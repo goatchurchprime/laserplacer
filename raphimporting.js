@@ -80,6 +80,9 @@ SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, 
     }
 }
     
+var nostrokecolour = null; 
+var defaultstrokewidth = 1.0; 
+//nostrokecolour = "#0000A0"; // can override the no stroke, though there's often a good reason it's not stroked (being garbage)
 SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, cc)
 {    
     var dtrans = Raphael.mapPath(d, cmatrix); // Raphael.transformPath(d, raphtranslist.join("")); 
@@ -88,9 +91,11 @@ SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, cc)
 
     var cclass; 
     if ((stroke == "none") || (stroke === undefined)) {
-        console.log("skipping path with no stroke", d); 
-        //stroke = "#ff0000"; // can use to override to see what it is
-        return; 
+        if (nostrokecolour == null) {
+            console.log("skipping path with no stroke", d); 
+            return; 
+        }
+        stroke = nostrokecolour; 
     }
     cclass = stroke; 
     
@@ -114,7 +119,7 @@ SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, cc)
     var spnum = this.spnummap[cclass]; 
     var spnumobj = this.spnumlist[spnum]; 
     var strokecolour = spnumobj.strokecolour; 
-    this.processSingleSVGpathFinal(dtrans, true, d, spnum, strokecolour, 2.0, cmatrix); 
+    this.processSingleSVGpathFinal(dtrans, true, d, spnum, strokecolour, defaultstrokewidth, cmatrix); 
 }
 
 
@@ -180,7 +185,7 @@ SVGfileprocess.prototype.importSVGpathR = function()
         console.log("skip clippath"); // will deploy Raphael.pathIntersection(path1, path2) eventually
         // <clipPath id="cp1"> <path d="M497.7 285.2 Z"/></clipPath>
         // then clippath="url(#cp1)" in a path for a trimmed symbol type
-    } else if ((tag == "polygon") || (tag == "polygline")) {
+    } else if ((tag == "polygon") || (tag == "polyline")) {
         var ppts = cc.attr("points").split(/\s+|,/);
         var x0 = ppts.shift(); 
         var y0 = ppts.shift();
