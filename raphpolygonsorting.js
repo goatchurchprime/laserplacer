@@ -171,13 +171,13 @@ FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
         var rle = rlends[j]; 
         var xB = rle[0]; 
         var yB = rle[1]; 
-        var jd = rle[2]*2 + (rle[3] ? 1 : 0); 
+        var jd = rle[2]*2 + (rle[3] ? 1 : 0);  // encoding the index as *2 + (forward ? 1 : 0)
         for (var j1 = j+1; ((j1 < rlends.length) && (rlends[j1][0] <= xB + closedist)); j1++) {
             var rle1 = rlends[j1]; 
             var dx = rle1[0] - xB;
             var dy = rle1[1] - yB; 
             var dCsq = dx*dx + dy*dy; 
-            if (dCsq <= closedistSq) {
+            if ((dCsq <= closedistSq) && ((rle[2] != rle1[2]) || (Raphael.getTotalLength(dlist[rle[2]]) > closedist))) { /* avoid connecting short line segment back to self (unless long enough to be a loop) */
                 var jd1 = rle1[2]*2 + (rle1[3] ? 1 : 0); 
                 rlidat[jd].push([dCsq, jd1]); 
                 rlidat[jd1].push([dCsq, jd]); 
@@ -234,7 +234,7 @@ FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
                     //console.log("removing jdl", jdl, jd0); 
                     disconnectJD1(jdl, rlidat[jdl].shift()[1]); 
                     break; 
-                } else if (jdseq.length > dlist.length - i*0) {
+                } else if ((jdseq.length > dlist.length - i*0) || ((jdseq.length != 0) && (jdseq[jdseq.length-1] == jd))) {
                     //console.log("removing jd0 semiloop", jd0); 
                     disconnectJD1(jd0, rlidat[jd0].shift()[1]); 
                     break; 
@@ -316,7 +316,7 @@ RevJDseq: function(jdseq)
 JDgeoseq: function(jdseq, dlist)
 {
     var darea = [ ]; 
-    console.log(jdseq); 
+    //console.log(jdseq); 
     var spath = undefined; 
     console.assert(jdseq.length != 0); 
     for (var ijd = 0; ijd < jdseq.length; ijd++) {
@@ -349,7 +349,7 @@ JDgeoseq: function(jdseq, dlist)
         }
     }
     console.assert((darea.length == 0) || (darea[0][0] == "M")); 
-    if ((px != spath[0][1]) || (py != spath[0][2])) {
+    if ((px != darea[0][1]) || (py != darea[0][2])) {
         darea.push(["L", darea[0][1], darea[0][2]]); 
     }
     return darea; 

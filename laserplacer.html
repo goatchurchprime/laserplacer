@@ -629,7 +629,7 @@ function setup()
         var cx = (mx + paper1x0)*paper1scale; 
         var cy = (my + paper1y0)*paper1scale; 
         //paper1.rect(cx, cy, 5, 5); 
-        paper1scale = (e.originalEvent.deltaY < 0 ? paper1scale*1.5 : paper1scale/1.5); 
+        paper1scale = (e.originalEvent.deltaY > 0 ? paper1scale*1.5 : paper1scale/1.5); 
         paper1x0 = cx/paper1scale - mx; 
         paper1y0 = cy/paper1scale - my; 
         paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 

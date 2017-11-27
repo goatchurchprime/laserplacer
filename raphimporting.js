@@ -103,7 +103,7 @@ SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, cc)
     if (this.spnummap[cclass] === undefined) {
         var strokecolour = stroke; 
         var spnumobj = { spnum:this.spnumlist.length, strokecolour:strokecolour }; 
-        var stitle = strokecolour; 
+        var stitle = strokecolour + " (click to exclude from outline)"; 
         this.spnummap[cclass] = spnumobj.spnum; 
         this.spnumlist.push(spnumobj); 
         if (true) {
@@ -310,7 +310,7 @@ SVGfileprocess.prototype.importSVGpathRtunnelx = function()
     return true; 
 }
 
-// this operates the settimeout loop
+// this operates the settimeout loop (done this way because some files we've tried are very very large)
 function importSVGpathRR(lthis)  
 {
     if (lthis.bcancelIm) {
@@ -318,6 +318,8 @@ function importSVGpathRR(lthis)
         lthis.state = "cancelled"+lthis.state; 
     } else if (lthis.btunnelxtype ? lthis.importSVGpathRtunnelx() : lthis.importSVGpathR()) {
         setTimeout(importSVGpathRR, lthis.timeoutcyclems, lthis); 
+        
+    // the final step when done
     } else {
         lthis.state = "done"+lthis.state; // "importsvgrareas" : "importsvgr"
         if (lthis.state == "donedetailsloading")
@@ -417,6 +419,46 @@ function ProcessToPathGroupingsTunnelX(rlistb, spnumlist)
     return res; 
 }
 
+function DcolourPathSubGrouping(rlistb, splist, pathpoly, strokecolour) 
+{
+    for (var ii = 0; ii < pathpoly.length; ii++) {
+        var rp = rlistb[pathpoly[ii]/2|0]; 
+        rp.path.attr("stroke", (strokecolour ? strokecolour : splist[rp.spnum].strokecolour)); 
+    }
+}
+
+function DcolourPathGrouping(rlistb, splist, pathgrouping, strokecolour, strokeengcolour) 
+{
+    for (var i = 1; i < pathgrouping.length - 1; i++) {
+        DcolourPathSubGrouping(rlistb, splist, pathgrouping[i], strokecolour);  
+    }
+    DcolourPathSubGrouping(rlistb, splist, pathgrouping[pathgrouping.length - 1], strokeengcolour);   
+}
+
+
+function CopyPathListOfColour(rlistb, spnum)
+{
+    var dlist = [ ]; 
+    var npathsc = 0; 
+    for (var i = 0; i < rlistb.length; i++) {
+        if ((spnum === null) || ((rlistb[i].spnum == spnum) && (rlistb[i].path.getTotalLength() != 0)))
+            dlist.push(rlistb[i].path.attrs.path); 
+        else
+            dlist.push(null); 
+        npathsc++; 
+    }
+    return dlist; 
+}
+
+function MakeContourcurvesFromSequences(dlist, jdseqs) 
+{
+    var jdgeos = [ ]; 
+    for (var i = 0; i < jdseqs.length; i++) {
+        jdgeos.push(PolySorting.JDgeoseq(jdseqs[i], dlist)); // concatenated sequences of paths forming the boundaries
+    }
+    return jdgeos; 
+}
+
 function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid)
 {
     // form the closed path sequences per spnum
@@ -424,13 +466,7 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid)
     for (var ispnum = 0; ispnum < spnumscp.length; ispnum++) {
         var spnum = spnumscp[ispnum]; 
         $(this.dfprocessstatus).text("joining spnum="+spnum); 
-        var dlist = [ ]; 
-        var npathsc = 0; 
-        for (var i = 0; i < rlistb.length; i++) {
-            dlist.push(rlistb[i].spnum == spnum ? rlistb[i].path.attrs.path : null); 
-            npathsc++; 
-        }
-        var ljdseqs = PolySorting.FindClosedPathSequencesD(dlist, closedist, false); 
+        var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColour(rlistb, spnum), closedist, false); 
         var npathsleft = 0; 
         for (var i = 0; i < ljdseqs.length; i++)
             npathsleft += ljdseqs[i].length; 
@@ -441,17 +477,12 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid)
 
     // list of paths not included in any cycle
     $(this.dfprocessstatus).text("getsingletlist"); 
-    var singletslist = PolySorting.GetSingletsList(jdseqs, (dlist !== undefined ? dlist.length : 0)); // (why isn't dlist defined outside of the loop?)  
+    var singletslist = PolySorting.GetSingletsList(jdseqs, rlistb.length); // (why isn't dlist defined outside of the loop?)  
 
     // build the dlist without any holes parallel to rlistb to use for groupings
-    var dlist = [ ]; 
-    for (var i = 0; i < rlistb.length; i++) 
-        dlist.push(rlistb[i].path.attrs.path); 
     $(this.dfprocessstatus).text("concat JDgeoseqs"); 
-    var jdgeos = [ ]; 
-    for (var i = 0; i < jdseqs.length; i++) {
-        jdgeos.push(PolySorting.JDgeoseq(jdseqs[i], dlist)); // concatenated sequences of paths forming the boundaries
-    }
+    var dlist = CopyPathListOfColour(rlistb, null); 
+    var jdgeos = MakeContourcurvesFromSequences(dlist, jdseqs); 
 
     // groups of jdsequences forming outercontour, islands, singlets 
     $(this.dfprocessstatus).text("FindAreaGroupingsD"); 
@@ -485,7 +516,7 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid)
             unmatchedsinglets.push(ic); 
     }
 
-    //console.log("unmatched", unmatchedsinglets); 
+    console.log("unmatched", unmatchedsinglets); 
     console.log("resres", res); 
     return res; 
 }
@@ -563,10 +594,13 @@ SVGfileprocess.prototype.removeall = function()
     this.Lgrouppaths = [ ]; 
 }
 
+
+
+
+// could this be converted into a callback function if it takes too long
 SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
 {
-    // could this be converted into a callback
-    var closedist = 3.2; 
+    var closedist = 0.2; // should be a setting
 
     var spnumscp = [ ]; 
     $('div#'+this.fadivid+' .spnumcols span').each(function(i, v)  { 
@@ -591,7 +625,6 @@ SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
     this.state = "process"+this.state.slice(4); 
     $(this.dfprocessstatus).text("doneG"); 
 
-    // rebuild this groupings directly from the above indexing sets
     // remove old groups if they exist (mapping across the transforms)
     console.log(this.Lgrouppaths); 
     if (this.Lgrouppaths.length != 0) {
@@ -622,7 +655,7 @@ SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
         
         // form the area object
         var dgroup = [ ]; 
-        var fillcolour = (this.btunnelxtype ? this.spnumlist[this.rlistb[pathgrouping[1][0]/2|0].spnum].fillcolour : "#0f0"); 
+        var fillcolour = (this.btunnelxtype ? this.spnumlist[this.rlistb[pathgrouping[1][0]/2|0].spnum].fillcolour : "#0a8"); 
         for (var j = 1; j < pathgrouping.length - 1; j++) {
             if (pathgrouping[j].length != 0)
                 dgroup = dgroup.concat(PolySorting.JDgeoseq(pathgrouping[j], dlist)); 
@@ -635,6 +668,7 @@ SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
         } else {
             pgroup = paper1.path(dgroup); 
             pgroup.attr({stroke:(this.btunnelxtype ? "black" : "white"), fill:fillcolour, "fill-opacity":"0.1"}); 
+            pgroup[0].style["fillRule"] = "evenodd"; // hack in as not implemented in Raphaeljs (till we get the orientations right)
         }
         
         // form the list of all paths belonging to this area object
