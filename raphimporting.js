@@ -90,7 +90,7 @@ SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, cc)
         return; 
 
     var cclass; 
-    if ((stroke == "none") || (stroke === undefined)) {
+    if ((stroke == "none") || (stroke === undefined) || (stroke === null)) {
         if (nostrokecolour == null) {
             console.log("skipping path with no stroke", d); 
             return; 
@@ -123,6 +123,25 @@ SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, cc)
 }
 
 
+// this is because firefox returns "none" for cc.css("stroke")
+function ColNoneToNull(col)
+{
+    if (col === undefined)
+        return null; 
+    if (col === "none")
+        return null; 
+    if (col === "")
+        return null; 
+    return col; 
+}
+// we get fill codes that shouldn't be set (for fonts) on firefox
+function ColNoneToNullF(col)
+{
+    if (col === "rgb(0, 0, 0)")
+        return null; 
+    return ColNoneToNull(col); 
+}
+
 SVGfileprocess.prototype.importSVGpathR = function() 
 {
     while (this.cstack.length == this.pback.pos) 
@@ -143,6 +162,7 @@ SVGfileprocess.prototype.importSVGpathR = function()
 
     // decode case where multiple classes in same field
     var cclass = cc.attr("class"); 
+    
     var lstyle = { }; 
     if (cc.attr("style")) {   // taken from parser in InitiateLoadingProcess
         cc.attr("style").replace(/([^:;]*):([^:;]*)/gi, function(a1, b1, c1) { 
@@ -152,25 +172,25 @@ SVGfileprocess.prototype.importSVGpathR = function()
             lstyle[b1.trim().toLowerCase()] = c11; 
         });
     }
-    var cstroke = cc.attr("stroke") || cc.css("stroke") || lstyle["stroke"]; 
-    var cfill = cc.attr("fill") || cc.css("fill") || lstyle["fill"]; 
+    var cstroke = ColNoneToNull(cc.attr("stroke")) || ColNoneToNull(cc.css("stroke")) || ColNoneToNull(lstyle["stroke"]); 
+    var cfill = ColNoneToNullF(cc.attr("fill")) || ColNoneToNullF(cc.css("fill")) || ColNoneToNullF(lstyle["fill"]); 
     var ocfill = cfill; 
-  
-    if (!cstroke && cclass) {
+
+    if ((cstroke === null) && cclass) {
         var lcclasss = cclass.split(" "); 
         for (var k = 0; k < lcclasss.length; k++) { 
             var lcclass = lcclasss[k]; 
             if (lcclass) {
                 var lstroke = this.mclassstyle[lcclass] && this.mclassstyle[lcclass]["stroke"]; 
                 var lfill = this.mclassstyle[lcclass] && this.mclassstyle[lcclass]["fill"]; 
-                cstroke = lstroke || cstroke;  // prioritized getting colour from somewhere
+                cstroke = ColNoneToNull(lstroke) || ColNoneToNull(cstroke);  // prioritized getting colour from somewhere
                 if (!ocfill)
                     cfill = lfill || cfill; 
             }
         }
     }
     
-    if (!cstroke || (cstroke == "none"))  // use fill if stroke not there
+    if (!cstroke || (cstroke === null))  // use fill if stroke not there
         cstroke = cfill;  // strictly because there is a strokelist stack but no filllist stack, this will mask any lower fills anyway
     
     if (cstroke) {
@@ -349,7 +369,7 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
             mclassstyle[b][b1.trim().toLowerCase()] = c11; 
         }); 
     }); 
-    console.log(mclassstyle); 
+    console.log("mclassstyle", mclassstyle); 
 
     // autorun the group process (should distinguish easy cases)
     //if (txt.length < 10000)

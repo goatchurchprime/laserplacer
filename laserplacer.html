@@ -559,6 +559,7 @@ Df = f;
 
 
 
+var Deee; 
 
 var Rmmscalebar = null; 
 var Drect1;
@@ -621,15 +622,28 @@ function setup()
     paper1 = Raphael("paper1", 1300, 800);
     paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
     //paper1.raphael.mousedown(function(e) { console.log(e); }); 
-    $(paper1.canvas).bind('mousewheel', function(e) {
+    $(paper1.canvas).bind('mousewheel DOMMouseScroll', function(e) {
+		console.log(e); 
+
+		var ex, ey, ed; 
+		if (e.handleObj && (e.handleObj.type == "DOMMouseScroll"))  {// firefox issue
+			console.log(e.originalEvent); 
+			ex = e.originalEvent.clientX; 
+			ey = e.originalEvent.clientY; 
+			ed = (e.originalEvent.detail > 0); 
+		} else {
+			ex = e.clientX; 
+			ey = e.clientY; 
+			ed = (e.originalEvent.deltaY > 0); 
+		}
         var paperelement = document.getElementById("paper1");
-        var mx = e.clientX - paperelement.offsetLeft - 2; 
-        var my = e.clientY - paperelement.offsetTop - 2; 
+        var mx = ex - paperelement.offsetLeft - 2; 
+        var my = ey - paperelement.offsetTop - 2; 
         //console.log(e.originalEvent.deltaY, mx, my, event); 
         var cx = (mx + paper1x0)*paper1scale; 
         var cy = (my + paper1y0)*paper1scale; 
         //paper1.rect(cx, cy, 5, 5); 
-        paper1scale = (e.originalEvent.deltaY > 0 ? paper1scale*1.5 : paper1scale/1.5); 
+        paper1scale = (ed ? paper1scale*1.5 : paper1scale/1.5); 
         paper1x0 = cx/paper1scale - mx; 
         paper1y0 = cy/paper1scale - my; 
         paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
