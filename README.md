@@ -39,6 +39,7 @@ To run the components of the polygon sorting from the javascript console, we hav
 k = SVGprocesses["fa0"]
 s = PolySorting.FindClosedPathSequencesD(CopyPathListOfColour(k.rlistb, 1), 2, false); 
 j = MakeContourcurvesFromSequences(CopyPathListOfColour(k.rlistb, null), s); 
+b = PolySorting.FindAreaGroupingsD(j); 
 
 
 
