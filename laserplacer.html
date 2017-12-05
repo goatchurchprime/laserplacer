@@ -30,8 +30,8 @@ var TXlinestylespnum = { "subsetarea":0, "Wall":1, "EstW":1, "Detl":2, "symbDetl
 //alert("hi"); 
 function exportPLT()
 {
-console.log("exportingJSON instead"); 
-return exportJSON(); 
+//console.log("exportingJSON instead"); 
+//return exportJSON(); 
 
     var svgprocess = SVGprocesses[fadividlast]; 
     var rlistb = svgprocess.rlistb; 
@@ -554,7 +554,7 @@ function setup()
 
 		var ex, ey, ed; 
 		if (e.handleObj && (e.handleObj.type == "DOMMouseScroll"))  {// firefox issue
-			console.log(e.originalEvent); 
+			//console.log(e.originalEvent); 
 			ex = e.originalEvent.clientX; 
 			ey = e.originalEvent.clientY; 
 			ed = (e.originalEvent.detail > 0); 

@@ -14,7 +14,8 @@ var SVGfileprocess = function(fname, fadivid)
     // this.btunnelxtype
 }
 
-function converttomm(s) {
+function converttomm(s) 
+{
     var fac = 1.0; 
     if (s.match(/.*?(mm|\d\.)$/g))
         fac = 1.0; 
@@ -23,7 +24,7 @@ function converttomm(s) {
     else if (s.match(/.*?(pt)$/g))
         fac = 25.4/72; 
     else
-        console.log("unrecognized units", s); 
+        console.log("viewBox missing units", s); 
     return parseFloat(s)*fac; // parses what it understands
 }
 
@@ -153,6 +154,7 @@ SVGfileprocess.prototype.importSVGpathR = function()
     var tag = cc.prop("tagName").toLowerCase(); 
     var raphtranslist = this.pback.raphtranslist; 
     var cmatrix = this.pback.cmatrix; 
+    
     if (cc.attr("transform")) {
         raphtranslist = raphtranslist.slice(); 
         raphtranslist.push(cc.attr("transform").replace(/([mtrs])\w+\s*\(([^\)]*)\)/gi, function(a, b, c) { return b.toLowerCase()+c+(b.match(/s/i) ? ",0,0" : ""); } )); 
@@ -381,7 +383,8 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
     this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with
 
     // these control the loop importSVGpathRR runs within
-    this.pback = {pos:-1, raphtranslist:[""], strokelist:[undefined], cmatrix:Raphael.matrix(this.fsca, 0, 0, this.fsca, 0, 0) };
+    var imatrix = Raphael.matrix(this.fsca, 0, 0, this.fsca, 0, 0); 
+    this.pback = {pos:-1, raphtranslist:[imatrix.toTransformString()], strokelist:[undefined], cmatrix:imatrix };
     this.pstack = [ ]; 
     this.cstack = [ this.tsvg ]; 
     
@@ -395,7 +398,8 @@ SVGfileprocess.prototype.LoadTunnelxDrawingDetails = function()
     console.assert(this.btunnelxtype); 
     this.state = "detailsloading"; 
 
-    this.pback = {pos:-1, raphtranslist:[""], strokelist:[undefined], cmatrix:Raphael.matrix(this.fsca, 0, 0, this.fsca, 0, 0) };
+    var imatrix = Raphael.matrix(this.fsca, 0, 0, this.fsca, 0, 0); 
+    this.pback = {pos:-1, raphtranslist:[imatrix.toTransformString()], strokelist:[undefined], cmatrix:imatrix };
     this.pstack = [ ]; 
     this.cstack = [ this.tsvg ]; 
     importSVGpathRR(this); 
