@@ -95,21 +95,6 @@ function convertchartopointlist(c)
     return ptsl; 
 }
 
-function uploadallcharshapes()
-{
-    var ks = Object.keys(characters); 
-    var ls = [ ]; 
-    for (var i = 0; i < ks.length; i++) {
-        var ptsl = convertchartopointlist(ks[i]); 
-        var w = characters[ks[i]].w; 
-        ls.push(JSON.stringify({c:ks[i], w:w, ptsl:ptsl})); 
-        console.log(ls[ls.length-1]); 
-    }
-    $.ajax({url:geturlcgipipe()+'/savengc.py?autorun=no', data:ls.join("\n"), type:'POST', success:function(msg) 
-    {
-        console.log("return message:", msg); 
-    }});             
-}
 
 function svgizetext(texttosvgize)
 {

@@ -246,19 +246,11 @@ function sendgcode()
         } else {
             var movex = (finalx > 0 ? finalx-100 : finalx+100);
             lgcode.push("G0Z5\nX"+movex.toFixed(3)+"M2\n"); 
-            if (bcgipipeworking) {
-                var rdata = lgcode.join(""); 
-                $.ajax({url:geturlcgipipe()+'/savengc.py?autorun='+($("#gcodeautorun").prop("checked") ? "yes" : "no"), data:rdata, type:'POST', success:function(msg) 
-                {
-                    console.log("return message:", msg); 
-                }});             
-            } else { 
-                var a = document.createElement('a');
-                var blob = new Blob(lgcode, {'type':"text/plain"});
-                a.href = window.URL.createObjectURL(blob);
-                a.download = "test.ngc";
-                a.click();
-            }
+			var a = document.createElement('a');
+			var blob = new Blob(lgcode, {'type':"text/plain"});
+			a.href = window.URL.createObjectURL(blob);
+			a.download = "test.ngc";
+			a.click();
         }
         $("#readingcancel").text((rlist.length-rlfptseqs.length)+"/"+rlist.length); 
     };
@@ -302,13 +294,8 @@ function requestmachinekitstats()
     var stdindata = ""; 
     var rdata = stdindata; 
     $("#machinekitstatus").text("requesting..."); 
-    //$.ajax({url:geturlcgipipe()+'/reverse.py?a=b', data:rdata, type:'POST', success:function(msg) 
-    if (bcgipipeworking) {
-        $.ajax({url:geturlcgipipe()+'/machinekitstatus.py', data:rdata, type:'POST', success:function(msg) { receivemachinekitstats(JSON.parse(msg)) }}); 
-    } else {
-        console.log("making machinekitstats numbers up"); 
-        receivemachinekitstats({"xlo":-620, "xhi":520, "ylo":-190, "yhi":600, "estop":0, "enabled":1, "homed":[1, 1, 1], "interp_state":1, INTERP_IDLE:1}); 
-    }
+	console.log("making machinekitstats numbers up"); 
+	receivemachinekitstats({"xlo":-620, "xhi":520, "ylo":-190, "yhi":600, "estop":0, "enabled":1, "homed":[1, 1, 1], "interp_state":1, INTERP_IDLE:1}); 
 }
 
 
@@ -433,51 +420,9 @@ function Nest1()
             }
         }
     }); 
-    var rdata = { execname:"nestpolys1.py", stdindata:JSON.stringify({polymap:polymap, board:board, sequence:sequence}) }; 
-    $.ajax({url:geturlcgipipe(), data:rdata, type:'POST', success:function(xjson) 
-    {
-        console.log("return JSON data", xjson); 
-        vjson = JSON.parse(xjson); 
-        var translats = vjson.translats; 
-        Dtranslats = translats; 
-        var kys = Object.keys(translats);
-        for (var k = 0; k < kys.length; k++) {
-            var pgid = kys[k]; 
-            var svgp = SVGprocesses[Ipolymap[pgid][0]]; 
-            var lpaths = svgp.Lgrouppaths[Ipolymap[pgid][1]]; 
-            var tstr = ("t"+(translats[pgid][0])+","+(translats[pgid][1])); 
-            for (var i = 0; i < lpaths.length; i++) {
-                lpaths[i].transform(tstr); 
-            }
-        }
-    }}); 
 }
 
-var Depstext; 
 var Df; 
-
-var bcgipipeworking = false; 
-function geturlcgipipe() 
-{
-    var cgiipnumber = $("#machinekitip").val().trim(); 
-    if (cgiipnumber == "")
-        cgiipnumber = "localhost"; 
-    return "http://"+cgiipnumber+":9003/cgipipe"; 
-}
-
-function checkcgipipeworking() 
-{
-    bcgipipeworking = false; 
-    $('#machinekitip').css("background", "#fdd"); 
-    $("#sendgcode").val("Save G-code"); 
-    $.ajax({url:geturlcgipipe()+'/reverse.py', data:"hi there", type:'POST', success:function(msg) {
-        console.log("pipe check reverse:", msg); 
-        bcgipipeworking = true; 
-        $('#machinekitip').css("background", "#dfd"); 
-        $("#sendgcode").val("Send G-code"); 
-    }}); 
-}
-
 
 var filecountid = 0; 
 function importSVGfiles(files)
@@ -542,17 +487,7 @@ Df = f;
             reader.onload = (function(e) { svgprocess.InitiateLoadingProcess(reader.result); }); 
             reader.readAsText(f); 
         } else {
-            reader.onload = (function(e) { 
-                console.log("Sending file length", reader.result.length); 
-                Depstext = reader.result.substr(0, 100); 
-                var rdata = { execname:(beps ? "eps2svg.py" : "dxf2svg.py"), stdindata:reader.result }; 
-                $.ajax({url:geturlcgipipe(), data:rdata, type:'POST', success:function(xsvg) 
-                {
-                    console.log("return SVG data", xsvg.length); 
-                    svgprocess.InitiateLoadingProcess(xsvg); 
-                }});             
-            }); 
-            reader.readAsBinaryString(f); 
+			alert("not svg type"); 
         }
     }); 
 }
@@ -584,15 +519,7 @@ function setup()
     $("#sendgcode").click(sendgcode); 
     $("#requestmachinekitstats").click(requestmachinekitstats); 
     $("#svgizetext").click(function() { 
-        if (bcgipipeworking) {
-            //+($("#gcodeautorun").prop("checked") ? "yes" : "no")
-            $.ajax({url:geturlcgipipe()+'/genpoetry.py?reversed=no&centre=no', data:$("#texttosvgize").val(), type:'POST', success:function(msg) 
-            {
-                console.log("return message:", msg); 
-            }});             
-        } else {
-            importSVGfiles([{type:'svgizedtext', svgtext:svgizetext($("#texttosvgize").val())}]); 
-        }
+		importSVGfiles([{type:'svgizedtext', svgtext:svgizetext($("#texttosvgize").val())}]); 
     }); 
     
     $("#paper1").on('dragover', function(e) {
@@ -672,21 +599,12 @@ function setup()
     Drect1.onDragOver(function(e) { console.log(e); }); 
     pathselected = Drect1; 
     
-    $('#machinekitip').keydown(function(e) {
-        if (e.keyCode == 13) {
-            e.preventDefault();
-            checkcgipipeworking(); 
-        }
-    });
-
     $('#rescalefile').keydown(function(e) {
         if (e.keyCode == 13) {
             e.preventDefault();
             rescalefile(parseFloat($("#rescalefile").val())); 
         }
     });
-    
-    checkcgipipeworking(); 
 }
 
 
@@ -712,6 +630,7 @@ div#filearea .groupprocess { background:#ffc }
 div#filearea .groupprocess:hover { background:#ccf }
 div#filearea .groupprocess.selected { background:#ee0 }
 input#mmpixwidth { width:3em }
+#texttosvgize { height: 1em }
 
 </style>
 
@@ -731,9 +650,6 @@ input#mmpixwidth { width:3em }
     <span id="pixscale">pix-scale(mm):<input type="text" id="mmpixwidth" name="mmpixwidth" value=""/></span>
     <span id="readingcancel">0/0</span>
     <span id="rescalefilesp">rescale:<input type="text" id="rescalefile" name="rescalefile" value="1.0"/></span>
-</div>
-<div>
-    <span>Machinekit twisted IPnumber: <input type="text" id="machinekitip" name="machinekitip" value="83.148.186.100"/></span>
     <input type="button" value="Send G-code" id="sendgcode"/>
     <input type="checkbox" id="gcodeautorun" title="autorun">
     <input type="button" value="MKstats" id="requestmachinekitstats"/>
