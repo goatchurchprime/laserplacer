@@ -6,7 +6,10 @@ var SVGfileprocess = function(fname, fadivid)
     this.state = "constructed"; 
     this.bcancelIm = false; 
     this.dfprocessstatus = "div#"+this.fadivid+" .fprocessstatus"; 
-
+    this.drawstrokewidth = 1.0; 
+    this.cutdrawstrokewidth = 0.8; 
+    this.cutfillcolour = "#0a8"; 
+    
     // after importing:
     // this.rlistb = [ ]; 
     // this.spnumlist = [ ]; 
@@ -65,7 +68,7 @@ SVGfileprocess.prototype.WorkOutPixelScale = function()
     $("#mmpixwidth").change(); 
 }
 
-SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, d, spnum, strokecolour, strokewidth, cmatrix)
+SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, d, spnum, strokecolour, cmatrix)
 {
     var i0 = 0; 
     var mi = 0; 
@@ -75,7 +78,7 @@ SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, 
             i1++; 
         // this is the place to separate out the paths by M positions
         var path = paper1.path(dtrans.slice(i0, i1)); 
-        path.attr({stroke:strokecolour, "stroke-width":strokewidth}); 
+        path.attr({stroke:strokecolour, "stroke-width":this.drawstrokewidth}); 
         rlist.push(path); 
         this.rlistb.push({path:path, spnum:spnum, d:d, mi:mi, cmatrix:cmatrix}); 
         
@@ -85,7 +88,6 @@ SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, 
 }
     
 var nostrokecolour = null; 
-var defaultstrokewidth = 1.0; 
 //nostrokecolour = "#0000A0"; // can override the no stroke, though there's often a good reason it's not stroked (being garbage)
 SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, cc)
 {    
@@ -123,7 +125,7 @@ SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, cc)
     var spnum = this.spnummap[cclass]; 
     var spnumobj = this.spnumlist[spnum]; 
     var strokecolour = spnumobj.strokecolour; 
-    this.processSingleSVGpathFinal(dtrans, true, d, spnum, strokecolour, defaultstrokewidth, cmatrix); 
+    this.processSingleSVGpathFinal(dtrans, true, d, spnum, strokecolour, cmatrix); 
 }
 
 
@@ -301,7 +303,7 @@ SVGfileprocess.prototype.processSingleSVGpathTunnelx = function(d, stroke, cc)
     if (this.state == "importsvgrareas") 
         strokecolour = spnumobj.fillcolour; 
     var bMsplits = (mcs.dlinestyle.match(/symb/) != null); 
-    this.processSingleSVGpathFinal(dtrans, bMsplits, d, spnum, strokecolour, 1.0, null); 
+    this.processSingleSVGpathFinal(dtrans, bMsplits, d, spnum, strokecolour, null); 
 }
 
 
@@ -682,7 +684,7 @@ SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
         
         // form the area object
         var dgroup = [ ]; 
-        var fillcolour = (this.btunnelxtype ? this.spnumlist[this.rlistb[pathgrouping[1][0]/2|0].spnum].fillcolour : "#0a8"); 
+        var fillcolour = (this.btunnelxtype ? this.spnumlist[this.rlistb[pathgrouping[1][0]/2|0].spnum].fillcolour : this.cutfillcolour); 
         for (var j = 1; j < pathgrouping.length - 1; j++) {
             if (pathgrouping[j].length != 0)
                 dgroup = dgroup.concat(PolySorting.JDgeoseq(pathgrouping[j], dlist)); 
@@ -694,7 +696,7 @@ SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
             pgroup.attr({stroke:"none", fill:"#aae", "fill-opacity":"0.16"}); 
         } else {
             pgroup = paper1.path(dgroup); 
-            pgroup.attr({stroke:(this.btunnelxtype ? "black" : "white"), fill:fillcolour, "fill-opacity":"0.1"}); 
+            pgroup.attr({stroke:(this.btunnelxtype ? "black" : "white"), "stroke-width": this.cutdrawstrokewidth, fill:fillcolour, "fill-opacity":"0.1"}); 
             pgroup[0].style["fillRule"] = "evenodd"; // hack in as not implemented in Raphaeljs (till we get the orientations right)
         }
         
