@@ -44,3 +44,34 @@ b = PolySorting.FindAreaGroupingsD(j);
 
 
 
+
+----------------
+todo stuff:
+* get the working area to fill the screen no scrolling
+* batch delete on the x click
+* grouping by a big rectangle outline that's draggable
+
+*load the subsetareas separately and be able to pass over tsvg again to get the details
+*remove Raphael.mapPath at end of transform case (practice on scratch object first, then do the mappath on output)
+*remove jigsawareaoffset code from tunnelx java
+*build symbol trimming tech of clippaths, possibly in a second pass over the tsvg object
+*drop-down of the sizes of stock (ply) which gets plotted in brown as the area, and material (which generates the lookup for the feeds and speeds)
+*select stock shape and type of material which is always underneath (allow for multiple sheets)
+*batch up each object into json of [original svgpaths,transforms,sequences,islands,colours,scaletomm,boundingbox,filename,author], 
+*be able to draw in minimal tiles off side of stock, post and recover from database file
+*layouts are saved as json objects and reimported, merged, etc.
+*pile objects along the right hand column in individual boxes
+*file select dropdowns that refer to local banks of colours/scales/unified line calls that may be different and can be rerun
+*zoom out all by default to scale the two laser board sizes in down the left hand side
+*use colours or picking to specify the engraving curves
+*estimates of time to cut, which can be used to check if order of cut improving.  do cuts after each etch so abort still have working results
+*begin relay packing within area and clearance bits in callouts
+*export that ply sheet and remove everything on it
+*allow this file to serve from BB, which should be on the net somewhere accessible to the Laser Machine
+*colour bits by stock material (colour, thickness, type)
+*twisted banks and serves out components for the cutter, previews what's being calculated elsewhere.  
+
+
+
+
+<p>Code is at <a href="https://bitbucket.org/goatchurch/laserplacer">bitbucket.org/goatchurch/laserplacer</a></p>

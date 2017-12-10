@@ -10,6 +10,8 @@
 var paper1 = null; 
 var shapeleft = null; 
 var shaperight = null; 
+var wordsleft = null; 
+var wordsright = null; 
 var D = null; 
 
 function exportSVG()
@@ -17,9 +19,12 @@ function exportSVG()
     var xs = new XMLSerializer();
     var data = document.getElementById("paper1").children[0]; 
     var a = document.createElement('a');
+    a.style = "display: none"; 
     var blob = new Blob([xs.serializeToString(data)], {'type':"image/svg+xml"});
     a.href = window.URL.createObjectURL(blob);
     a.download = "test.svg";
+    document.body.appendChild(a); 
+    a.onclick = function() { document.body.removeChild(a); }; 
     a.click();
 }
 
@@ -59,19 +64,18 @@ function makesc()
     var tbset = p.set(); 
     tbset.push(tbs1, tbs2, tbwords); 
     return tbset; 
-
 }
 
 function makeshape(bleft)
 {
     var p = paper1; 
-    var w = 75; 
+    var w = 79; 
     var h = 40; 
     //var rect = p.rect(0, 0, w, h); 
-    var circle = p.circle(25, 18, 7); 
+    //var circle = p.circle(24, 18, 7); 
     var crad = 8; 
-    var w1 = 25, d1 = 20, w2 = 63, d2 = d1+10; 
-    var slotwidth = 3.2; 
+    var w1 = 23, d1 = 15, w2 = 68, d2 = d1+13; 
+    var slotwidth = 3.1; 
     var slottop = "v"+(h/2)+"h"+slotwidth+"v"+(-h/2); 
     var slotbot = "v"+(-h/2)+"h"+(-slotwidth)+"v"+(h/2); 
     var contarr = [ "M", w-crad, ",", h, 
@@ -81,20 +85,17 @@ function makeshape(bleft)
                     "L", 0, ",", crad, "A", crad, ",", crad, ",0,0,1,", crad, ",", 0, 
                     (bleft ? slottop : ""), 
                     "L", w1, ",", 0, "L", w1+d1, ",", d1, 
-                    "C", w1+d2, ",", d2, ",", w2-2, ",", d2, ",", w2+1, ",", d1+3,
+                    "C", w1+d1+5, ",", d1+5, ",", w2-15, ",", d2-1, ",", w2-3, ",", d2-1,
+                    "C", w2+1, ",", d2-1, ",", w2+1, ",", d1+7, ",", w2+1, ",", d1+3,
                     "S", w-4, ",", d1-3, ",", w-1, ",", h-crad-4, 
                     "A", crad, ",", crad*1.15, ",0,0,1,", w-crad, ",", h, 
-                    "Z"
+                    "Z", 
+                    "M24,11 A7,7,0,0,1,24,25 A7,7,0,0,1,24,11" 
                   ]; 
 console.log(contarr.join("")); 
     var contour = p.path(contarr.join("")); 
-    var tbset = (bleft ? makebolt() : makesc()); 
-    tbset.transform((bleft ? "t15,30s0.2,0.2" : "t15,28s0.15,0.15") + ",0,0"+"t"+(-tbset.getBBox().x)+","+(-tbset.getBBox().y)+"..."); 
-
-    var st = p.set(); 
-    st.push(contour, circle, tbset); 
-    st.attr({"stroke-width": 0.25})
-    return st; 
+    contour.attr({"stroke-width": 0.25})
+    return contour; 
 }
 
 function setup()
@@ -105,9 +106,19 @@ function setup()
     shapeleft = makeshape(true); 
     shaperight = makeshape(false); 
     shaperight.transform("t0,45..."); 
+    shaperight.scale(-1,1); 
+    
+    wordsleft = makebolt();
+    wordsright = makesc(); 
+    wordsleft.attr({"stroke-width": 0.25})
+    wordsright.attr({"stroke-width": 0.25})
+
+    wordsleft.transform("t15,30s0.2,0.2" + ",0,0"+"t"+(-wordsleft.getBBox().x)+","+(-wordsleft.getBBox().y)+"..."); 
+    wordsright.transform("t0,45t22,28s0.15,0.15" + ",0,0"+"t"+(-wordsright.getBBox().x)+","+(-wordsright.getBBox().y)+"..."); 
+    
     console.log("hi"); 
     
-exportSVG();     
+exportSVG(); 
 }
 
 Raphael(setup);   // function to call only *after* page has finished loading

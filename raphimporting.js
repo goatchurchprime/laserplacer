@@ -28,6 +28,9 @@ function converttomm(s)
     return parseFloat(s)*fac; // parses what it understands
 }
 
+
+// undo the scale by multiplying by 1/(Dsvgprocess.fsca)*90/25.4
+
 SVGfileprocess.prototype.WorkOutPixelScale = function() 
 {
     var svgtitletext = this.tsvg.find("title").text(); 
@@ -43,7 +46,7 @@ SVGfileprocess.prototype.WorkOutPixelScale = function()
             viewBox.push(parseFloat(x), parseFloat(y), parseFloat(w), parseFloat(h)); 
     }); 
 
-    console.log("facts:" + swidth +"  " + sheight + "  "+viewBox); 
+    console.log("facts:" + swidth +"  " + sheight + "  viewbox:"+viewBox); 
     var inkscapedefaultmmpix = 90/25.4; 
     this.fmmpixwidth = inkscapedefaultmmpix; 
     this.fmmpixheight = inkscapedefaultmmpix; 
