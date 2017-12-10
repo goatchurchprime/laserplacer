@@ -167,6 +167,8 @@ function rescalefile(fscale)
 // (we need to lightly reorder it)
 function sendgcode()
 {
+	var machinekitstats = {"xlo":-620, "xhi":520, "ylo":-190, "yhi":600, "estop":0, "enabled":1, "homed":[1, 1, 1] }; 
+
     var svgprocess = SVGprocesses[fadividlast]; 
     var rlistb = svgprocess.rlistb; 
     var mmpixwidth = parseFloat($("#mmpixwidth").val()); 
@@ -271,46 +273,6 @@ function sendgcode()
     };
     
     exportGCODEpathR(); 
-}
-
-
-var machinekitstats = undefined; 
-var toscasizerect = undefined; 
-function receivemachinekitstats(lmachinekitstats)
-{
-    machinekitstats = lmachinekitstats; 
-    console.log(machinekitstats); 
-    var mkstatus = "fetched"; 
-    if (machinekitstats["response"] == "bad")
-        mkstatus = "not working"
-    else if (machinekitstats["estop"] != 0)
-        mkstatus = "estop";
-    else if (!machinekitstats["enabled"])
-        mkstatus = "disabled";
-    else if ((machinekitstats["homed"][0] == 0) || (machinekitstats["homed"][1] == 0) || (machinekitstats["homed"][2] == 0))
-        mkstatus = "not homed";
-    else if (machinekitstats["interp_state"] != machinekitstats.INTERP_IDLE)
-        mkstatus = "not idle";
-    else
-        mkstatus = "mkready"; 
-    $("#machinekitstatus").text(mkstatus); 
-    if (machinekitstats.xlo !== undefined) {
-        if (toscasizerect !== undefined)
-            toscasizerect.remove(); 
-        var mmpixwidth = parseFloat($("#mmpixwidth").val()); 
-        var mmwidth = machinekitstats.xhi - machinekitstats.xlo; 
-        var mmheight = machinekitstats.yhi - machinekitstats.ylo; 
-        toscasizerect = paper1.rect(15, 15, mmwidth*mmpixwidth, mmheight*mmpixwidth).attr({stroke:"grey", fill:"lightGrey"}).toBack(); 
-    }
-}
-
-function requestmachinekitstats() 
-{
-    var stdindata = ""; 
-    var rdata = stdindata; 
-    $("#machinekitstatus").text("requesting..."); 
-	console.log("making machinekitstats numbers up"); 
-	receivemachinekitstats({"xlo":-620, "xhi":520, "ylo":-190, "yhi":600, "estop":0, "enabled":1, "homed":[1, 1, 1], "interp_state":1, INTERP_IDLE:1}); 
 }
 
 
@@ -540,8 +502,6 @@ function setup()
         Rmmscalebar = paper1.path("M10,10h"+(woodwidth*mmpixwidth)+"v5 M10,10v"+(woodheight*mmpixwidth)+"h5").attr("stroke", "#888"); 
     }); 
     
-    $("#sendgcode").click(sendgcode); 
-    $("#requestmachinekitstats").click(requestmachinekitstats); 
     $("#svgizetext").click(function() { 
 		importSVGfiles([{type:'svgizedtext', svgtext:svgizetext($("#texttosvgize").val())}]); 
     }); 
@@ -574,7 +534,7 @@ function setup()
     paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
     //paper1.raphael.mousedown(function(e) { console.log(e); }); 
     $(paper1.canvas).bind('mousewheel DOMMouseScroll', function(e) {
-		console.log(e); 
+		//console.log(e); 
 
 		var ex, ey, ed; 
 		if (e.handleObj && (e.handleObj.type == "DOMMouseScroll"))  {// firefox issue
@@ -681,11 +641,7 @@ input#mmpixwidth { width:3em }
     <span id="pixscale">pix-scale(mm):<input type="text" id="mmpixwidth" name="mmpixwidth" value=""/></span>
     <span id="readingcancel">0/0</span>
     <span id="rescalefilesp">rescale:<input type="text" id="rescalefile" name="rescalefile" value="1.0"/></span>
-    <input type="button" value="Send G-code" id="sendgcode"/>
-    <input type="checkbox" id="gcodeautorun" title="autorun">
-    <input type="button" value="MKstats" id="requestmachinekitstats"/>
-    <span id="machinekitstatus"></span>
-        
+    
     <textarea id="texttosvgize">svgizing letters here</textarea>
     <input type="button" value="svgizetext" id="svgizetext">
   </div>
