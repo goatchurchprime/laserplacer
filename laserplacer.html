@@ -163,6 +163,14 @@ var Drect1;
 function setup()
 {
 	window.addEventListener("resize", setraphsize);
+	
+	document.getElementById("thinnerstrokes").onclick = function() { scalestrokewidth(0.5); }; 
+	document.getElementById("thickerstrokes").onclick = function() { scalestrokewidth(2); }; 
+	document.getElementById("togglebackgroundcolour").onclick = function() { 
+		var divwholewindow = document.getElementById("wholewindow"); 
+		divwholewindow.style.background = (divwholewindow.style.background == "rgb(60, 60, 60)" ? "#e8e8e8" : "rgb(60, 60, 60)");  
+	}
+
     $("#exportSVG").click(exportSVG); 
     $("#exportPLT").click(exportPLT); 
     $("#movecollide").click(MoveCollide); 
@@ -283,8 +291,8 @@ div#paper1 { position: fixed; left: 0; right: 0; }
 #err { color:red }
 .dropfileselected { background: #ffa }
 #scale:hover, #scaledouble:hover { background:yellow; cursor:pointer }
-div#filearea  { cursor:pointer; }
 
+div#filearea  { cursor:pointer; }
 div#filearea .fprocessstatus:hover { background: red; cursor: pointer }
 div#filearea .spnumcols span { border: thin black solid }
 div#filearea  span.delbutton { color: yellow }
@@ -295,6 +303,9 @@ div#filearea .spnumcols span:hover { border-color:white }
 div#filearea .groupprocess { background:#ffc }
 div#filearea .groupprocess:hover { background:#ccf }
 div#filearea .groupprocess.selected { background:#ee0 }
+
+#thinnerstrokes, #thickerstrokes, #togglebackgroundcolour { padding: 0 }
+
 input#mmpixwidth { width:3em }
 #texttosvgize { height: 1em }
 
@@ -318,6 +329,9 @@ input#mmpixwidth { width:3em }
     <span id="pixscale">pix-scale(mm):<input type="text" id="mmpixwidth" name="mmpixwidth" value=""/></span>
     <span id="readingcancel">0/0</span>
     <span id="rescalefilesp">rescale:<input type="text" id="rescalefile" name="rescalefile" value="1.0"/></span>
+    <input type="button" value="<<" id="thinnerstrokes" title="Thinner strokes">
+    <input type="button" value=">>" id="thickerstrokes" title="Thicker strokes">
+    <input type="button" value="_*" id="togglebackgroundcolour" title="Toggle background colour">
     
     <textarea id="texttosvgize">svgizing letters here</textarea>
     <input type="button" value="svgizetext" id="svgizetext">
