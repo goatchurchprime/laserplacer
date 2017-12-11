@@ -168,6 +168,73 @@ function setraphsize() {
 }
 
 
+var zoomfuncsobj = {
+	ex: 0, 
+	ey: 0,
+	ed: 0,
+    bmd: null, 
+    Bpaper1scale: 1, 
+	Bpaper1x0: 0,
+	Bpaper1y0: 0,
+	mousezoompoint: function(scalefactor) {
+		var paperelement = document.getElementById("paper1");
+		var mx = this.ex - paperelement.offsetLeft - 2; 
+		var my = this.ey - paperelement.offsetTop - 2; 
+		//console.log(e.originalEvent.deltaY, mx, my, event); 
+		var cx = (mx + this.Bpaper1x0)*this.Bpaper1scale; 
+		var cy = (my + this.Bpaper1y0)*this.Bpaper1scale; 
+		paper1scale = this.Bpaper1scale*scalefactor; 
+		paper1x0 = cx/paper1scale - mx; 
+		paper1y0 = cy/paper1scale - my; 
+		paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
+	},
+	mousedownoffshape: function(e) { 
+		this.ex = e.clientX; 
+		this.ey = e.clientY; 
+		this.bmd = (e.ctrlKey ? "" : (e.shiftKey ? "zoom" : "drag")); 
+		this.Bpaper1scale = paper1scale; 
+		this.Bpaper1x0 = paper1x0; 
+		this.Bpaper1y0 = paper1y0; 
+		e.stopPropagation(); e.preventDefault(); 
+	},
+    mousemoveoffshape: function(e) {
+		if (this.bmd== "zoom")
+			this.mousezoompoint(2**(-(e.clientX - this.ex)/300)); 
+		else if (this.bmd == "drag") {
+			paper1x0 = this.Bpaper1x0 - (e.clientX - this.ex); 
+			paper1y0 = this.Bpaper1y0 - (e.clientY - this.ey); 
+			paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
+		}
+	},
+	mouseupoffshape: function(e) {
+		if (this.bmd) {
+			this.bmd = null; 
+			e.stopPropagation(); e.preventDefault(); 
+		}
+	},
+	scrollwheelzoom: function(e) {
+		//console.log(e); 
+		if (e.handleObj && (e.handleObj.type == "DOMMouseScroll"))  {// firefox issue
+			//console.log(e.originalEvent); 
+			this.ex = e.originalEvent.clientX; 
+			this.ey = e.originalEvent.clientY; 
+			this.ed = (e.originalEvent.detail > 0); 
+		} else {
+			this.ex = e.clientX; 
+			this.ey = e.clientY; 
+			this.ed = (e.originalEvent.deltaY > 0); 
+		}
+		this.Bpaper1scale = paper1scale; 
+		this.Bpaper1x0 = paper1x0; 
+		this.Bpaper1y0 = paper1y0; 
+		this.mousezoompoint(this.ed ? 1.5 : 1/1.5); 
+		e.stopPropagation(); e.preventDefault(); 
+		return false; 
+	}
+}
+
+
+
 var Deee; 
 
 var Rmmscalebar = null; 
@@ -237,35 +304,11 @@ function setup()
     setraphsize(); 
     paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
     
-    //paper1.raphael.mousedown(function(e) { console.log(e); }); 
-    $(paper1.canvas).bind('mousewheel DOMMouseScroll', function(e) {
-		//console.log(e); 
-
-		var ex, ey, ed; 
-		if (e.handleObj && (e.handleObj.type == "DOMMouseScroll"))  {// firefox issue
-			//console.log(e.originalEvent); 
-			ex = e.originalEvent.clientX; 
-			ey = e.originalEvent.clientY; 
-			ed = (e.originalEvent.detail > 0); 
-		} else {
-			ex = e.clientX; 
-			ey = e.clientY; 
-			ed = (e.originalEvent.deltaY > 0); 
-		}
-        var paperelement = document.getElementById("paper1");
-        var mx = ex - paperelement.offsetLeft - 2; 
-        var my = ey - paperelement.offsetTop - 2; 
-        //console.log(e.originalEvent.deltaY, mx, my, event); 
-        var cx = (mx + paper1x0)*paper1scale; 
-        var cy = (my + paper1y0)*paper1scale; 
-        //paper1.rect(cx, cy, 5, 5); 
-        paper1scale = (ed ? paper1scale*1.5 : paper1scale/1.5); 
-        paper1x0 = cx/paper1scale - mx; 
-        paper1y0 = cy/paper1scale - my; 
-        paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
-        e.stopPropagation(); e.preventDefault(); 
-        return false; 
-    });
+    // can't reference directly as context will be canvas instead of zoomfuncsobj
+    $(paper1.canvas).bind('mousewheel DOMMouseScroll', function(e) { zoomfuncsobj.scrollwheelzoom(e) });
+	paper1.canvas.onmousedown = function(e) { zoomfuncsobj.mousedownoffshape(e) }; 
+	paper1.canvas.onmousemove = function(e) { zoomfuncsobj.mousemoveoffshape(e) }; 
+	paper1.canvas.onmouseup = function(e) { zoomfuncsobj.mouseupoffshape(e) }; 
 
     dropsvgherenote = paper1.text(200, 60, "Drop SVG here").attr({fill: "orange"}).transform("s3").attr("fill-opacity", 0.3); 
     var data = $("#paper1 svg").attr("id", "svg1"); 

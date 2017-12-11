@@ -602,11 +602,12 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths)
     var basematrix; 
     var groupcolour = pgrouparea.attr("fill"); 
     pgrouparea.drag(
-        function(dx, dy) { // drag
+        function(dx, dy, x, y, e) { // drag
             var tstr = (brotatemode ? "r"+(dx*0.5)+","+cx+","+cy : "t"+(dx*paper1scale)+","+(dy*paper1scale))+basematrix; 
             for (var k = 0; k < lpaths.length; k++) {
                 lpaths[k].transform(tstr); 
             }; 
+            e.stopPropagation(); e.preventDefault(); 
         }, 
         function(x, y, e)  {  // mouse down
             brotatemode = e.ctrlKey; 
@@ -617,12 +618,14 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths)
             var bbox = pgrouparea.getBBox(); 
             cx = (bbox.x + bbox.x2)/2; 
             cy = (bbox.y + bbox.y2)/2; 
+            e.stopPropagation(); e.preventDefault(); 
         },  
-        function() {    // mouse up
+        function(e) {    // mouse up
             /*$.each(lpaths, function(i, path) { 
                 path.attr("path", Raphael.mapPath(path.attr("path"), path.matrix)); 
                 path.transform("t0,0") 
             });*/ 
+            e.stopPropagation(); e.preventDefault(); 
             pgrouparea.attr("fill", groupcolour); 
         }
     ); 
