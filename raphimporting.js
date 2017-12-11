@@ -595,31 +595,35 @@ SVGfileprocess.prototype.processdetailSVGtunnelx = function()
 }
 
 
-SVGfileprocess.prototype.applygroupdrag = function(pgroup, lpaths) 
+SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths) 
 {
-    var brotatemode = false; 
+    var brotatemode = false;  // closured values
     var cx = 0, cy = 0; 
     var basematrix; 
-    pgroup.drag(
-        function(dx, dy) { 
+    var groupcolour = pgrouparea.attr("fill"); 
+    pgrouparea.drag(
+        function(dx, dy) { // drag
             var tstr = (brotatemode ? "r"+(dx*0.5)+","+cx+","+cy : "t"+(dx*paper1scale)+","+(dy*paper1scale))+basematrix; 
             for (var k = 0; k < lpaths.length; k++) {
                 lpaths[k].transform(tstr); 
             }; 
         }, 
-        function(x, y, e)  { 
+        function(x, y, e)  {  // mouse down
             brotatemode = e.ctrlKey; 
-            pathselected = pgroup; 
-            basematrix = pgroup.matrix.toTransformString(); 
-            var bbox = pgroup.getBBox(); 
+            pathselected = pgrouparea; 
+            basematrix = pgrouparea.matrix.toTransformString(); 
+            groupcolour = pgrouparea.attr("fill"); 
+            pgrouparea.attr("fill", "#fa0"); 
+            var bbox = pgrouparea.getBBox(); 
             cx = (bbox.x + bbox.x2)/2; 
             cy = (bbox.y + bbox.y2)/2; 
-        }, 
-        function() { 
+        },  
+        function() {    // mouse up
             /*$.each(lpaths, function(i, path) { 
                 path.attr("path", Raphael.mapPath(path.attr("path"), path.matrix)); 
                 path.transform("t0,0") 
             });*/ 
+            pgrouparea.attr("fill", groupcolour); 
         }
     ); 
 }
