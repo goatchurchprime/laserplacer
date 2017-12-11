@@ -271,9 +271,9 @@ function importSVGfiles(files)
         }
         
         
-        if (Drect1 != null) {
-            Drect1.remove(); 
-            Drect1 = null; 
+        if (dropsvgherenote !== null) {
+            dropsvgherenote.remove(); 
+            dropsvgherenote = null; 
         }
         var fadivid = 'fa'+filecountid; 
         filecountid++; 
