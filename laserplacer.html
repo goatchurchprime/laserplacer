@@ -253,6 +253,7 @@ function setup()
 
     $("#exportSVG").click(exportSVG); 
     $("#exportPLT").click(exportPLT); 
+    document.getElementById("exportANC").onclick = exportANC; 
     $("#movecollide").click(MoveCollide); 
     $("#nest1").click(Nest1); 
     $("#files").change(function(e) { importSVGfiles(e.target.files); });  
@@ -366,8 +367,9 @@ input#mmpixwidth { width:3em }
   <div id="panelheader">
     <input type="button" value="exportSVG" id="exportSVG"/>
     <input type="button" value="exportPLT" id="exportPLT"/>
-    <input type="button" value="MOVE!" id="movecollide">
-    <input type="button" value="Nest1" id="nest1">
+    <input type="button" value="exportANC" id="exportANC"/>
+    <!--input type="button" value="MOVE!" id="movecollide"-->
+    <!--input type="button" value="Nest1" id="nest1"-->
     <span id="scale">1</span><span id="scaledouble">*2</span>
     <input type="file" id="files" name="files[]" multiple />
     <span id="pixscale">pix-scale(mm):<input type="text" id="mmpixwidth" name="mmpixwidth" value=""/></span>

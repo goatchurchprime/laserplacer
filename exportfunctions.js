@@ -144,7 +144,7 @@ function exportJSON()
 
 // this works from a position of no processing or re-ordering, like was done to the cutting paths for the laser
 // (we need to lightly reorder it)
-function sendgcode()
+function exportANC()
 {
 	var machinekitstats = {"xlo":-620, "xhi":520, "ylo":-190, "yhi":600, "estop":0, "enabled":1, "homed":[1, 1, 1] }; 
 
@@ -181,7 +181,7 @@ function sendgcode()
             // next phase
             if (rlfptseqs.length == rlistb.length) {
                 $("#readingcancel").text("ordersendinggcode"); 
-                lgcode = [ "G64P0.2", "G0Z5F20000\n" ]; 
+                lgcode = [ "START\n", "SP 1\n" ]; 
             }
             setTimeout(exportGCODEpathR, 1); 
             return; 
@@ -228,25 +228,37 @@ function sendgcode()
         if (spnum !== undefined) {
             for (var j = 0; j < fpts.length; j++) {
                 var bretract = ((j == 0) && ((lgcode.length <= 4) || (ddistlink >= thinningtolerancemm*fac*2))); 
-                lgcode.push((bretract ? "G0Z5\nX" : "X") + (xtopmm+fpts[j][0]*fac).toFixed(3) + "Y" + (ytopmm-fpts[j][1]*fac).toFixed(3) + "\n"); 
+                if (bretract) {
+                    lgcode.push("PU;\n"); 
+                    lgcode.push("VS 1000;\n"); 
+                }
+                lgcode.push("PA " + (xtopmm+fpts[j][0]*fac).toFixed(2) + "," + (ytopmm-fpts[j][1]*fac).toFixed(2) + "\n"); 
                 finalx = xtopmm+fpts[j][0]*fac; 
-                if (bretract)
-                    lgcode.push("G1Z0\n"); 
+                if (bretract) {
+                    lgcode.push("PD;\n"); 
+                    lgcode.push("VS 500;\n"); 
+                }
             }
         } else if (spnumobj) {
             console.log(TXlinestylespnum[spnumobj.linestyle]); 
         }
         
+        // end or callback
         if (rlfptseqs.length != 0) {
             setTimeout(exportGCODEpathR, 1); 
         } else {
             var movex = (finalx > 0 ? finalx-100 : finalx+100);
-            lgcode.push("G0Z5\nX"+movex.toFixed(3)+"M2\n"); 
+            lgcode.push("PU;\nPA 0,0\n!PG"); 
 			var a = document.createElement('a');
 			var blob = new Blob(lgcode, {'type':"text/plain"});
 			a.href = window.URL.createObjectURL(blob);
 			a.download = "test.ngc";
-			a.click();
+            document.body.appendChild(a); 
+            a.onclick = function() { 
+                document.body.removeChild(a); 
+            }; 
+            a.click();
+
         }
         $("#readingcancel").text((rlist.length-rlfptseqs.length)+"/"+rlist.length); 
     };

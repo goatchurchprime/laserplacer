@@ -1,4 +1,6 @@
 
+
+var Iprocesscount = 0; 
 var SVGfileprocess = function(fname, fadivid, drawstrokewidth) 
 {
     this.fname = fname; 
@@ -9,6 +11,7 @@ var SVGfileprocess = function(fname, fadivid, drawstrokewidth)
     this.drawstrokewidth = drawstrokewidth; 
     this.cutdrawstrokewidth = drawstrokewidth*0.8; 
     this.cutfillcolour = "#0a8"; 
+    this.processcountnumber = Iprocesscount++; // used for positioning on drop
     
     // after importing:
     // this.rlistb = [ ];  // all the paths
@@ -734,6 +737,17 @@ SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
             lpaths.push(this.rlistb[engpaths[i]].path); 
         this.Lgrouppaths.push(lpaths); 
 
+        // shift area to top left corner wherever it starts out landing
+        if (pathgrouping[0] == "boundrect") {
+            var basematrix = pgroup.matrix.toTransformString(); 
+            var dx = -bbox.x + 30 + this.processcountnumber*10; 
+            var dy = -bbox.y + 30 + this.processcountnumber*10; 
+            var tstr = "t"+(dx*paper1scale)+","+(dy*paper1scale)+basematrix; 
+            for (var k = 0; k < lpaths.length; k++) {
+                lpaths[k].transform(tstr); 
+            }; 
+        }
+        
         this.applygroupdrag(pgroup, lpaths); 
     }; 
 }
