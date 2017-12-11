@@ -285,7 +285,7 @@ function importSVGfiles(files)
         $("div#"+fadivid).append('<span class="fprocessstatus">VV</span>'); 
         $("div#"+fadivid).append('<span class="groupprocess">GGoup</span>'); 
         
-        var svgprocess = new SVGfileprocess(f.name, fadivid); 
+        var svgprocess = new SVGfileprocess(f.name, fadivid, (fadividlast === null ? 1.0 : SVGprocesses[fadividlast].drawstrokewidth)); 
         
         $("div#"+fadivid+" .fprocessstatus").click(function() { svgprocess.bcancelIm = true; }); 
         $("div#"+fadivid+" .groupprocess").click(function() { 

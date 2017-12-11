@@ -49,13 +49,25 @@ var filenamelist = { };
 var rlist = [ ]; 
 var SVGprocesses = { }; // indexed by fadivid (type SVGfileprocess, which it gets confused with)
 var Dsvgprocess = undefined; // lastone
-var fadividlast = undefined; 
+var fadividlast = null; 
 var pathselected = null; 
 var opts; 
 var collidestepout = 10, collidestepover = 10; 
 var ylo, yhi; 
 var perprods; 
 var Lgrouppath = []; 
+
+
+function scalestrokewidth(fss)
+{
+	for (var fadivid in SVGprocesses) {
+		if (SVGprocesses.hasOwnProperty(fadivid)) {
+			if (SVGprocesses[fadivid].Lgrouppaths !== undefined)
+				SVGprocesses[fadivid].scalestrokewidth(fss); 
+		}
+	}
+}
+
 function CollideBinary() 
 {
     // paper1.getElementsByPoint(x, y); 
@@ -167,8 +179,9 @@ function setup()
 	document.getElementById("thinnerstrokes").onclick = function() { scalestrokewidth(0.5); }; 
 	document.getElementById("thickerstrokes").onclick = function() { scalestrokewidth(2); }; 
 	document.getElementById("togglebackgroundcolour").onclick = function() { 
-		var divwholewindow = document.getElementById("wholewindow"); 
-		divwholewindow.style.background = (divwholewindow.style.background == "rgb(60, 60, 60)" ? "#e8e8e8" : "rgb(60, 60, 60)");  
+		var c = document.getElementById("paper1").style.background; 
+		document.getElementById("paper1").style.background = document.getElementById("togglebackgroundcolour").style.background; 
+		document.getElementById("togglebackgroundcolour").style.background = c; 
 	}
 
     $("#exportSVG").click(exportSVG); 
@@ -191,17 +204,22 @@ function setup()
 		importSVGfiles([{type:'svgizedtext', svgtext:svgizetext($("#texttosvgize").val())}]); 
     }); 
     
+
+	var currbackground = ""; 
     $("#paper1").on('dragover', function(e) {
         e.stopPropagation(); e.preventDefault(); 
     }).on('dragenter', function(e) {
         e.stopPropagation(); e.preventDefault(); 
-        $(this).addClass("dropfileselected"); 
+        currbackground = document.getElementById("paper1").style.background; 
+		document.getElementById("paper1").style.background = "#ffa"; 
     }).on('dragleave', function(e) {
         e.stopPropagation(); e.preventDefault(); 
-        $(this).removeClass("dropfileselected"); 
+        document.getElementById("paper1").style.background = currbackground;
+		currbackground = "";  
     }).on('drop', function(e) {
         e.stopPropagation(); e.preventDefault(); 
-        $(this).removeClass("dropfileselected"); 
+        document.getElementById("paper1").style.background = currbackground;
+		currbackground = "";  
         importSVGfiles(e.originalEvent.dataTransfer.files); 
     }); 
 
@@ -216,7 +234,9 @@ function setup()
     
     // setup the raphael paper and bits
     paper1 = Raphael("paper1", 1300, 800);
+    setraphsize(); 
     paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
+    
     //paper1.raphael.mousedown(function(e) { console.log(e); }); 
     $(paper1.canvas).bind('mousewheel DOMMouseScroll', function(e) {
 		//console.log(e); 
@@ -284,12 +304,11 @@ Raphael(setup);
 </script>
 
 <style>
-div#wholewindow { background: #e8e8e8; position: fixed; left: 0; top: 0; right:0; bottom: 0; overflow:auto; }
+div#wholewindow { position: fixed; left: 0; top: 0; right:0; bottom: 0; overflow:auto; }
 div#filearea { z-index: 10; position: fixed; bottom:10px; right:10px; background:white; border: thin blue solid }
 div#paper1 { position: fixed; left: 0; right: 0; }
 
 #err { color:red }
-.dropfileselected { background: #ffa }
 #scale:hover, #scaledouble:hover { background:yellow; cursor:pointer }
 
 div#filearea  { cursor:pointer; }
@@ -304,7 +323,7 @@ div#filearea .groupprocess { background:#ffc }
 div#filearea .groupprocess:hover { background:#ccf }
 div#filearea .groupprocess.selected { background:#ee0 }
 
-#thinnerstrokes, #thickerstrokes, #togglebackgroundcolour { padding: 0 }
+#thinnerstrokes, #thickerstrokes, #togglebackgroundcolour { border: 0; padding: 0; color: blue }
 
 input#mmpixwidth { width:3em }
 #texttosvgize { height: 1em }
@@ -331,13 +350,13 @@ input#mmpixwidth { width:3em }
     <span id="rescalefilesp">rescale:<input type="text" id="rescalefile" name="rescalefile" value="1.0"/></span>
     <input type="button" value="<<" id="thinnerstrokes" title="Thinner strokes">
     <input type="button" value=">>" id="thickerstrokes" title="Thicker strokes">
-    <input type="button" value="_*" id="togglebackgroundcolour" title="Toggle background colour">
+    <input type="button" value=".*." id="togglebackgroundcolour" title="Toggle background colour" style="background: #444" >
     
     <textarea id="texttosvgize">svgizing letters here</textarea>
     <input type="button" value="svgizetext" id="svgizetext">
   </div>
   
-  <div style="border: thin black solid" id="paper1">
+  <div style="border: thin black solid; background: #e8e8e8" id="paper1">
   </div>
 </div>
   

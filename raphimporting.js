@@ -1,20 +1,35 @@
 
-var SVGfileprocess = function(fname, fadivid) 
+var SVGfileprocess = function(fname, fadivid, drawstrokewidth) 
 {
     this.fname = fname; 
     this.fadivid = fadivid; 
     this.state = "constructed"; 
     this.bcancelIm = false; 
     this.dfprocessstatus = "div#"+this.fadivid+" .fprocessstatus"; 
-    this.drawstrokewidth = 1.0; 
-    this.cutdrawstrokewidth = 0.8; 
+    this.drawstrokewidth = drawstrokewidth; 
+    this.cutdrawstrokewidth = drawstrokewidth*0.8; 
     this.cutfillcolour = "#0a8"; 
     
     // after importing:
-    // this.rlistb = [ ]; 
+    // this.rlistb = [ ];  // all the paths
     // this.spnumlist = [ ]; 
     // this.spnummap = { }; 
     // this.btunnelxtype
+    // this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with
+}
+
+SVGfileprocess.prototype.scalestrokewidth = function(fss)
+{
+    this.drawstrokewidth *= fss; 
+    this.cutdrawstrokewidth *= fss; 
+    for (var i = 0; i < this.Lgrouppaths.length; i++) {
+        var pgroup = this.Lgrouppaths[i][0]; 
+        for (var j = 1; j < this.Lgrouppaths[i].length; j++) {
+            this.Lgrouppaths[i][j].attr("stroke-width", this.drawstrokewidth); 
+        };
+        if (this.pathgroupings[i][0] != "boundrect")
+            this.Lgrouppaths[i][0].attr("stroke-width", this.cutdrawstrokewidth); 
+    }
 }
 
 function converttomm(s) 
@@ -694,9 +709,9 @@ SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
             var bbox = Raphael.pathBBox(dgroup); 
             pgroup = paper1.path("M"+bbox.x+","+bbox.y+"H"+bbox.x2+"V"+bbox.y2+"H"+bbox.x+"Z"); 
             pgroup.attr({stroke:"none", fill:"#aae", "fill-opacity":"0.16"}); 
-        } else {
+        } else {   // pathgrouping[0] is the id of this component
             pgroup = paper1.path(dgroup); 
-            pgroup.attr({stroke:(this.btunnelxtype ? "black" : "white"), "stroke-width": this.cutdrawstrokewidth, fill:fillcolour, "fill-opacity":"0.1"}); 
+            pgroup.attr({stroke:(this.btunnelxtype ? "black" : "white"), "stroke-width": this.cutdrawstrokewidth, fill:fillcolour, "fill-opacity":"0.1", "stroke-linejoin":"round"}); 
             pgroup[0].style["fillRule"] = "evenodd"; // hack in as not implemented in Raphaeljs (till we get the orientations right)
         }
         
