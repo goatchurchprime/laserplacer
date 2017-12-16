@@ -250,6 +250,8 @@ function setup()
 		document.getElementById("paper1").style.background = document.getElementById("togglebackgroundcolour").style.background; 
 		document.getElementById("togglebackgroundcolour").style.background = c; 
 	}
+	document.getElementById("closehelp").onclick = function() { document.getElementById("helparea").hidden = true; }; 
+	
 
     $("#exportSVG").click(exportSVG); 
     $("#exportPLT").click(exportPLT); 
@@ -334,6 +336,8 @@ div#wholewindow { position: fixed; left: 0; top: 0; right:0; bottom: 0; overflow
 div#filearea { z-index: 10; position: fixed; bottom:10px; right:10px; background:white; border: thin blue solid }
 div#paper1 { position: fixed; left: 0; right: 0; }
 
+div#helparea { z-index: 10; position: fixed; top:60px; right:10px; width: 700px; background:white; border: thin blue solid }
+
 #err { color:red }
 #scale:hover, #scaledouble:hover { background:yellow; cursor:pointer }
 
@@ -360,6 +364,26 @@ input#mmpixwidth { width:3em }
 <body>
 
 <div id="wholewindow">
+  <div id="helparea">
+	  <input type="button" value="close help" id="closehelp">
+	  <h4>Purpose:</h4>
+	  <p>This is browser application is for collecting, arranging pieces and generating a cut file for 
+	  a laser cutter.  It may become useful for planning and operating devices remotely as it is 
+	  build using free internet technology.</p>
+	  
+	  <h4>Instructions:</h4>
+	  <p>Drag and drop an SVG file into this working area to decode all its lines.</p>
+	  <p>You can drag the diagram with the left mouse button.  You can rotate it 
+	  by holding Control-key down when you start dragging.  If you click and drag outside the 
+	  diagram you change the view.  The scroll wheel also changes the view by zooming in and out.</p>
+	  <p>Now look at the <b>FileArea</b> in the bottom right of the screen and select the colours 
+	  that are <b>NOT</b> part of the outline.  Then click [GGGoup].  This breaks apart your file into 
+	  independent pieces that you can move about in the same way as above with their corresponding 
+	  etching lines.</p>
+	  <p>The buttons [<<] and [>>] change the line width, [.*.] toggles the background colour, 
+	  and [exportANC] generates a cut file in HP-GL format. 
+	  The code is at <a href="https://bitbucket.org/goatchurch/laserplacer/">bitbucket/laserplacer</a></p>
+  </div>
   <div id="filearea">
     FileArea
   </div>
@@ -385,6 +409,7 @@ input#mmpixwidth { width:3em }
   
   <div style="border: thin black solid; background: #e8e8e8" id="paper1">
   </div>
+    
 </div>
   
 </body>
