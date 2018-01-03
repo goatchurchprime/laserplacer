@@ -14,18 +14,6 @@
 <script>
 
 
-function rescalefile(fscale)
-{
-    var svgprocess = svgprocesses[fadividlast]; 
-    var rlistb = svgprocess.rlistb; 
-    for (var i = 0; i < rlistb.length; i++) {
-        rlistb[i].path.attr("path", Raphael.mapPath(rlistb[i].path.attr("path"), Raphael.matrix(fscale, 0, 0, fscale, 0, 0))); 
-        //rlistb[i].path.scale(fscale, fscale, 0, 0); 
-    }
-    svgprocess.Lgrouppaths[0][0].attr("path", Raphael.mapPath(svgprocess.Lgrouppaths[0][0].attr("path"), Raphael.matrix(fscale, 0, 0, fscale, 0, 0))); 
-}
-
-
 var filenamelist = { }; 
 var rlist = [ ]; 
 
@@ -62,7 +50,6 @@ function setup()
     $("#movecollide").click(MoveCollide); 
     $("#nest1").click(Nest1); 
     $("#files").change(function(e) { importSVGfiles(e.target.files); });  
-    $("#mmpixwidth").change(updatepixwidth); 
     
     $("#svgizetext").click(function() { 
 		importSVGfiles([{type:'svgizedtext', svgtext:svgizetext($("#texttosvgize").val())}]); 
@@ -85,20 +72,12 @@ function setup()
 	paper1.canvas.onmouseup = function(e) { zoomfuncsobj.mouseupoffshape(e) }; 
 
     dropsvgherenote = paper1.text(200, 60, "Drop SVG here").attr({fill: "orange"}).transform("s3").attr("fill-opacity", 0.3); 
-        
-    $('#rescalefile').keydown(function(e) {
-        if (e.keyCode == 13) {
-            e.preventDefault();
-            rescalefile(parseFloat($("#rescalefile").val())); 
-        }
-    });
     setraphsize(); 
 }
 
 
 //$(document).ready(setup);   // function to call only *after* page has finished loading
 Raphael(setup); 
-
 </script>
 
 <style>
@@ -111,6 +90,7 @@ div#helparea { z-index: 10; position: fixed; top:60px; right:10px; width: 700px;
 #err { color:red }
 
 div#filearea  { cursor:pointer; }
+div#filearea .tfscale { width: 30px; }
 div#filearea .fprocessstatus:hover { background: red; cursor: pointer }
 div#filearea .spnumcols span { border: thin black solid }
 div#filearea  span.delbutton { color: red }
@@ -124,7 +104,6 @@ div#filearea .groupprocess.selected { background:#ee0 }
 
 #thinnerstrokes, #thickerstrokes, #togglebackgroundcolour { border: 0; padding: 0; color: blue }
 
-input#mmpixwidth { width:3em }
 #texttosvgize { height: 1em }
 
 </style>
@@ -164,9 +143,7 @@ input#mmpixwidth { width:3em }
     <!--input type="button" value="MOVE!" id="movecollide"-->
     <!--input type="button" value="Nest1" id="nest1"-->
     <input type="file" id="files" name="files[]" multiple />
-    <span id="pixscale">pix-scale(mm):<input type="text" id="mmpixwidth" name="mmpixwidth" value=""/></span>
     <span id="readingcancel">0/0</span>
-    <span id="rescalefilesp">rescale:<input type="text" id="rescalefile" name="rescalefile" value="1.0"/></span>
     <input type="button" value="<<" id="thinnerstrokes" title="Thinner strokes">
     <input type="button" value=">>" id="thickerstrokes" title="Thicker strokes">
     <input type="button" value=".*." id="togglebackgroundcolour" title="Toggle background colour" style="background: #eee" >

@@ -12,6 +12,7 @@ var SVGfileprocess = function(fname, fadivid, drawstrokewidth)
     this.cutdrawstrokewidth = drawstrokewidth*0.8; 
     this.cutfillcolour = "#0a8"; 
     this.processcountnumber = Iprocesscount++; // used for positioning on drop
+    this.currentabsolutescale = 1.0; 
     
     // after importing:
     // this.rlistb = [ ];  // all the paths
@@ -67,23 +68,19 @@ SVGfileprocess.prototype.WorkOutPixelScale = function()
             viewBox.push(parseFloat(x), parseFloat(y), parseFloat(w), parseFloat(h)); 
     }); 
 
-    console.log("facts:" + swidth +"  " + sheight + "  viewbox:"+viewBox); 
-    var inkscapedefaultmmpix = 90/25.4; 
-    this.fmmpixwidth = inkscapedefaultmmpix; 
-    this.fmmpixheight = inkscapedefaultmmpix; 
+    console.log("facts: svg-width:" + swidth +"  svg-height:" + sheight + "  viewbox:"+viewBox); 
+    this.fmmpixwidth = 1.0; 
+    this.fmmpixheight = 1.0; 
     if ((viewBox.length != 0) && (sheight != undefined) && (swidth != undefined)) {
         var fmmheight = converttomm(sheight); 
         var fmmwidth = converttomm(swidth); 
         this.fmmpixwidth = viewBox[2]/fmmwidth; 
         this.fmmpixheight = viewBox[3]/fmmheight; 
+        console.log("pixscaleX "+this.fmmpixwidth+"  pixscaleY "+this.fmmpixheight); 
     }
-    // force all to be same scale
-    this.fsca = inkscapedefaultmmpix/this.fmmpixwidth; 
-    this.mmpixwidth = inkscapedefaultmmpix
-    
-    console.log("pixscaleX "+this.mmpixwidth+"  pixscaleY "+this.mmpixheight); 
-    $("#mmpixwidth").val(this.mmpixwidth); 
-    $("#mmpixwidth").change(); 
+    // old pixel width of inkscape forcing, now it's 1mm to 1unit
+    //var inkscapedefaultmmpix = 90/25.4; fsca = inkscapedefaultmmpix/this.fmmpixwidth
+    this.fsca = 1.0/this.fmmpixwidth; 
 }
 
 SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, d, spnum, strokecolour, cmatrix)

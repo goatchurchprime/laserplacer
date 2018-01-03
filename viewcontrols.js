@@ -50,10 +50,9 @@ function updatepixwidth()
         Rmmscalebar.remove(); 
         Rmmscalebar = null; 
     }
-    var mmpixwidth = parseFloat($("#mmpixwidth").val()); 
     var woodwidth = 100; 
     var woodheight = 100; 
-    Rmmscalebar = paper1.path("M10,10h"+(woodwidth*mmpixwidth)+"v5 M10,10v"+(woodheight*mmpixwidth)+"h5").attr("stroke", "#888"); 
+    Rmmscalebar = paper1.path("M10,10h"+(woodwidth)+"v5 M10,10v"+(woodheight)+"h5").attr("stroke", "#888"); 
 }
 
 

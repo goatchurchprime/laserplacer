@@ -30,11 +30,10 @@ function exportPLT()
 
     var svgprocess = svgprocesses[fadividlast]; 
     var rlistb = svgprocess.rlistb; 
-    var mmpixwidth = parseFloat($("#mmpixwidth").val()); 
     
     var lplt = [ "IN;\n", "WU0;\n" ]; 
     var samplerateunit = 0.9; 
-    var fac = 40/mmpixwidth; // PLT file operates at 40units per pixel
+    var fac = 40; // PLT file operates at 40units per pixel
     var ytop = 10000; 
     var i = 0; 
     bcancelExIm = false; 
@@ -89,11 +88,10 @@ function exportJSON()
 {
     var svgprocess = svgprocesses[fadividlast]; 
     var rlistb = svgprocess.rlistb; 
-    var mmpixwidth = parseFloat($("#mmpixwidth").val()); 
     
     var lplt = [ " " ]; 
     var samplerateunit = 0.9; 
-    var fac = 1/mmpixwidth; // PLT file operates at 40units per pixel
+    var fac = 1; 
     var ytop = 0; 
     var i = 0; 
     bcancelExIm = false; 
@@ -150,10 +148,9 @@ function exportANC()
 
     var svgprocess = svgprocesses[fadividlast]; 
     var rlistb = svgprocess.rlistb; 
-    var mmpixwidth = parseFloat($("#mmpixwidth").val()); 
     
     var samplerateunit = 0.9; 
-    var fac = 1.0/mmpixwidth; 
+    var fac = 1.0; 
     var xtopmm = machinekitstats.xlo; 
     var ytopmm = machinekitstats.yhi; 
     var thinningtolerancemm = 1.1; 
@@ -271,68 +268,108 @@ var Df;
 var filecountid = 0; 
 function importSVGfiles(files)
 {
-    $.each(files, function(i, f) { 
-        var beps = f.type.match('image/x-eps'); 
-        var bsvg = f.type.match('image/svg\\+xml'); 
-        var bsvgizedtext = f.type.match('svgizedtext'); 
-        var bdxf = f.type.match('image/vnd\\.dxf'); 
-        
-        if (!beps && !bsvg && !bdxf && !bsvgizedtext) {
-            alert(f.name+" not SVG, EPS or DXF file: "+f.type); 
-            return;
-        }
-        
-        
-        if (dropsvgherenote !== null) {
-            dropsvgherenote.remove(); 
-            dropsvgherenote = null; 
-        }
-        var fadivid = 'fa'+filecountid; 
-        filecountid++; 
-        filenamelist[fadivid] = f.name; 
-        $("div#filearea").append('<div id="'+fadivid+'"></div>'); 
-        $("div#"+fadivid).append('<span class="delbutton">&times;</span>'); 
-        $("div#"+fadivid).append('<b>'+f.name+'</b>: '); 
-        $("div#"+fadivid).append('<span class="spnumcols"></span>'); 
-        $("div#"+fadivid).append('<span class="fprocessstatus">VV</span>'); 
-        $("div#"+fadivid).append('<span class="groupprocess">GGoup</span>'); 
-        
-        var svgprocess = new SVGfileprocess(f.name, fadivid, (fadividlast === null ? 1.0 : svgprocesses[fadividlast].drawstrokewidth)); 
-        
-        $("div#"+fadivid+" .fprocessstatus").click(function() { svgprocess.bcancelIm = true; }); 
-        $("div#"+fadivid+" .groupprocess").click(function() { 
-            if ($(this).hasClass("selected")) {
-                $(this).removeClass("selected"); 
-            } else {
-                $(this).addClass("selected"); 
-                if (svgprocess.state.match(/doneimportsvgr|doneimportsvgrareas/))
-                    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
-                else if (svgprocess.state.match(/processimportsvgrareas/))
-                    svgprocess.LoadTunnelxDrawingDetails(); 
-                else 
-                    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); // reprocess again
-            }
-        }); 
-        $("div#"+fadivid+" .delbutton").click(function() { 
-            var lfadivid = $(this).parent("div").attr("id"); 
-            svgprocesses[lfadivid].removeall(); 
-            delete svgprocesses[lfadivid]; 
-            $("div#"+fadivid).remove(); 
-        }); 
-        
-        svgprocesses[fadivid] = svgprocess; 
-        fadividlast = fadivid; 
-        Dsvgprocess = svgprocess; 
-Df = f;         
-        var reader = new FileReader(); 
-        if (bsvgizedtext) {
-            svgprocess.InitiateLoadingProcess(f.svgtext); 
-        } else if (bsvg) {
-            reader.onload = (function(e) { svgprocess.InitiateLoadingProcess(reader.result); }); 
-            reader.readAsText(f); 
-        } else {
-			alert("not svg type"); 
-        }
-    }); 
+    for (var i = 0; i < files.length; i++) 
+        importSVGfile(i, files[i]); // this function already kicks off independent loading processes
+}
+
+function deletesvgprocess()
+{
+    var elfadiv = this.parentElement;  
+    if (fadividlast === elfadiv.id)
+        fadividlast = null; 
+    svgprocesses[elfadiv.id].removeall(); // kill off the geometry that derived from this file
+    delete svgprocesses[elfadiv.id]; 
+    elfadiv.remove(); 
+}
+
+function groupsvgprocess() 
+{
+    var elfadiv = this.parentElement;  
+    var svgprocess = svgprocesses[elfadiv.id]; 
+    if (this.classList.contains("selected")) {
+        this.classList.remove("selected"); 
+    } else {
+        this.classList.add("selected"); 
+        if (svgprocess.state.match(/doneimportsvgr|doneimportsvgrareas/))
+            svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
+        else if (svgprocess.state.match(/processimportsvgrareas/))
+            svgprocess.LoadTunnelxDrawingDetails(); 
+        else 
+            svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); // reprocess again
+    }
+}
+
+// called when a return happens in the scale input
+function rescalefileabs(elfadiv)
+{
+    var newabsolutescale = parseFloat(elfadiv.getElementsByClassName("tfscale")[0].value); 
+    var svgprocess = svgprocesses[elfadiv.id]; 
+    var relativescale = newabsolutescale/svgprocess.currentabsolutescale; // abs on yscale means -1 will reflect
+    var rlistb = svgprocess.rlistb; 
+    
+    // rescaling the input values 
+    for (var i = 0; i < rlistb.length; i++) {
+        rlistb[i].path.attr("path", Raphael.mapPath(rlistb[i].path.attr("path"), Raphael.matrix(relativescale, 0, 0, Math.abs(relativescale), 0, 0))); 
+    }
+    
+    // rescaling the groups can move them around because each is done to its centre
+    for (var i = 0; i < svgprocess.Lgrouppaths.length; i++)
+        svgprocess.Lgrouppaths[i][0].attr("path", Raphael.mapPath(svgprocess.Lgrouppaths[i][0].attr("path"), Raphael.matrix(relativescale, 0, 0, Math.abs(relativescale), 0, 0))); 
+    svgprocess.currentabsolutescale = newabsolutescale; 
+}
+
+
+function importSVGfile(i, f)
+{ 
+    var beps = f.type.match('image/x-eps'); 
+    var bsvg = f.type.match('image/svg\\+xml'); 
+    var bsvgizedtext = f.type.match('svgizedtext');  // this is the letters case
+    var bdxf = f.type.match('image/vnd\\.dxf'); 
+    
+    if (!beps && !bsvg && !bdxf && !bsvgizedtext) {
+        alert(f.name+" not SVG, EPS or DXF file: "+f.type); 
+        return;
+    }
+    if (dropsvgherenote !== null) {
+        dropsvgherenote.remove(); 
+        dropsvgherenote = null; 
+    }
+
+    // create the new unique id and the process behind it
+    var fadivid = 'fa'+filecountid; 
+    filecountid++; 
+    filenamelist[fadivid] = f.name; 
+    var svgprocess = new SVGfileprocess(f.name, fadivid, (fadividlast === null ? 1.0 : svgprocesses[fadividlast].drawstrokewidth)); 
+    svgprocesses[fadivid] = svgprocess; 
+
+    // create the control panel and functions for this process
+    var elfilearea = document.getElementById("filearea"); 
+    var fileblock = ['<div id="'+fadivid+'"><span class="delbutton" title="Delete geometry">&times;</span>', 
+                       '<input class="tfscale" type="text" name="fscale" value="1.0" title="Apply scale"/>', 
+                       '<b class="fname">'+f.name+'</b>: <span class="spnumcols"></span>', 
+                       '<span class="fprocessstatus">VV</span>', 
+                       '<span class="groupprocess" title="Group geometry">GGoup</span>', 
+                     '</div>'].join(""); 
+    elfilearea.insertAdjacentHTML("beforeend", fileblock); 
+    var elfadiv = document.getElementById(fadivid); 
+    elfadiv.getElementsByClassName("delbutton")[0].onclick = deletesvgprocess; 
+    elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
+    elfadiv.getElementsByClassName("groupprocess")[0].onclick = groupsvgprocess; 
+    elfadiv.getElementsByClassName("tfscale")[0].onkeydown = function(e) { if (e.keyCode == 13)  { e.preventDefault(); rescalefileabs(elfadiv) }; }; 
+
+    
+    fadividlast = fadivid; 
+Dsvgprocess = svgprocess; 
+Df = f;  
+
+    var reader = new FileReader(); 
+    if (bsvgizedtext) {
+        svgprocess.InitiateLoadingProcess(f.svgtext); 
+    } else if (bsvg) {
+        reader.onload = (function(e) { svgprocess.InitiateLoadingProcess(reader.result); }); 
+        reader.readAsText(f); 
+    } else {
+        alert("not svg type"); 
+    }
 }
 
