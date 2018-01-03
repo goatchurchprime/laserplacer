@@ -1,4 +1,6 @@
 
+var collidestepout = 10, collidestepover = 10; 
+
 function TestCollision(dx, dy) 
 {
     for (var i = 0; i < opts.length; i++) {
@@ -75,7 +77,7 @@ function MoveCollide()
     yhi = 400; 
     
     Lgrouppath = null; 
-    var Lgrouppaths = SVGprocesses[fadividlast].Lgrouppaths; 
+    var Lgrouppaths = svgprocesses[fadividlast].Lgrouppaths; 
     for (var k = 0; k < Lgrouppaths.length; k++) {
         if (Lgrouppaths[k][0] == pathselected)
             Lgrouppath = Lgrouppaths[k]; 
@@ -91,9 +93,9 @@ function Nest1()
     var board = [ ]; 
     var sequence = [ ]; 
     var Ipolymap = { }; 
-    //for (var i = 0; i < SVGprocesses.length; i++) {
+    //for (var i = 0; i < svgprocesses.length; i++) {
     Object.keys(a).forEach(function(key, i) {  // untested after the above change from list to object
-        var svgp = SVGprocesses[key]; 
+        var svgp = svgprocesses[key]; 
         for (var j = 0; j < svgp.Lgrouppaths.length; j++) {
             var pth = svgp.Lgrouppaths[j][0].attr("path"); 
             var pgid = svgp.pathgroupings[j][0]; 

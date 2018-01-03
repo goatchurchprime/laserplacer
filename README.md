@@ -8,8 +8,8 @@ Process and join up polygons and shapes (and etched lines) from an SVG file so t
 FileArea tracks each file import.  
 spnumcols are the layers or colours that you can select
 
-SVGprocesses is an array of SVGfileprocess recording the current state of the file, whether it has been loaded or grouped yet.
-Select a process from it as k = SVGprocesses["fa0"]
+svgprocesses is an array of SVGfileprocess recording the current state of the file, whether it has been loaded or grouped yet.
+Select a process from it as k = svgprocesses["fa0"]
 
 This uses the function importSVGpathR() that is called-back recursively and uses a cstack and pstack to keep track of how much is left to do and how deep the transformation values go.
 
@@ -36,7 +36,7 @@ The colours that are not selected (white X) are included in the list spnumscp an
 
 To run the components of the polygon sorting from the javascript console, we have this sequence of functions:
 
-k = SVGprocesses["fa0"]
+k = svgprocesses["fa0"]
 s = PolySorting.FindClosedPathSequencesD(CopyPathListOfColour(k.rlistb, 1), 2, false); 
 j = MakeContourcurvesFromSequences(CopyPathListOfColour(k.rlistb, null), s); 
 b = PolySorting.FindAreaGroupingsD(j); 

@@ -28,7 +28,7 @@ function exportPLT()
 //console.log("exportingJSON instead"); 
 //return exportJSON(); 
 
-    var svgprocess = SVGprocesses[fadividlast]; 
+    var svgprocess = svgprocesses[fadividlast]; 
     var rlistb = svgprocess.rlistb; 
     var mmpixwidth = parseFloat($("#mmpixwidth").val()); 
     
@@ -87,7 +87,7 @@ function exportPLT()
 // quick hack to see if we can load into polar graph system
 function exportJSON()
 {
-    var svgprocess = SVGprocesses[fadividlast]; 
+    var svgprocess = svgprocesses[fadividlast]; 
     var rlistb = svgprocess.rlistb; 
     var mmpixwidth = parseFloat($("#mmpixwidth").val()); 
     
@@ -148,7 +148,7 @@ function exportANC()
 {
 	var machinekitstats = {"xlo":-620, "xhi":520, "ylo":-190, "yhi":600, "estop":0, "enabled":1, "homed":[1, 1, 1] }; 
 
-    var svgprocess = SVGprocesses[fadividlast]; 
+    var svgprocess = svgprocesses[fadividlast]; 
     var rlistb = svgprocess.rlistb; 
     var mmpixwidth = parseFloat($("#mmpixwidth").val()); 
     
@@ -297,7 +297,7 @@ function importSVGfiles(files)
         $("div#"+fadivid).append('<span class="fprocessstatus">VV</span>'); 
         $("div#"+fadivid).append('<span class="groupprocess">GGoup</span>'); 
         
-        var svgprocess = new SVGfileprocess(f.name, fadivid, (fadividlast === null ? 1.0 : SVGprocesses[fadividlast].drawstrokewidth)); 
+        var svgprocess = new SVGfileprocess(f.name, fadivid, (fadividlast === null ? 1.0 : svgprocesses[fadividlast].drawstrokewidth)); 
         
         $("div#"+fadivid+" .fprocessstatus").click(function() { svgprocess.bcancelIm = true; }); 
         $("div#"+fadivid+" .groupprocess").click(function() { 
@@ -315,12 +315,12 @@ function importSVGfiles(files)
         }); 
         $("div#"+fadivid+" .delbutton").click(function() { 
             var lfadivid = $(this).parent("div").attr("id"); 
-            SVGprocesses[lfadivid].removeall(); 
-            delete SVGprocesses[lfadivid]; 
+            svgprocesses[lfadivid].removeall(); 
+            delete svgprocesses[lfadivid]; 
             $("div#"+fadivid).remove(); 
         }); 
         
-        SVGprocesses[fadivid] = svgprocess; 
+        svgprocesses[fadivid] = svgprocess; 
         fadividlast = fadivid; 
         Dsvgprocess = svgprocess; 
 Df = f;         

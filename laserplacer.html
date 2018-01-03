@@ -3,20 +3,20 @@
 <head>
 <script src="jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="raphael.js"></script>    
-<script type="text/javascript" src="raphpolygonsorting.js?1712"></script>    
-<script type="text/javascript" src="raphimporting.js?1712"></script>    
-<script type="text/javascript" src="svgizingtext.js?1712"></script>    
-<script type="text/javascript" src="exportfunctions.js?1712"></script>    
-<script type="text/javascript" src="viewcontrols.js?1712"></script>    
-<script type="text/javascript" src="collisiontests.js?1712"></script>    
+<script type="text/javascript" src="raphpolygonsorting.js?1801"></script>    
+<script type="text/javascript" src="raphimporting.js?1801"></script>    
+<script type="text/javascript" src="svgizingtext.js?1801"></script>    
+<script type="text/javascript" src="exportfunctions.js?1801"></script>    
+<script type="text/javascript" src="viewcontrols.js?1801"></script>    
+<script type="text/javascript" src="collisiontests.js?1801"></script>    
 <meta charset="utf-8">
-<title>Laser placer V17.12</title>
+<title>Laser placer V18.01</title>
 <script>
 
 
 function rescalefile(fscale)
 {
-    var svgprocess = SVGprocesses[fadividlast]; 
+    var svgprocess = svgprocesses[fadividlast]; 
     var rlistb = svgprocess.rlistb; 
     for (var i = 0; i < rlistb.length; i++) {
         rlistb[i].path.attr("path", Raphael.mapPath(rlistb[i].path.attr("path"), Raphael.matrix(fscale, 0, 0, fscale, 0, 0))); 
@@ -28,12 +28,11 @@ function rescalefile(fscale)
 
 var filenamelist = { }; 
 var rlist = [ ]; 
-var SVGprocesses = { }; // indexed by fadivid (type SVGfileprocess, which it gets confused with)
+var svgprocesses = { }; // indexed by fadivid (type SVGfileprocess, which it gets confused with)
 var Dsvgprocess = undefined; // lastone
 var fadividlast = null; 
 var pathselected = null; 
 var opts; 
-var collidestepout = 10, collidestepover = 10; 
 var ylo, yhi; 
 var perprods; 
 var Lgrouppath = []; 

@@ -17,10 +17,10 @@ function setviewboxfrompaperscale()
 
 function scalestrokewidth(fss)
 {
-	for (var fadivid in SVGprocesses) {
-		if (SVGprocesses.hasOwnProperty(fadivid)) {
-			if (SVGprocesses[fadivid].Lgrouppaths !== undefined)
-				SVGprocesses[fadivid].scalestrokewidth(fss); 
+	for (var fadivid in svgprocesses) {
+		if (svgprocesses.hasOwnProperty(fadivid)) {
+			if (svgprocesses[fadivid].Lgrouppaths !== undefined)
+				svgprocesses[fadivid].scalestrokewidth(fss); 
 		}
 	}
 }
@@ -124,7 +124,6 @@ var zoomfuncsobj = {
 var currbackground = ""; 
 function setfiledragoverfunctions(paper1el)
 {
-    alert("hi");
     paper1el.ondragover = function(e) {  e.stopPropagation(); e.preventDefault(); }; 
     paper1el.ondragenter = function(e) {
         e.stopPropagation(); e.preventDefault(); 
