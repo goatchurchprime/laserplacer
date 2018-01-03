@@ -50,7 +50,8 @@ function setup()
 	
 	document.getElementById("thinnerstrokes").onclick = function() { scalestrokewidth(0.5); }; 
 	document.getElementById("thickerstrokes").onclick = function() { scalestrokewidth(2); }; 
-	document.getElementById("togglebackgroundcolour").onclick = togglebackgroundcolour; 
+	document.getElementById("togglebackgroundcolour").onclick = function() { setbackgroundcolour(true); }
+	setbackgroundcolour(false); 
 	document.getElementById("closehelp").onclick = hidehelparea; 
 	if (hashoptions["h"] === "0")
 		hidehelparea(); 
@@ -168,7 +169,7 @@ input#mmpixwidth { width:3em }
     <span id="rescalefilesp">rescale:<input type="text" id="rescalefile" name="rescalefile" value="1.0"/></span>
     <input type="button" value="<<" id="thinnerstrokes" title="Thinner strokes">
     <input type="button" value=">>" id="thickerstrokes" title="Thicker strokes">
-    <input type="button" value=".*." id="togglebackgroundcolour" title="Toggle background colour" style="background: #444" >
+    <input type="button" value=".*." id="togglebackgroundcolour" title="Toggle background colour" style="background: #eee" >
     
     <textarea id="texttosvgize">svgizing letters here</textarea>
     <input type="button" value="svgizetext" id="svgizetext">

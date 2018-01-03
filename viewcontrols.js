@@ -35,11 +35,13 @@ function setraphsize()
 	fixedscalebartext.attr("y", paper1.height-25); 
 }
 
-function togglebackgroundcolour() 
+function setbackgroundcolour(btoggle) 
 { 
-    var c = document.getElementById("paper1").style.background; 
-    document.getElementById("paper1").style.background = document.getElementById("togglebackgroundcolour").style.background; 
-    document.getElementById("togglebackgroundcolour").style.background = c; 
+    if (btoggle) {
+        hashoptions["b"] = (hashoptions["b"] == "1" ? "0" : "1"); 
+        writewindowurlhash(); 
+    }
+    document.getElementById("paper1").style.background = (hashoptions["b"] == "1" ? "#444" : "#e8e8e8"); 
 }
 
 function updatepixwidth()
