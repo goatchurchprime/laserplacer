@@ -28,9 +28,10 @@ function rescalefile(fscale)
 
 var filenamelist = { }; 
 var rlist = [ ]; 
-var svgprocesses = { }; // indexed by fadivid (type SVGfileprocess, which it gets confused with)
-var Dsvgprocess = undefined; // lastone
+
+var svgprocesses = { };      // indexed by fadivid (type SVGfileprocess)
 var fadividlast = null; 
+var Dsvgprocess = undefined; // most recent one
 var pathselected = null; 
 var opts; 
 var ylo, yhi; 
@@ -40,15 +41,19 @@ var Lgrouppath = [];
 
 var Deee; 
 
-var dropsvgherenote = null;
+var dropsvgherenote = null; 
 function setup()
 {
+	readwindowurlhash(); 
+	console.log(hashoptions); 
 	window.addEventListener("resize", setraphsize);
 	
 	document.getElementById("thinnerstrokes").onclick = function() { scalestrokewidth(0.5); }; 
 	document.getElementById("thickerstrokes").onclick = function() { scalestrokewidth(2); }; 
 	document.getElementById("togglebackgroundcolour").onclick = togglebackgroundcolour; 
-	document.getElementById("closehelp").onclick = function() { document.getElementById("helparea").hidden = true; }; 
+	document.getElementById("closehelp").onclick = hidehelparea; 
+	if (hashoptions["h"] === "0")
+		hidehelparea(); 
 
     $("#exportSVG").click(exportSVG); 
     $("#exportPLT").click(exportPLT); 

@@ -144,3 +144,30 @@ function setfiledragoverfunctions(paper1el)
 }
 
 
+var hashoptions = { }; 
+function readwindowurlhash() 
+{
+	var lmatoptions = window.location.hash.match(/[a-z]\d+/g); 
+    if (lmatoptions) {
+        for (var i = 0; i < lmatoptions.length; i++) 
+            hashoptions[lmatoptions[i][0]] = lmatoptions[i].substr(1); 
+    }
+}
+function writewindowurlhash() 
+{
+    var lhashoptions = [ "#" ]; 
+    var ks = Object.keys(hashoptions); 
+    for (var i = 0; i < ks.length; i++) {
+        lhashoptions.push(ks[i], hashoptions[ks[i]]); 
+    }
+    window.location.hash = lhashoptions.join(""); 
+}
+
+function hidehelparea() 
+{
+    document.getElementById("helparea").hidden = true; 
+    if (hashoptions["h"] != "0") {
+        hashoptions["h"] = "0"; 
+        writewindowurlhash(); 
+    }
+}; 
