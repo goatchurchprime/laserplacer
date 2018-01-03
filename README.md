@@ -42,6 +42,15 @@ j = MakeContourcurvesFromSequences(CopyPathListOfColour(k.rlistb, null), s);
 b = PolySorting.FindAreaGroupingsD(j); 
 
 
+# DXF powers
+
+An experimental dxf converter has been made from https://github.com/bjnortier/dxf using 
+    browserify examples/jtest2.js --standalone bdxf -o examples/bundledxftrial.js 
+
+where jtest2.js says: 
+    const dxf = require('..')
+    exports.dxf = dxf; 
+
 
 
 

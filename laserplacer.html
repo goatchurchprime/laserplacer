@@ -7,6 +7,7 @@
 <script type="text/javascript" src="raphimporting.js?1712"></script>    
 <script type="text/javascript" src="svgizingtext.js?1712"></script>    
 <script type="text/javascript" src="exportfunctions.js?1712"></script>    
+<script type="text/javascript" src="viewcontrols.js?1712"></script>    
 <meta charset="utf-8">
 <title>Laser placer V17.12</title>
 <script>
@@ -41,10 +42,6 @@ function TestCollision(dx, dy)
     return true; 
 }
 
-var paper1 = null; 
-var paper1scale = 1; 
-var paper1x0 = 0; 
-var paper1y0 = 0; 
 var filenamelist = { }; 
 var rlist = [ ]; 
 var SVGprocesses = { }; // indexed by fadivid (type SVGfileprocess, which it gets confused with)
@@ -57,16 +54,6 @@ var ylo, yhi;
 var perprods; 
 var Lgrouppath = []; 
 
-
-function scalestrokewidth(fss)
-{
-	for (var fadivid in SVGprocesses) {
-		if (SVGprocesses.hasOwnProperty(fadivid)) {
-			if (SVGprocesses[fadivid].Lgrouppaths !== undefined)
-				SVGprocesses[fadivid].scalestrokewidth(fss); 
-		}
-	}
-}
 
 function CollideBinary() 
 {
@@ -159,85 +146,8 @@ function Nest1()
     }); 
 }
 
-function setraphsize() {
-    var divpaper1 = document.getElementById("paper1"); 
-    var divwholewindow = document.getElementById("wholewindow"); 
-    var divpanelheader = document.getElementById("panelheader"); 
-    paper1.setSize(divpaper1.offsetWidth, 
-				   divwholewindow.offsetHeight - divpanelheader.offsetHeight - 7); 
-}
-
-
-var zoomfuncsobj = {
-	ex: 0, 
-	ey: 0,
-	ed: 0,
-    bmd: null, 
-    Bpaper1scale: 1, 
-	Bpaper1x0: 0,
-	Bpaper1y0: 0,
-	mousezoompoint: function(scalefactor) {
-		var paperelement = document.getElementById("paper1");
-		var mx = this.ex - paperelement.offsetLeft - 2; 
-		var my = this.ey - paperelement.offsetTop - 2; 
-		//console.log(e.originalEvent.deltaY, mx, my, event); 
-		var cx = (mx + this.Bpaper1x0)*this.Bpaper1scale; 
-		var cy = (my + this.Bpaper1y0)*this.Bpaper1scale; 
-		paper1scale = this.Bpaper1scale*scalefactor; 
-		paper1x0 = cx/paper1scale - mx; 
-		paper1y0 = cy/paper1scale - my; 
-		paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
-	},
-	mousedownoffshape: function(e) { 
-		this.ex = e.clientX; 
-		this.ey = e.clientY; 
-		this.bmd = (e.ctrlKey ? "" : (e.shiftKey ? "zoom" : "drag")); 
-		this.Bpaper1scale = paper1scale; 
-		this.Bpaper1x0 = paper1x0; 
-		this.Bpaper1y0 = paper1y0; 
-		e.stopPropagation(); e.preventDefault(); 
-	},
-    mousemoveoffshape: function(e) {
-		if (this.bmd== "zoom")
-			this.mousezoompoint(2**(-(e.clientX - this.ex)/300)); 
-		else if (this.bmd == "drag") {
-			paper1x0 = this.Bpaper1x0 - (e.clientX - this.ex); 
-			paper1y0 = this.Bpaper1y0 - (e.clientY - this.ey); 
-			paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
-		}
-	},
-	mouseupoffshape: function(e) {
-		if (this.bmd) {
-			this.bmd = null; 
-			e.stopPropagation(); e.preventDefault(); 
-		}
-	},
-	scrollwheelzoom: function(e) {
-		//console.log(e); 
-		if (e.handleObj && (e.handleObj.type == "DOMMouseScroll"))  {// firefox issue
-			//console.log(e.originalEvent); 
-			this.ex = e.originalEvent.clientX; 
-			this.ey = e.originalEvent.clientY; 
-			this.ed = (e.originalEvent.detail > 0); 
-		} else {
-			this.ex = e.clientX; 
-			this.ey = e.clientY; 
-			this.ed = (e.originalEvent.deltaY > 0); 
-		}
-		this.Bpaper1scale = paper1scale; 
-		this.Bpaper1x0 = paper1x0; 
-		this.Bpaper1y0 = paper1y0; 
-		this.mousezoompoint(this.ed ? 1.5 : 1/1.5); 
-		e.stopPropagation(); e.preventDefault(); 
-		return false; 
-	}
-}
-
-
-
 var Deee; 
 
-var Rmmscalebar = null; 
 var dropsvgherenote = null;
 function setup()
 {
@@ -245,11 +155,7 @@ function setup()
 	
 	document.getElementById("thinnerstrokes").onclick = function() { scalestrokewidth(0.5); }; 
 	document.getElementById("thickerstrokes").onclick = function() { scalestrokewidth(2); }; 
-	document.getElementById("togglebackgroundcolour").onclick = function() { 
-		var c = document.getElementById("paper1").style.background; 
-		document.getElementById("paper1").style.background = document.getElementById("togglebackgroundcolour").style.background; 
-		document.getElementById("togglebackgroundcolour").style.background = c; 
-	}
+	document.getElementById("togglebackgroundcolour").onclick = togglebackgroundcolour; 
 	document.getElementById("closehelp").onclick = function() { document.getElementById("helparea").hidden = true; }; 
 	
 
@@ -259,16 +165,7 @@ function setup()
     $("#movecollide").click(MoveCollide); 
     $("#nest1").click(Nest1); 
     $("#files").change(function(e) { importSVGfiles(e.target.files); });  
-    $("#mmpixwidth").change(function() { 
-        if (Rmmscalebar != null) {
-            Rmmscalebar.remove(); 
-            Rmmscalebar = null; 
-        }
-        var mmpixwidth = parseFloat($("#mmpixwidth").val()); 
-        var woodwidth = 100; 
-        var woodheight = 100; 
-        Rmmscalebar = paper1.path("M10,10h"+(woodwidth*mmpixwidth)+"v5 M10,10v"+(woodheight*mmpixwidth)+"h5").attr("stroke", "#888"); 
-    }); 
+    $("#mmpixwidth").change(updatepixwidth); 
     
     $("#svgizetext").click(function() { 
 		importSVGfiles([{type:'svgizedtext', svgtext:svgizetext($("#texttosvgize").val())}]); 
@@ -276,27 +173,12 @@ function setup()
     
 
 	var currbackground = ""; 
-    $("#paper1").on('dragover', function(e) {
-        e.stopPropagation(); e.preventDefault(); 
-    }).on('dragenter', function(e) {
-        e.stopPropagation(); e.preventDefault(); 
-        currbackground = document.getElementById("paper1").style.background; 
-		document.getElementById("paper1").style.background = "#ffa"; 
-    }).on('dragleave', function(e) {
-        e.stopPropagation(); e.preventDefault(); 
-        document.getElementById("paper1").style.background = currbackground;
-		currbackground = "";  
-    }).on('drop', function(e) {
-        e.stopPropagation(); e.preventDefault(); 
-        document.getElementById("paper1").style.background = currbackground;
-		currbackground = "";  
-        importSVGfiles(e.originalEvent.dataTransfer.files); 
-    }); 
+	setfiledragoverfunctions(document.getElementById("paper1")); 
 
     $("#scaledouble").click(function() { $("#scaledouble").text($("#scaledouble").text() == "*2" ? "/2" : "*2"); }); 
     $("#scale").click(function() { 
         paper1scale *= ($("#scaledouble").text() == "*2" ? 2 : 0.5); 
-        paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
+		setviewboxfrompaperscale(); 
         $("#scale").text(paper1scale); 
     }); 
     $("#scaledouble, #scale").mousedown(function(e) { e.preventDefault(); }); // stop selection on double-click
@@ -304,7 +186,10 @@ function setup()
     
     // setup the raphael paper and bits
     paper1 = Raphael("paper1", 1300, 800);
+    fixedscalebar = paper1.rect(50,100,200,3).attr({stroke:"#00e", fill:"cyan"}); 
+    fixedscalebartext= paper1.text(50, 90, "200mm").attr("stroke", "#00e"); 
     setraphsize(); 
+	setviewboxfrompaperscale(); 
     paper1.setViewBox(paper1x0*paper1scale, paper1y0*paper1scale, paper1.width*paper1scale, paper1.height*paper1scale); 
     
     // can't reference directly as context will be canvas instead of zoomfuncsobj
