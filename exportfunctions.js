@@ -4,7 +4,7 @@
 function exportSVG()
 {
     var xs = new XMLSerializer();
-    var data = document.getElementById("svg1");
+    var data = document.getElementById("paper1").children[0]; // gets the svg element put there by Raphael
     var a = document.createElement('a');
     a.style = "display: none"; 
     var blob = new Blob([xs.serializeToString(data)], {'type':"image/svg+xml"});
