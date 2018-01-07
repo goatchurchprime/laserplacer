@@ -90,20 +90,24 @@ div#helparea { z-index: 10; position: fixed; top:60px; right:10px; width: 700px;
 #err { color:red }
 
 div#filearea  { cursor:pointer; }
-div#filearea .tfscale { width: 30px; height: 10px !important; padding:0 0 -2 -2; margin: 0 }
+div#filearea .tfscale { width: 30px; height: 15px; border: thin black solid; padding:0; margin: 0 }
 div#filearea .fprocessstatus:hover { background: red; cursor: pointer }
 div#filearea .spnumcols span { border: thin black solid }
 div#filearea  span.delbutton { color: red }
 div#filearea  span.delbutton:hover { background: red; color: black }
-div#filearea .spnumcols span.selected { color: white }
+
+div#filearea .spnumcols span { color: white }
+div#filearea .spnumcols span.spnumselected { color: black }
 div#filearea .spnumcols span:hover { border-color:white }
 
 div#filearea .groupprocess { background:#ffc }
 div#filearea .groupprocess:hover { background:#ccf }
 div#filearea .groupprocess.selected { background:#ee0 }
+
 div#filearea .dposition { color: green }
 div#filearea .dposition span { border-left: thin black solid }
-div#filearea .dposition span.locked { background: yellow }
+div#filearea .dposition span.locked { background: #aaa }
+div#filearea .dposition span.moving { font-weight: bold }
 
 #thinnerstrokes, #thickerstrokes, #togglebackgroundcolour { border: 0; padding: 0; color: blue }
 

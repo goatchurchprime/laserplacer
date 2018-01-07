@@ -125,16 +125,13 @@ SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, cc)
         var stitle = strokecolour + " (click to exclude from outline)"; 
         this.spnummap[cclass] = spnumobj.spnum; 
         this.spnumlist.push(spnumobj); 
-        if (true) {
-            $('div#'+this.fadivid+' .spnumcols').append($('<span class="spnum'+spnumobj.spnum+'" title="'+stitle+'">'+('X')+'</span>').css("background", strokecolour)); 
-            $('div#'+this.fadivid+' .spnumcols span.spnum'+spnumobj.spnum).click(function() {
-                if ($(this).hasClass("selected")) 
-                    $(this).removeClass("selected"); 
-                else
-                    $(this).addClass("selected"); 
-            });
-        }
+        
+        var elspnumcols = document.getElementById(this.fadivid).getElementsByClassName("spnumcols")[0]; 
+        var spnumid = this.fadivid+"_spnum"+spnumobj.spnum; 
+        elspnumcols.insertAdjacentHTML("beforeend", '<span id="'+spnumid+'" class="spnumselected" title="'+stitle+'" style="background:'+strokecolour+'">'+('X')+'</span>'); 
+        document.getElementById(spnumid).onclick = function() { this.classList.toggle("spnumselected"); }; 
     }
+    
     var spnum = this.spnummap[cclass]; 
     var spnumobj = this.spnumlist[spnum]; 
     var strokecolour = spnumobj.strokecolour; 
@@ -597,43 +594,53 @@ SVGfileprocess.prototype.processdetailSVGtunnelx = function()
 // pgrouparea is the filled object that we click in, and lpaths are all the paths that should be dragged with it (including pgrouparea as first element)
 SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, grouptransform) 
 {
-    var brotatemode = false;  // closured values
+    console.assert(lpaths[0] === pgrouparea); 
+
+        // closured values shared between the drag functions
+    var blockedmode = false; 
+    var brotatemode = false;  
     var cx = 0, cy = 0; 
     var tstr; 
     var groupcolour = pgrouparea.attr("fill"); // original colour before coloured to highlight it is being dragged
-    var eldposition = eldposition; 
-    console.assert(lpaths[0] === pgrouparea); 
+    var elfadividphi = document.getElementById(grouptransform.fadividphi); 
     
     pgrouparea.drag(
         function(dx, dy, x, y, e) { // drag
-            tstr = (brotatemode ? "r"+(dx*0.34)+","+cx+","+cy : "t"+(dx*paper1scale)+","+(dy*paper1scale))+grouptransform.transform; 
-            tstr = pgrouparea.transform(tstr).transform(); // compose and extract the simplified transform
-            for (var k = 1; k < lpaths.length; k++) {
-                lpaths[k].transform(tstr); 
-            }; 
-            document.getElementById(grouptransform.fadividphi).textContent = "t"+pgrouparea._.dx.toFixed()+","+pgrouparea._.dy.toFixed()+"r"+pgrouparea._.deg.toFixed(); 
             e.stopPropagation(); e.preventDefault(); 
+            if (blockedmode)
+                return; 
+            else if (brotatemode)
+                tstr = "r"+(dx*0.34)+","+cx+","+cy+grouptransform.transform; 
+            else
+                tstr = "t"+(dx*paper1scale)+","+(dy*paper1scale)+grouptransform.transform; 
+            tstr = pgrouparea.transform(tstr).transform(); // compose and extract the simplified transform
+            for (var k = 1; k < lpaths.length; k++) 
+                lpaths[k].transform(tstr); 
+            elfadividphi.textContent = "t"+pgrouparea._.dx.toFixed()+","+pgrouparea._.dy.toFixed()+"r"+pgrouparea._.deg.toFixed(); 
         }, 
         function(x, y, e)  {  // mouse down
+            blockedmode = elfadividphi.classList.contains("locked"); 
             brotatemode = e.ctrlKey; 
-            pathselected = pgrouparea; 
+            pathselected = pgrouparea; // this is only a remnant of the collision testing stuff
+            elfadividphi.classList.add("moving"); 
+                
             //basematrix = pgrouparea.matrix.toTransformString(); 
             basematrix = pgrouparea.transform(); 
             groupcolour = pgrouparea.attr("fill"); 
             pgrouparea.attr("fill", "#fa0"); 
-            var bbox = pgrouparea.getBBox(); 
-            cx = (bbox.x + bbox.x2)/2;  // this is where we could try rotate round point down
-            cy = (bbox.y + bbox.y2)/2; 
+            if (brotatemode) {
+                var bbox = pgrouparea.getBBox(); 
+                cx = (bbox.x + bbox.x2)/2;  // this is where we could try rotate round point down
+                cy = (bbox.y + bbox.y2)/2; 
+            }
             e.stopPropagation(); e.preventDefault(); 
         },  
         function(e) {    // mouse up
-            /*$.each(lpaths, function(i, path) { 
-                path.attr("path", Raphael.mapPath(path.attr("path"), path.matrix)); 
-                path.transform("t0,0") 
-            });*/
-            grouptransform.transform = tstr;  
-            e.stopPropagation(); e.preventDefault(); 
+            if (!blockedmode)
+                grouptransform.transform = tstr;  
+            elfadividphi.classList.remove("moving"); 
             pgrouparea.attr("fill", groupcolour); 
+            e.stopPropagation(); e.preventDefault(); 
         }
     ); 
 }
@@ -662,10 +669,10 @@ SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
     var closedist = 0.2; // should be a setting
 
     var spnumscp = [ ]; 
-    $('div#'+this.fadivid+' .spnumcols span').each(function(i, v)  { 
-        if (!$(v).hasClass("selected"))
-            spnumscp.push(parseInt($(v).attr("class").match(/\d+/g)[0]));  // spnum(\d+) 
-    }); 
+    var elcolspans = document.getElementById(this.fadivid).getElementsByClassName("spnumselected"); 
+console.log(elcolspans);    
+    for (var i = 0; i < elcolspans.length; i++)
+        spnumscp.push(parseInt(elcolspans[i].id.match(/\d+$/g)[0]));  // _spnum(\d+) 
     console.log("hghghg", grouptype, spnumscp); 
     
     // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list
