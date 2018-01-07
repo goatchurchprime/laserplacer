@@ -15,16 +15,6 @@ function setviewboxfrompaperscale()
 	fixedscalebartext.transform("t"+(paper1x0*paper1scale+fixedscalebartext.attr("x")*(paper1scale-1)+fixedscalebar.attr("width")/2)+","+(paper1y0*paper1scale+(fixedscalebartext.attr("y")-fixedscalebartext.attr("height"))*(paper1scale-1)-8)); 
 }
 
-function scalestrokewidth(fss)
-{
-	for (var fadivid in svgprocesses) {
-		if (svgprocesses.hasOwnProperty(fadivid)) {
-			if (svgprocesses[fadivid].Lgrouppaths !== undefined)
-				svgprocesses[fadivid].scalestrokewidth(fss); 
-		}
-	}
-}
-
 function setraphsize() 
 {
     var divpaper1 = document.getElementById("paper1"); 

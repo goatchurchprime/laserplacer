@@ -284,7 +284,7 @@ function deletesvgprocess()
 
 function groupsvgprocess() 
 {
-    var elfadiv = this.parentElement;  
+    var elfadiv = this.parentElement; 
     var svgprocess = svgprocesses[elfadiv.id]; 
     if (this.classList.contains("selected")) {
         this.classList.remove("selected"); 
@@ -298,6 +298,18 @@ function groupsvgprocess()
             svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); // reprocess again
     }
 }
+
+var gdrawstrokewidth = 1.0; 
+var gcutstrokewidth = 0.8; 
+function scalestrokewidths(fss)
+{
+    gdrawstrokewidth *= fss; 
+    gcutstrokewidth *= fss; 
+    var fadivids = Object.keys(svgprocesses); 
+    for (var i = 0; i < fadivids.length; i++) 
+        svgprocesses[fadivids[i]].scalestrokewidth(gdrawstrokewidth, gcutstrokewidth); 
+}
+
 
 // called when a return happens in the scale input
 function rescalefileabs(elfadiv)
@@ -339,24 +351,32 @@ function importSVGfile(i, f)
     var fadivid = 'fa'+filecountid; 
     filecountid++; 
     filenamelist[fadivid] = f.name; 
-    var svgprocess = new SVGfileprocess(f.name, fadivid, (fadividlast === null ? 1.0 : svgprocesses[fadividlast].drawstrokewidth)); 
+    var bstockdefinitiontype = f.name.match(/^stockdef/); 
+    var svgprocess = new SVGfileprocess(f.name, fadivid); 
     svgprocesses[fadivid] = svgprocess; 
 
     // create the control panel and functions for this process
     var elfilearea = document.getElementById("filearea"); 
-    var fileblock = ['<div id="'+fadivid+'"><span class="delbutton" title="Delete geometry">&times;</span>', 
-                       '<input class="tfscale" type="text" name="fscale" value="1.0" title="Apply scale"/>', 
-                       '<b class="fname">'+f.name+'</b>: <span class="spnumcols"></span>', 
-                       '<span class="fprocessstatus">VV</span>', 
-                       '<span class="groupprocess" title="Group geometry">GGoup</span>', 
-                     '</div>'].join(""); 
-    elfilearea.insertAdjacentHTML("beforeend", fileblock); 
+    var fileblock = ['<div id="'+fadivid+'"><span class="delbutton" title="Delete geometry">&times;</span>' ]; 
+    if (!bstockdefinitiontype) 
+        fileblock.push('<input class="tfscale" type="text" name="fscale" value="1.0" title="Apply scale"/>'); 
+    fileblock.push('<b class="fname">'+f.name+'</b>'); 
+    if (!bstockdefinitiontype)
+        fileblock.push(': <span class="spnumcols"></span>'); 
+    fileblock.push('<span class="fprocessstatus">VV</span>'); 
+    if (!bstockdefinitiontype)
+        fileblock.push('<span class="groupprocess" title="Group geometry">GGoup</span>'); 
+    fileblock.push('<span class="dposition"></span>'); 
+    fileblock.push('</div>'); 
+                     
+    elfilearea.insertAdjacentHTML("beforeend", fileblock.join("")); 
     var elfadiv = document.getElementById(fadivid); 
     elfadiv.getElementsByClassName("delbutton")[0].onclick = deletesvgprocess; 
-    elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
-    elfadiv.getElementsByClassName("groupprocess")[0].onclick = groupsvgprocess; 
-    elfadiv.getElementsByClassName("tfscale")[0].onkeydown = function(e) { if (e.keyCode == 13)  { e.preventDefault(); rescalefileabs(elfadiv) }; }; 
-
+    if (!bstockdefinitiontype) {
+        elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
+        elfadiv.getElementsByClassName("groupprocess")[0].onclick = groupsvgprocess; 
+        elfadiv.getElementsByClassName("tfscale")[0].onkeydown = function(e) { if (e.keyCode == 13)  { e.preventDefault(); rescalefileabs(elfadiv) }; }; 
+    }
     
     fadividlast = fadivid; 
 Dsvgprocess = svgprocess; 
@@ -373,3 +393,5 @@ Df = f;
     }
 }
 
+//if (svgprocess.state.match(/doneimportsvgr|doneimportsvgrareas/))
+//    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 

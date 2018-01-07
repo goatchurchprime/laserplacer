@@ -36,8 +36,8 @@ function setup()
 	console.log(hashoptions); 
 	window.addEventListener("resize", setraphsize);
 	
-	document.getElementById("thinnerstrokes").onclick = function() { scalestrokewidth(0.5); }; 
-	document.getElementById("thickerstrokes").onclick = function() { scalestrokewidth(2); }; 
+	document.getElementById("thinnerstrokes").onclick = function() { scalestrokewidths(0.5); }; 
+	document.getElementById("thickerstrokes").onclick = function() { scalestrokewidths(2); }; 
 	document.getElementById("togglebackgroundcolour").onclick = function() { setbackgroundcolour(true); }
 	setbackgroundcolour(false); 
 	document.getElementById("closehelp").onclick = hidehelparea; 
@@ -90,7 +90,7 @@ div#helparea { z-index: 10; position: fixed; top:60px; right:10px; width: 700px;
 #err { color:red }
 
 div#filearea  { cursor:pointer; }
-div#filearea .tfscale { width: 30px; }
+div#filearea .tfscale { width: 30px; height: 15px; }
 div#filearea .fprocessstatus:hover { background: red; cursor: pointer }
 div#filearea .spnumcols span { border: thin black solid }
 div#filearea  span.delbutton { color: red }
@@ -101,6 +101,7 @@ div#filearea .spnumcols span:hover { border-color:white }
 div#filearea .groupprocess { background:#ffc }
 div#filearea .groupprocess:hover { background:#ccf }
 div#filearea .groupprocess.selected { background:#ee0 }
+div#filearea .dposition { color: green }
 
 #thinnerstrokes, #thickerstrokes, #togglebackgroundcolour { border: 0; padding: 0; color: blue }
 
@@ -133,7 +134,7 @@ div#filearea .groupprocess.selected { background:#ee0 }
 	  The code is at <a href="https://bitbucket.org/goatchurch/laserplacer/">bitbucket/laserplacer</a></p>
   </div>
   <div id="filearea">
-    FileArea
+    FileArea<span id="thingpos"></span>
   </div>
   
   <div id="panelheader">
