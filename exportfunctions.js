@@ -287,7 +287,7 @@ function groupsvgprocess()
     var elfadiv = this.parentElement; 
     var svgprocess = svgprocesses[elfadiv.id]; 
     if (this.classList.contains("selected")) {
-        this.classList.remove("selected"); 
+        this.classList.remove("selected"); // should this delete and regroup 
     } else {
         this.classList.add("selected"); 
         if (svgprocess.state.match(/doneimportsvgr|doneimportsvgrareas/))
@@ -297,6 +297,51 @@ function groupsvgprocess()
         else 
             svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); // reprocess again
     }
+}
+
+function genpathorderonstock() 
+{
+    var elfadiv = this.parentElement; 
+    var svgstockprocess = svgprocesses[elfadiv.id]; 
+    console.assert(svgstockprocess.bstockdefinitiontype); 
+    var stockbbox = svgstockprocess.Lgrouppaths[0][0].getBBox(); 
+    
+    // find all pathgroups that overlap this stockbbox
+    var groupstoindex = [ ]; 
+    var svgprocesseskeys = Object.keys(svgprocesses); 
+    for (var i = 0; i < svgprocesseskeys.length; i++) {
+        var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
+        if (svgprocess.bstockdefinitiontype)
+            continue; 
+        console.assert(svgprocess.fadivid != elfadiv.id); 
+        console.assert(svgprocess.Lgrouppaths.length == svgprocess.pathgroupings.length); 
+        for (var j = 0; j < svgprocess.pathgroupings.length; j++) {
+            if ((svgprocess.pathgroupings[j][0] != "boundrect") && (svgprocess.pathgroupings[j][0] != "unmatchedsinglets")) {
+                var groupbbox = svgprocess.Lgrouppaths[j].getBBox(); 
+                if (Raphael.isBBoxIntersect(stockbbox, groupbbox))
+                    groupstoindex.push([svgprocess.fadivid, j]); 
+            }
+        }
+    }
+    console.log("groups we will merge in", groupstoindex); 
+    
+    // collect all the penciled edges
+    var penmarks = [ ]; // rlistb type
+    for (var i = 0; i < groupstoindex.length; i++) {
+        var svgprocess = svgprocesses[groupstoindex[i][0]]; 
+        var penlist = svgprocess.groupstoindex[i][svgprocess.groupstoindex[i].length-1]; 
+        console.log("penlist", penlist); 
+        for (var j = 0; j < penlist.length; j++)
+            penmarks.append([svgprocess.rlistb[penlist[j]], svgprocess.Lgrouppaths[i][0].transform()]); 
+    }
+    
+    // we can now penplot
+// now plot and 
+console.log("nowpenplot", penmarks); 
+
+// then collect the islands and contours and make sure all islands are done before contours (but can start at any point)
+
+// then produce an output
 }
 
 var gdrawstrokewidth = 1.0; 
@@ -352,8 +397,6 @@ function importSVGfile(i, f)
     filecountid++; 
     filenamelist[fadivid] = f.name; 
     var bstockdefinitiontype = f.name.match(/^stockdef/); 
-    var svgprocess = new SVGfileprocess(f.name, fadivid); 
-    svgprocesses[fadivid] = svgprocess; 
 
     // create the control panel and functions for this process
     var elfilearea = document.getElementById("filearea"); 
@@ -361,18 +404,30 @@ function importSVGfile(i, f)
     if (!bstockdefinitiontype) 
         fileblock.push('<input class="tfscale" type="text" name="fscale" value="1.0" title="Apply scale"/>'); 
     fileblock.push('<b class="fname">'+f.name+'</b>'); 
-    if (!bstockdefinitiontype)
+
+// shouldn't have numcols in     stockdef kind
+    //if (!bstockdefinitiontype)
         fileblock.push(': <span class="spnumcols"></span>'); 
+    
     fileblock.push('<span class="fprocessstatus">VV</span>'); 
     if (!bstockdefinitiontype)
-        fileblock.push('<span class="groupprocess" title="Group geometry">GGoup</span>'); 
+        fileblock.push('<span class="groupprocess" title="Group geometry">Group</span>'); 
     fileblock.push('<span class="dposition"></span>'); 
+    if (bstockdefinitiontype)
+        fileblock.push('<span class="genpathorder">GenPath</span>'); 
+    
     fileblock.push('</div>'); 
-                     
     elfilearea.insertAdjacentHTML("beforeend", fileblock.join("")); 
+
+    // now the actual process (which has links into the control panel just made
+    var svgprocess = new SVGfileprocess(f.name, fadivid, bstockdefinitiontype); 
+    svgprocesses[fadivid] = svgprocess; 
+
     var elfadiv = document.getElementById(fadivid); 
     elfadiv.getElementsByClassName("delbutton")[0].onclick = deletesvgprocess; 
-    if (!bstockdefinitiontype) {
+    if (bstockdefinitiontype) {
+        elfadiv.getElementsByClassName("genpathorder")[0].onclick = genpathorderonstock; 
+    } else {
         elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
         elfadiv.getElementsByClassName("groupprocess")[0].onclick = groupsvgprocess; 
         elfadiv.getElementsByClassName("tfscale")[0].onkeydown = function(e) { if (e.keyCode == 13)  { e.preventDefault(); rescalefileabs(elfadiv) }; }; 

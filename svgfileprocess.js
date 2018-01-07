@@ -8,7 +8,7 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
     this.bstockdefinitiontype = bstockdefinitiontype; 
     this.state = "constructed"; 
     this.bcancelIm = false; 
-    this.dfprocessstatus = "div#"+this.fadivid+" .fprocessstatus"; 
+    this.elprocessstatus = document.getElementById(this.fadivid).getElementsByClassName("fprocessstatus")[0]; 
     this.cutfillcolour = "#0a8"; 
     this.processcountnumber = Iprocesscount++; // used for positioning on drop
     this.currentabsolutescale = 1.0; 
@@ -258,7 +258,7 @@ SVGfileprocess.prototype.importSVGpathR = function()
         for (var i = cs.length - 1; i >= 0; i--) 
             this.cstack.push($(cs[i]));   // in reverse order for the stack
     }
-    $(this.dfprocessstatus).text(this.rlistb.length+"/"+this.cstack.length); 
+    this.elprocessstatus.textContent = (this.rlistb.length+"/"+this.cstack.length); 
     return true; 
 }
 
@@ -343,7 +343,7 @@ SVGfileprocess.prototype.importSVGpathRtunnelx = function()
         for (var i = cs.length - 1; i >= 0; i--) 
             this.cstack.push($(cs[i]));   // in reverse order for the stack
     }
-    $(this.dfprocessstatus).text(this.rlistb.length+"/"+this.cstack.length); 
+    this.elprocessstatus.textContent = (this.rlistb.length+"/"+this.cstack.length); 
     return true; 
 }
 
@@ -351,7 +351,7 @@ SVGfileprocess.prototype.importSVGpathRtunnelx = function()
 function importSVGpathRR(lthis)  
 {
     if (lthis.bcancelIm) {
-        $(this.dfprocessstatus).text("CANCELLED"); 
+        this.elprocessstatus.textContent = ("CANCELLED"); 
         lthis.state = "cancelled"+lthis.state; 
     } else if (lthis.btunnelxtype ? lthis.importSVGpathRtunnelx() : lthis.importSVGpathR()) {
         setTimeout(importSVGpathRR, lthis.timeoutcyclems, lthis); 
@@ -394,8 +394,9 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
 
     this.rlistb = [ ]; 
     this.spnumlist = [ ]; 
-    this.spnummap = { }; // maps into the above from concatinations of subset and strokecolour
+    this.spnummap = { }; // maps into the above from concatenations of subset and strokecolour
     this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with
+    //this.pathgroupings = [ ]; // the actual primary data, returned from ProcessToPathGroupings()
 
     // these control the loop importSVGpathRR runs within
     var imatrix = Raphael.matrix(this.fsca, 0, 0, this.fsca, 0, 0); 
@@ -498,13 +499,14 @@ function MakeContourcurvesFromSequences(dlist, jdseqs)
     return jdgeos; 
 }
 
-function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid)
+// may need to be in callback type to spread the load and make the processstatus appear
+function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocessstatus)
 {
     // form the closed path sequences per spnum
     var jdseqs = [ ];  // indexes dlist
     for (var ispnum = 0; ispnum < spnumscp.length; ispnum++) {
         var spnum = spnumscp[ispnum]; 
-        $(this.dfprocessstatus).text("joining spnum="+spnum); 
+        elprocessstatus.textContent = ("joining spnum="+spnum); 
         var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColour(rlistb, spnum), closedist, false); 
         var npathsleft = 0; 
         for (var i = 0; i < ljdseqs.length; i++)
@@ -515,20 +517,20 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid)
     // jdseqs = [ [i1, i2, i3,...] sequence of dlist[ii/2|0], bfore=((ii%2)==1 ]
 
     // list of paths not included in any cycle
-    $(this.dfprocessstatus).text("getsingletlist"); 
+    elprocessstatus.textContent = ("getsingletlist"); 
     var singletslist = PolySorting.GetSingletsList(jdseqs, rlistb.length); // (why isn't dlist defined outside of the loop?)  
 
     // build the dlist without any holes parallel to rlistb to use for groupings
-    $(this.dfprocessstatus).text("concat JDgeoseqs"); 
+    elprocessstatus.textContent = ("concat JDgeoseqs"); 
     var dlist = CopyPathListOfColour(rlistb, null); 
     var jdgeos = MakeContourcurvesFromSequences(dlist, jdseqs); 
 
     // groups of jdsequences forming outercontour, islands, singlets 
-    $(this.dfprocessstatus).text("FindAreaGroupingsD"); 
+    elprocessstatus.textContent = ("FindAreaGroupingsD"); 
     var res = [ ]; 
     var cboundislands = PolySorting.FindAreaGroupingsD(jdgeos); 
     
-    $(this.dfprocessstatus).text("oriented islands"); 
+    elprocessstatus.textContent = ("oriented islands"); 
     for (var j = 0; j < cboundislands.length; j++) {
         var lres = [ fadivid+"cb"+j ]; 
         var cboundisland = cboundislands[j]; 
@@ -543,7 +545,7 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid)
         res.push(lres); 
     }
     
-    $(this.dfprocessstatus).text("singlets to groupings"); 
+    elprocessstatus.textContent = ("singlets to groupings"); 
     var unmatchedsinglets = [ ]; 
     for (var i = 0; i < singletslist.length; i++) {
         var ic = singletslist[i]; 
@@ -679,7 +681,7 @@ console.log(elcolspans);
     if (grouptype == "grouptunnelx")
         this.pathgroupings = ProcessToPathGroupingsTunnelX(this.rlistb, this.spnumlist); 
     else if (grouptype == "groupcontainment")
-        this.pathgroupings = ProcessToPathGroupings(this.rlistb, closedist, spnumscp, this.fadivid); 
+        this.pathgroupings = ProcessToPathGroupings(this.rlistb, closedist, spnumscp, this.fadivid, this.elprocessstatus); 
     else { 
         console.assert(grouptype == "groupboundingrect"); 
         var groupall = [ ]; 
@@ -689,7 +691,7 @@ console.log(elcolspans);
     }
 
     this.state = "process"+this.state.slice(4); 
-    $(this.dfprocessstatus).text("doneG"); 
+    this.elprocessstatus.textContent = (""); 
 
     // remove old groups if they exist (mapping across the transforms)
     var tstr = (this.Lgrouppaths.length != 0 ? this.Lgrouppaths[0][0].transform() : "t0,0"); 
@@ -726,7 +728,7 @@ console.log("moving boundrect needs fixing", tstr);
         eldpositions.removeChild(eldpositions.firstChild); 
     this.grouptransforms = [ ]; 
     
-    // this.Lgrouppaths is the parallel arrays of actual grouped paths and containing area (the first element of each is the derived outline or box, and not in the list
+    // this.Lgrouppaths is the parallel arrays of actual pathgroupings and containing area (the first element of each is the derived outline or box, and not in the list
     // this.grouptransforms = [ { transform:tstr, fadividphi:fadividpgi } ]
     
     // first copy out the path properties from the rlistb thing
@@ -765,7 +767,7 @@ console.log("moving boundrect needs fixing", tstr);
         this.grouptransforms.push(grouptransform); 
 
         pgroup.transform(grouptransform.transform); 
-        eldpositions.insertAdjacentHTML("afterbegin", '<span id="'+grouptransform.fadividphi+'">'+tstr+'</span>'); 
+        eldpositions.insertAdjacentHTML("beforeend", '<span id="'+grouptransform.fadividphi+'" title="group'+k+'">'+"t"+pgroup._.dx.toFixed()+","+pgroup._.dy.toFixed()+"r"+pgroup._.deg.toFixed()+'</span>'); 
         document.getElementById(grouptransform.fadividphi).onclick = function() { this.classList.toggle("locked"); }; 
 
         var eldposition = document.getElementById(this.fadivid).getElementsByClassName("dposition")[0]; 
