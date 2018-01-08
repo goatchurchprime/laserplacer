@@ -299,6 +299,7 @@ function groupsvgprocess()
     }
 }
 
+var Dpens = null; 
 function genpathorderonstock() 
 {
     var elfadiv = this.parentElement; 
@@ -317,7 +318,7 @@ function genpathorderonstock()
         console.assert(svgprocess.Lgrouppaths.length == svgprocess.pathgroupings.length); 
         for (var j = 0; j < svgprocess.pathgroupings.length; j++) {
             if ((svgprocess.pathgroupings[j][0] != "boundrect") && (svgprocess.pathgroupings[j][0] != "unmatchedsinglets")) {
-                var groupbbox = svgprocess.Lgrouppaths[j].getBBox(); 
+                var groupbbox = svgprocess.Lgrouppaths[j][0].getBBox(); 
                 if (Raphael.isBBoxIntersect(stockbbox, groupbbox))
                     groupstoindex.push([svgprocess.fadivid, j]); 
             }
@@ -326,22 +327,32 @@ function genpathorderonstock()
     console.log("groups we will merge in", groupstoindex); 
     
     // collect all the penciled edges
-    var penmarks = [ ]; // rlistb type
+    var etchingmarks = [ ]; // [rlistb, additional-transform] type
     for (var i = 0; i < groupstoindex.length; i++) {
         var svgprocess = svgprocesses[groupstoindex[i][0]]; 
-        var penlist = svgprocess.groupstoindex[i][svgprocess.groupstoindex[i].length-1]; 
-        console.log("penlist", penlist); 
-        for (var j = 0; j < penlist.length; j++)
-            penmarks.append([svgprocess.rlistb[penlist[j]], svgprocess.Lgrouppaths[i][0].transform()]); 
+        var pathgrouping = svgprocess.pathgroupings[groupstoindex[i][1]]; 
+        var etchinglist = pathgrouping[pathgrouping.length-1]; 
+        console.log("penlist", etchinglist); 
+        var tstr = svgprocess.Lgrouppaths[groupstoindex[i][1]][0].transform(); 
+        for (var j = 0; j < etchinglist.length; j++)
+            etchingmarks.push([svgprocess.rlistb[etchinglist[j]], tstr]); 
     }
     
     // we can now penplot
-// now plot and 
-console.log("nowpenplot", penmarks); 
-
-// then collect the islands and contours and make sure all islands are done before contours (but can start at any point)
-
-// then produce an output
+    var dseq = [ ]; 
+    for (var i = 0; i < etchingmarks.length; i++) {
+        var d = etchingmarks[i][0].path.attr("path"); 
+        var dtrans = Raphael.mapPath(d, etchingmarks[i][0].cmatrix); 
+        dtrans = Raphael.transformPath(dtrans, etchingmarks[i][1]); 
+console.log(dtrans);         
+        for (var j = 0; j < dtrans.length; j++) {
+            dseq.push("L", dtrans[j][dtrans[j].length-2], dtrans[j][dtrans[j].length-1]); 
+        }   
+        dseq[0] = "M"; 
+    }
+if (Dpens !== null)
+    Dpens.remove(); 
+Dpens = paper1.path(dseq); 
 }
 
 var gdrawstrokewidth = 1.0; 

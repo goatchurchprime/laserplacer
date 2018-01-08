@@ -81,13 +81,14 @@ SVGfileprocess.prototype.WorkOutPixelScale = function()
     this.fsca = 1.0/this.fmmpixwidth; 
 }
 
+// necessaryfor the final splitting of the path by the M values
 SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, d, spnum, strokecolour, cmatrix)
 {
     var i0 = 0; 
     var mi = 0; 
     while (i0 < dtrans.length) {
         var i1 = i0 + 1; 
-        while ((i1 < dtrans.length) && (dtrans[i1][0] != "M"))
+        while ((i1 < dtrans.length) && ((dtrans[i1][0] != "M") || !bMsplits))
             i1++; 
         // this is the place to separate out the paths by M positions
         var path = paper1.path(dtrans.slice(i0, i1)); 
@@ -102,7 +103,7 @@ SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, 
     
 var nostrokecolour = null; 
 //nostrokecolour = "#0000A0"; // can override the no stroke, though there's often a good reason it's not stroked (being garbage)
-SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, cc)
+SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke)
 {    
     var dtrans = Raphael.mapPath(d, cmatrix); // Raphael.transformPath(d, raphtranslist.join("")); 
     if (dtrans.length <= 1)
@@ -227,20 +228,20 @@ SVGfileprocess.prototype.importSVGpathR = function()
         var x0 = ppts.shift(); 
         var y0 = ppts.shift();
         var d = 'M'+x0+','+y0+'L'+ppts.join(' ')+(tag == "polygon" ? "Z" : ""); 
-        this.processSingleSVGpath(d, cmatrix, cstroke, cc); 
+        this.processSingleSVGpath(d, cmatrix, cstroke); 
     } else if (tag == "circle") {
         var cx = parseFloat(cc.attr("cx"));
         var cy = parseFloat(cc.attr("cy")); 
         var r = parseFloat(cc.attr("r")); 
         var d = "M"+(cx-r)+","+cy+"A"+r+","+r+",0,0,1,"+cx+","+(cy-r)+"A"+r+","+r+",0,1,1,"+(cx-r)+","+cy; 
-        this.processSingleSVGpath(d, cmatrix, cstroke, cc); 
+        this.processSingleSVGpath(d, cmatrix, cstroke); 
     } else if (tag == "line") {
         var x1 = parseFloat(cc.attr("x1"));
         var y1 = parseFloat(cc.attr("y1")); 
         var x2 = parseFloat(cc.attr("x2"));
         var y2 = parseFloat(cc.attr("y2")); 
         var d = "M"+x1+","+y1+"L"+x2+","+y2; 
-        this.processSingleSVGpath(d, cmatrix, cstroke, cc); 
+        this.processSingleSVGpath(d, cmatrix, cstroke); 
     } else if (tag == "rect") {
         var x0 = parseFloat(cc.attr("x"));
         var y0 = parseFloat(cc.attr("y")); 
@@ -248,9 +249,9 @@ SVGfileprocess.prototype.importSVGpathR = function()
         var y1 = y0 + parseFloat(cc.attr("height")); 
         var d = "M"+x0+","+y0+"L"+x0+","+y1+" "+x1+","+y1+" "+x1+","+y0+"Z"; 
         if (!this.btunnelxtype)
-            this.processSingleSVGpath(d, cmatrix, cstroke, cc); 
+            this.processSingleSVGpath(d, cmatrix, cstroke); 
     } else if (tag == "path") {
-        this.processSingleSVGpath(cc.attr("d"), cmatrix, cstroke, cc); 
+        this.processSingleSVGpath(cc.attr("d"), cmatrix, cstroke); 
     } else {
         this.pstack.push(this.pback); 
         this.pback = { pos:this.cstack.length, raphtranslist:raphtranslist, strokelist:strokelist, cmatrix:cmatrix }; 
@@ -287,7 +288,7 @@ SVGfileprocess.prototype.spnummapGetCreate = function(cclass, mcs, strokecolour)
 
 SVGfileprocess.prototype.processSingleSVGpathTunnelx = function(d, stroke, cc)
 {
-    var dtrans = Raphael.path2curve(d);
+    var dtrans = Raphael.path2curve(d); 
     var cclass = cc.attr("class"); 
     var mcs = this.mclassstyle[cclass]; 
     var dlinestyle = mcs.dlinestyle; 
@@ -312,7 +313,7 @@ SVGfileprocess.prototype.processSingleSVGpathTunnelx = function(d, stroke, cc)
     var strokecolour = spnumobj.strokecolour; 
     if (this.state == "importsvgrareas") 
         strokecolour = spnumobj.fillcolour; 
-    var bMsplits = (mcs.dlinestyle.match(/symb/) != null); 
+    var bMsplits = (mcs.dlinestyle.match(/symb/) != null);  // sumbols don't get broken up even if made of several disconnected strokes, please
     this.processSingleSVGpathFinal(dtrans, bMsplits, d, spnum, strokecolour, null); 
 }
 
@@ -392,7 +393,10 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
     //if (txt.length < 10000)
     //    $("div#"+this.fadivid+" .groupprocess").addClass("selected"); 
 
-    this.rlistb = [ ]; 
+    this.rlistb = [ ];  // list of type [ {path:paper1.path, spnum:spnum, d:org-d-value, mi:index-to-m cutoff, cmatrix:cmatrix} ]
+                        // quickest shortcut is to use d = path.attr("path")
+                        // also functions useful are: Raphael.mapPath(d, cmatrix) and PolySorting.flattenpath()
+                        
     this.spnumlist = [ ]; 
     this.spnummap = { }; // maps into the above from concatenations of subset and strokecolour
     this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with
@@ -677,7 +681,7 @@ console.log(elcolspans);
         spnumscp.push(parseInt(elcolspans[i].id.match(/\d+$/g)[0]));  // _spnum(\d+) 
     console.log("hghghg", grouptype, spnumscp); 
     
-    // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list
+    // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
     if (grouptype == "grouptunnelx")
         this.pathgroupings = ProcessToPathGroupingsTunnelX(this.rlistb, this.spnumlist); 
     else if (grouptype == "groupcontainment")
@@ -693,7 +697,7 @@ console.log(elcolspans);
     this.state = "process"+this.state.slice(4); 
     this.elprocessstatus.textContent = (""); 
 
-    // remove old groups if they exist (mapping across the transforms)
+    // remove old groups if they exist (mapping across the transforms that were originally applied when dragging the boundingrect)
     var tstr = (this.Lgrouppaths.length != 0 ? this.Lgrouppaths[0][0].transform() : "t0,0"); 
     for (var i = 0; i < this.Lgrouppaths.length; i++) {
         var pgroup = this.Lgrouppaths[i][0]; 
