@@ -2,7 +2,7 @@
 SVGfileprocess.prototype.LoadTunnelxDrawingDetails = function() 
 {
     console.assert(this.btunnelxtype); 
-    this.state = "detailsloading"; 
+    this.svgstate = "detailsloading"; 
 
     var imatrix = Raphael.matrix(this.fsca, 0, 0, this.fsca, 0, 0); 
     this.pback = {pos:-1, raphtranslist:[imatrix.toTransformString()], strokelist:[undefined], cmatrix:imatrix };
@@ -57,14 +57,14 @@ SVGfileprocess.prototype.processSingleSVGpathTunnelx = function(d, stroke, cc)
     var mcs = this.mclassstyle[cclass]; 
     var dlinestyle = mcs.dlinestyle; 
     this.spnummapGetCreate(cclass, mcs, stroke); 
-    if (this.state == "importsvgrareas") {
+    if (this.svgstate == "importsvgrareas") {
         if (mcs.dlinestyle === undefined) {
             console.log(cclass); 
             return; 
         } else if (mcs.dlinestyle.match("subsetarea") == null) {
             return; 
         }
-    } else if (this.state == "detailsloading") {
+    } else if (this.svgstate == "detailsloading") {
         if (mcs.dlinestyle == undefined) 
             return; // this is due to a label arrow!
         if (mcs.dlinestyle.match("OSA|CCA|subsetarea") != null)
@@ -75,7 +75,7 @@ SVGfileprocess.prototype.processSingleSVGpathTunnelx = function(d, stroke, cc)
     var spnum = this.spnummap[cclass]; 
     var spnumobj = this.spnumlist[spnum]; 
     var strokecolour = spnumobj.strokecolour; 
-    if (this.state == "importsvgrareas") 
+    if (this.svgstate == "importsvgrareas") 
         strokecolour = spnumobj.fillcolour; 
     var bMsplits = (mcs.dlinestyle.match(/symb/) != null);  // sumbols don't get broken up even if made of several disconnected strokes, please
     this.processSingleSVGpathFinal(dtrans, bMsplits, d, spnum, strokecolour, null); 
@@ -137,5 +137,5 @@ SVGfileprocess.prototype.processdetailSVGtunnelx = function()
         }
     }
     
-    this.state = "done"+this.state; 
+    this.svgstate = "done"+this.svgstate; 
 }

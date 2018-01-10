@@ -6,7 +6,7 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
     this.fname = fname; 
     this.fadivid = fadivid; 
     this.bstockdefinitiontype = bstockdefinitiontype; 
-    this.state = "constructed"; 
+    this.svgstate = "constructed"; 
     this.bcancelIm = false; 
     this.cutfillcolour = "#0a8"; 
     this.processcountnumber = Iprocesscount++; // used for positioning on drop
@@ -25,7 +25,7 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
 
 SVGfileprocess.prototype.jsonThingsPositions = function()   // to be used by importThingPositions(lthingsposition) 
 {
-    var thingpos = { fname:this.fname, state:this.state, currentabsolutescale:this.currentabsolutescale }; 
+    var thingpos = { fname:this.fname, svgstate:this.svgstate, currentabsolutescale:this.currentabsolutescale }; 
     thingpos["spnumsselected"] = getspnumsselected(this.fadivid); 
     thingpos["rlistblength"] = this.rlistb.length; 
     thingpos["pathgroupingsinfo"] = [ ]; 
@@ -39,7 +39,7 @@ SVGfileprocess.prototype.jsonThingsPositions = function()   // to be used by imp
 // only to be called after loading (the positions can be looked up later)
 SVGfileprocess.prototype.applyThingsPosition = function(thingpos)   // to be used by importThingPositions(lthingsposition) 
 {
-    console.assert(this.state == "processimportsvgr"); 
+    console.assert(this.svgstate == "processimportsvgr"); 
     if (!this.bstockdefinitiontype) {
         var elfadiv = document.getElementById(this.fadivid); 
         elfadiv.getElementsByClassName("tfscale")[0].value = thingpos.currentabsolutescale; 
@@ -335,14 +335,14 @@ function importSVGpathRR(lthis)
 {
     if (lthis.bcancelIm) {
         this.elprocessstatus.textContent = ("CANCELLED"); 
-        lthis.state = "cancelled"+lthis.state; 
+        lthis.svgstate = "cancelled"+lthis.svgstate; 
     } else if (lthis.btunnelxtype ? lthis.importSVGpathRtunnelx() : lthis.importSVGpathR()) {
         setTimeout(importSVGpathRR, lthis.timeoutcyclems, lthis); 
         
     // the final step when done
     } else {
-        lthis.state = "done"+lthis.state; // "importsvgrareas" : "importsvgr"
-        if (lthis.state == "donedetailsloading")
+        lthis.svgstate = "done"+lthis.svgstate; // "importsvgrareas" : "importsvgr"
+        if (lthis.svgstate == "donedetailsloading")
             lthis.processdetailSVGtunnelx(); 
         else 
             lthis.groupimportedSVGfordrag("groupboundingrect"); 
@@ -354,7 +354,7 @@ function importSVGpathRR(lthis)
 SVGfileprocess.prototype.InitiateLoadingProcess = function(txt) 
 {
     // NB "stroke" actually means colour in SVG lingo
-    this.state = "loading"; 
+    this.svgstate = "loading"; 
     this.txt = txt; 
     this.tsvg = $($(txt).children()[0]).parent(); // seems not to work directly as $(txt).find("svg")
     this.WorkOutPixelScale();  // sets the btunnelxtype
@@ -390,7 +390,7 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
     this.pstack = [ ]; 
     this.cstack = [ this.tsvg ]; 
     
-    this.state = (this.btunnelxtype ? "importsvgrareas" : "importsvgr"); 
+    this.svgstate = (this.btunnelxtype ? "importsvgrareas" : "importsvgr"); 
     this.timeoutcyclems = 4; 
     importSVGpathRR(this); 
 }
@@ -605,7 +605,7 @@ console.log("hghghg", grouptype, spnumscp);
         this.pathgroupings = [ [ "boundrect", groupall ] ]; 
     }
 
-    this.state = "process"+this.state.slice(4); 
+    this.svgstate = "process"+this.svgstate.slice(4); 
     this.elprocessstatus.textContent = (""); 
 
     // remove old groups if they exist (mapping across the transforms that were originally applied when dragging the boundingrect)

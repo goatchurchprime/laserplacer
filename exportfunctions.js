@@ -271,7 +271,7 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
     var svgprocesseskeys = Object.keys(svgprocesses); 
     for (var i = 0; i < svgprocesseskeys.length; i++) {
         var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
-        if (svgprocess.state == "processimportsvgr") {
+        if (svgprocess.svgstate == "processimportsvgr") {
             for (var j = 0; j < mainthingsposition.svgprocesses.length; j++) {
                 if ((!mainthingsposition.svgprocesses[j].done) && (svgprocess.fname == mainthingsposition.svgprocesses[j].fname)) {
                     svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
@@ -287,7 +287,8 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
     while (elimportedthingpos.firstChild)  
         elimportedthingpos.removeChild(elimportedthingpos.firstChild); 
     for (var j = 0; j < mainthingsposition.svgprocesses.length; j++)
-        elimportedthingpos.insertAdjacentHTML("beforeend", "<option style='"+(mainthingsposition.svgprocesses[j].done ? "color:blue" : "")+"'>"+mainthingsposition.svgprocesses[j].fname+"</option>"); 
+        elimportedthingpos.insertAdjacentHTML("beforeend", "<option>"+(mainthingsposition.svgprocesses[j].done?"-- ":"")+mainthingsposition.svgprocesses[j].fname+"</option>"); // can't put colours into option tag
+    elimportedthingpos.hidden = (mainthingsposition.svgprocesses.length == 0); 
 }
 
 var Df; 
@@ -323,9 +324,9 @@ function groupsvgprocess()
         this.classList.remove("selected"); // should this delete and regroup 
     } else {
         this.classList.add("selected"); 
-        if (svgprocess.state.match(/doneimportsvgr|doneimportsvgrareas/))
+        if (svgprocess.svgstate.match(/doneimportsvgr|doneimportsvgrareas/))
             svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
-        else if (svgprocess.state.match(/processimportsvgrareas/))
+        else if (svgprocess.svgstate.match(/processimportsvgrareas/))
             svgprocess.LoadTunnelxDrawingDetails(); 
         else 
             svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); // reprocess again
@@ -493,7 +494,7 @@ Df = f;
     }
 }
 
-//if (svgprocess.state.match(/doneimportsvgr|doneimportsvgrareas/))
+//if (svgprocess.svgstate.match(/doneimportsvgr|doneimportsvgrareas/))
 //    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
 
 
