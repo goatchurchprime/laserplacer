@@ -271,7 +271,9 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
     var svgprocesseskeys = Object.keys(svgprocesses); 
     for (var i = 0; i < svgprocesseskeys.length; i++) {
         var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
-        if (svgprocess.svgstate == "processimportsvgr") {
+        
+        // we should only need to apply it once, because all the positions will be filled in ready in the pathgroupingtstrs array
+        if ((svgprocess.elprocessstatus.textContent == "BD") || (svgprocess.elprocessstatus.textContent == "LD")) {
             for (var j = 0; j < mainthingsposition.svgprocesses.length; j++) {
                 if ((!mainthingsposition.svgprocesses[j].done) && (svgprocess.fname == mainthingsposition.svgprocesses[j].fname)) {
                     svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
@@ -321,15 +323,27 @@ function groupsvgprocess()
     var elfadiv = this.parentElement; 
     var svgprocess = svgprocesses[elfadiv.id]; 
     if (this.classList.contains("selected")) {
-        this.classList.remove("selected"); // should this delete and regroup 
+        ; // this.classList.remove("selected"); // should this delete and regroup feature (currently disabled feature)
     } else {
         this.classList.add("selected"); 
-        if (svgprocess.svgstate.match(/doneimportsvgr|doneimportsvgrareas/))
-            svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
-        else if (svgprocess.svgstate.match(/processimportsvgrareas/))
-            svgprocess.LoadTunnelxDrawingDetails(); 
-        else 
-            svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); // reprocess again
+
+        // disable tunnel code
+        //if (svgprocess.svgstate.match(/doneimportsvgr|doneimportsvgrareas/))
+        //    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
+        //else if (svgprocess.svgstate.match(/processimportsvgrareas/))
+        //    svgprocess.LoadTunnelxDrawingDetails(); 
+        //else 
+        //    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); // reprocess again
+        
+        // normal case
+        var closedist = 0.2; // should be a setting
+        var spnumscp = getspnumsselected(svgprocess.fadivid); 
+    
+        // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
+        svgprocess.elprocessstatus.textContent = "Gstart"; 
+        svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedist, spnumscp, svgprocess.fadivid, svgprocess.elprocessstatus); 
+        svgprocess.elprocessstatus.textContent = "GD"; 
+        svgprocess.updateLgrouppaths(); 
     }
 }
 

@@ -6,7 +6,7 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
     this.fname = fname; 
     this.fadivid = fadivid; 
     this.bstockdefinitiontype = bstockdefinitiontype; 
-    this.svgstate = "constructed"; 
+    //this.svgstate = "constructed";   // want to replace this with elprocessstatus
     this.bcancelIm = false; 
     this.cutfillcolour = "#0a8"; 
     this.processcountnumber = Iprocesscount++; // used for positioning on drop
@@ -23,9 +23,15 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
     this.elprocessstatus = document.getElementById(this.fadivid).getElementsByClassName("fprocessstatus")[0]; 
 }
 
+/*SVGfileprocess.prototype.setsvgstate = function(lsvgstate)
+{
+    console.log(lsvgstate); // give a place we can intercept for debugging
+    this.svgstate = lsvgstate; 
+}*/
+
 SVGfileprocess.prototype.jsonThingsPositions = function()   // to be used by importThingPositions(lthingsposition) 
 {
-    var thingpos = { fname:this.fname, svgstate:this.svgstate, currentabsolutescale:this.currentabsolutescale }; 
+    var thingpos = { fname:this.fname, svgstate:this.elprocessstatus.textContent, currentabsolutescale:this.currentabsolutescale }; 
     thingpos["spnumsselected"] = getspnumsselected(this.fadivid); 
     thingpos["rlistblength"] = this.rlistb.length; 
     thingpos["pathgroupingsinfo"] = [ ]; 
@@ -39,7 +45,6 @@ SVGfileprocess.prototype.jsonThingsPositions = function()   // to be used by imp
 // only to be called after loading (the positions can be looked up later)
 SVGfileprocess.prototype.applyThingsPosition = function(thingpos)   // to be used by importThingPositions(lthingsposition) 
 {
-    console.assert(this.svgstate == "processimportsvgr"); 
     if (!this.bstockdefinitiontype) {
         var elfadiv = document.getElementById(this.fadivid); 
         elfadiv.getElementsByClassName("tfscale")[0].value = thingpos.currentabsolutescale; 
@@ -302,7 +307,7 @@ SVGfileprocess.prototype.importSVGpathR = function()
         for (var i = cs.length - 1; i >= 0; i--) 
             this.cstack.push($(cs[i]));   // in reverse order for the stack
     }
-    this.elprocessstatus.textContent = (this.rlistb.length+"/"+this.cstack.length); 
+    this.elprocessstatus.textContent = ("L"+this.rlistb.length+"/"+this.cstack.length); 
     return true; 
 }
 
@@ -335,17 +340,24 @@ function importSVGpathRR(lthis)
 {
     if (lthis.bcancelIm) {
         this.elprocessstatus.textContent = ("CANCELLED"); 
-        lthis.svgstate = "cancelled"+lthis.svgstate; 
+        
+    // this is the timeout loop
     } else if (lthis.btunnelxtype ? lthis.importSVGpathRtunnelx() : lthis.importSVGpathR()) {
         setTimeout(importSVGpathRR, lthis.timeoutcyclems, lthis); 
         
     // the final step when done
     } else {
-        lthis.svgstate = "done"+lthis.svgstate; // "importsvgrareas" : "importsvgr"
-        if (lthis.svgstate == "donedetailsloading")
+        if (false) { // lthis.svgstate == "donedetailsloading") {
+            this.elprocessstatus.textContent = "LD"; 
             lthis.processdetailSVGtunnelx(); 
-        else 
-            lthis.groupimportedSVGfordrag("groupboundingrect"); 
+            
+        // this is the standard path (making a bounding box)
+        } else  {
+            lthis.elprocessstatus.textContent = "LD"; 
+            lthis.ProcessPathsToBoundingRect();  
+            lthis.elprocessstatus.textContent = "BD"; 
+            lthis.updateLgrouppaths(); 
+        }
     }
 }
 
@@ -354,7 +366,6 @@ function importSVGpathRR(lthis)
 SVGfileprocess.prototype.InitiateLoadingProcess = function(txt) 
 {
     // NB "stroke" actually means colour in SVG lingo
-    this.svgstate = "loading"; 
     this.txt = txt; 
     this.tsvg = $($(txt).children()[0]).parent(); // seems not to work directly as $(txt).find("svg")
     this.WorkOutPixelScale();  // sets the btunnelxtype
@@ -390,7 +401,6 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
     this.pstack = [ ]; 
     this.cstack = [ this.tsvg ]; 
     
-    this.svgstate = (this.btunnelxtype ? "importsvgrareas" : "importsvgr"); 
     this.timeoutcyclems = 4; 
     importSVGpathRR(this); 
 }
@@ -443,7 +453,7 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocesss
     var jdseqs = [ ];  // indexes dlist
     for (var ispnum = 0; ispnum < spnumscp.length; ispnum++) {
         var spnum = spnumscp[ispnum]; 
-        elprocessstatus.textContent = ("joining spnum="+spnum); 
+        elprocessstatus.textContent = "Gjoining_spnum="+spnum; 
         var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColour(rlistb, spnum), closedist, false); 
         var npathsleft = 0; 
         for (var i = 0; i < ljdseqs.length; i++)
@@ -454,20 +464,20 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocesss
     // jdseqs = [ [i1, i2, i3,...] sequence of dlist[ii/2|0], bfore=((ii%2)==1 ]
 
     // list of paths not included in any cycle
-    elprocessstatus.textContent = ("getsingletlist"); 
+    elprocessstatus.textContent = "Ggetsingletlist"; 
     var singletslist = PolySorting.GetSingletsList(jdseqs, rlistb.length); // (why isn't dlist defined outside of the loop?)  
 
     // build the dlist without any holes parallel to rlistb to use for groupings
-    elprocessstatus.textContent = ("concat JDgeoseqs"); 
+    elprocessstatus.textContent = "Gconcat_JDgeoseqs"; 
     var dlist = CopyPathListOfColour(rlistb, null); 
     var jdgeos = MakeContourcurvesFromSequences(dlist, jdseqs); 
 
     // groups of jdsequences forming outercontour, islands, singlets 
-    elprocessstatus.textContent = ("FindAreaGroupingsD"); 
+    elprocessstatus.textContent = "GFindAreaGroupingsD"; 
     var res = [ ]; 
     var cboundislands = PolySorting.FindAreaGroupingsD(jdgeos); 
     
-    elprocessstatus.textContent = ("oriented islands"); 
+    elprocessstatus.textContent = "Goriented_islands"; 
     for (var j = 0; j < cboundislands.length; j++) {
         var lres = [ fadivid+"cb"+j ]; 
         var cboundisland = cboundislands[j]; 
@@ -482,7 +492,7 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocesss
         res.push(lres); 
     }
     
-    elprocessstatus.textContent = ("singlets to groupings"); 
+    elprocessstatus.textContent = "Gsinglets_to_groupings"; 
     var unmatchedsinglets = [ ]; 
     for (var i = 0; i < singletslist.length; i++) {
         var ic = singletslist[i]; 
@@ -494,6 +504,7 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocesss
             unmatchedsinglets.push(ic); 
     }
 
+    elprocessstatus.textContent = "GC"; 
     if (unmatchedsinglets.length != 0)
         res.push(["unmatchedsinglets", unmatchedsinglets ]); 
     console.log("unmatched", unmatchedsinglets); 
@@ -585,6 +596,15 @@ console.log(elcolspans);
     return spnumscp; 
 }
 
+SVGfileprocess.prototype.ProcessPathsToBoundingRect = function()
+{
+    var groupall = [ ]; 
+    for (var i = 0; i < this.rlistb.length; i++) 
+        groupall.push(i); 
+    this.pathgroupings = [ [ "boundrect", groupall ] ]; 
+    this.elprocessstatus.textContent = "LD"; 
+}
+
 // could this be converted into a callback function if it takes too long
 SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
 {
@@ -595,19 +615,15 @@ console.log("hghghg", grouptype, spnumscp);
     // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
     if (grouptype == "grouptunnelx")
         this.pathgroupings = ProcessToPathGroupingsTunnelX(this.rlistb, this.spnumlist); 
-    else if (grouptype == "groupcontainment")
+    else if (grouptype == "groupcontainment") {
         this.pathgroupings = ProcessToPathGroupings(this.rlistb, closedist, spnumscp, this.fadivid, this.elprocessstatus); 
-    else { 
-        console.assert(grouptype == "groupboundingrect"); 
-        var groupall = [ ]; 
-        for (var i = 0; i < this.rlistb.length; i++) 
-            groupall.push(i); 
-        this.pathgroupings = [ [ "boundrect", groupall ] ]; 
     }
 
-    this.svgstate = "process"+this.svgstate.slice(4); 
-    this.elprocessstatus.textContent = (""); 
+    this.updateLgrouppaths(); 
+}
 
+SVGfileprocess.prototype.updateLgrouppaths = function()
+{
     // remove old groups if they exist (mapping across the transforms that were originally applied when dragging the boundingrect)
     var tstr = (this.Lgrouppaths.length != 0 ? this.Lgrouppaths[0][0].transform() : "t0,0"); 
     for (var i = 0; i < this.Lgrouppaths.length; i++) {

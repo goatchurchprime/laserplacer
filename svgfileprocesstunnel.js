@@ -2,7 +2,7 @@
 SVGfileprocess.prototype.LoadTunnelxDrawingDetails = function() 
 {
     console.assert(this.btunnelxtype); 
-    this.svgstate = "detailsloading"; 
+    this.elprocessstatus.textContent = ("detailsloading"); 
 
     var imatrix = Raphael.matrix(this.fsca, 0, 0, this.fsca, 0, 0); 
     this.pback = {pos:-1, raphtranslist:[imatrix.toTransformString()], strokelist:[undefined], cmatrix:imatrix };
@@ -57,7 +57,7 @@ SVGfileprocess.prototype.processSingleSVGpathTunnelx = function(d, stroke, cc)
     var mcs = this.mclassstyle[cclass]; 
     var dlinestyle = mcs.dlinestyle; 
     this.spnummapGetCreate(cclass, mcs, stroke); 
-    if (this.svgstate == "importsvgrareas") {
+    if (this.elprocessstatus.textContent == "importsvgrareas") {  // was svgstate
         if (mcs.dlinestyle === undefined) {
             console.log(cclass); 
             return; 
@@ -108,7 +108,7 @@ SVGfileprocess.prototype.importSVGpathRtunnelx = function()
         for (var i = cs.length - 1; i >= 0; i--) 
             this.cstack.push($(cs[i]));   // in reverse order for the stack
     }
-    this.elprocessstatus.textContent = (this.rlistb.length+"/"+this.cstack.length); 
+    this.elprocessstatus.textContent = ("T"+this.rlistb.length+"/"+this.cstack.length); 
     return true; 
 }
 
@@ -137,5 +137,5 @@ SVGfileprocess.prototype.processdetailSVGtunnelx = function()
         }
     }
     
-    this.svgstate = "done"+this.svgstate; 
+    this.setsvgstate("done"+this.svgstate); 
 }
