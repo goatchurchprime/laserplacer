@@ -19,7 +19,7 @@ var filenamelist = { };
 var rlist = [ ]; 
 
 var svgprocesses = { };         // indexed by fadivid (type SVGfileprocess)
-var mainthingsposition = null;  // loaded and applied to files as their names match
+var mainthingsposition = {svgprocesses:[]};  // loaded and applied to files as their names match
 
 var fadividlast = null; 
 var Dsvgprocess = undefined; // most recent one
@@ -60,7 +60,7 @@ function setup()
 
 	setfiledragoverfunctions(document.getElementById("paper1")); 
     document.getElementById("thingpos").onclick = exportThingPositions; 
-
+	document.getElementById("importedthingpos").hidden = true; 
     
     // setup the raphael paper and bits
     paper1 = Raphael("paper1", 1300, 800);
@@ -113,7 +113,7 @@ div#filearea .dposition { color: green }
 div#filearea .dposition span { border-left: thin black solid }
 div#filearea .dposition span.locked { background: #aaa }
 div#filearea .dposition span.moving { font-weight: bold }
-div#filearea select#importedthingpos { visibility: hidden }
+div#filearea select#importedthingpos { Dvisibility: hidden }
 
 #thinnerstrokes, #thickerstrokes, #togglebackgroundcolour { border: 0; padding: 0; color: blue }
 

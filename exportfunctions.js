@@ -273,7 +273,7 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
         var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
         
         // we should only need to apply it once, because all the positions will be filled in ready in the pathgroupingtstrs array
-        if ((svgprocess.elprocessstatus.textContent == "BD") || (svgprocess.elprocessstatus.textContent == "LD")) {
+        if ((svgprocess.elprocessstatus.textContent == "BD") || (svgprocess.elprocessstatus.textContent == "GD")) {
             for (var j = 0; j < mainthingsposition.svgprocesses.length; j++) {
                 if ((!mainthingsposition.svgprocesses[j].done) && (svgprocess.fname == mainthingsposition.svgprocesses[j].fname)) {
                     svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
@@ -344,6 +344,7 @@ function groupsvgprocess()
         svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedist, spnumscp, svgprocess.fadivid, svgprocess.elprocessstatus); 
         svgprocess.elprocessstatus.textContent = "GD"; 
         svgprocess.updateLgrouppaths(); 
+        updateAvailableThingPositions(); 
     }
 }
 

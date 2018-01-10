@@ -17,7 +17,7 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
     this.spnumlist = [ ]; 
     this.spnummap = { }; 
     this.pathgroupings = [ ]; // the actual primary data, returned from ProcessToPathGroupings()
-    this.pathgroupingtstrs = [ ]; // the transform strings (which run in parallel to the pathgroupings)
+    this.pathgroupingtstrs = [ ]; // the transform strings (which run in parallel to the pathgroupings) of type {tstr:""} so we can pass it in to functions by reference
     this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with (the 0th element is the area, which is not part of the geometry)
 
     this.elprocessstatus = document.getElementById(this.fadivid).getElementsByClassName("fprocessstatus")[0]; 
@@ -63,9 +63,9 @@ SVGfileprocess.prototype.applyThingsPosition = function(thingpos)   // to be use
     
     // and now fill in the parallel list of transformations for each of the pathgroups
     for (var j = 0; j < thingpos.pathgroupingsinfo.length; j++) {
-        if (this.pathgroupingtstrs.length < j)
-            this.pathgroupingtstrs.push(""); 
-        this.pathgroupingtstrs[j] = thingpos.pathgroupingsinfo[j].tstr; 
+        if (this.pathgroupingtstrs.length <= j)
+            this.pathgroupingtstrs.push({tstr:""}); 
+        this.pathgroupingtstrs[j].tstr = thingpos.pathgroupingsinfo[j].tstr; 
     }
 }
 
@@ -357,6 +357,7 @@ function importSVGpathRR(lthis)
             lthis.ProcessPathsToBoundingRect();  
             lthis.elprocessstatus.textContent = "BD"; 
             lthis.updateLgrouppaths(); 
+            updateAvailableThingPositions(); 
         }
     }
 }
@@ -515,7 +516,7 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocesss
 
 
 // pgrouparea is the filled object that we click in, and lpaths are all the paths that should be dragged with it (including pgrouparea as first element)
-SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, grouptransform) 
+SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, pathgroupingtstr) 
 {
     console.assert(lpaths[0] === pgrouparea); 
 
@@ -525,7 +526,7 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, grouptran
     var cx = 0, cy = 0; 
     var tstr; 
     var groupcolour = pgrouparea.attr("fill"); // original colour before coloured to highlight it is being dragged
-    var elfadividphi = document.getElementById(grouptransform.fadividphi); 
+    var elfadividphi = document.getElementById(pathgroupingtstr.fadividphi); 
     
     pgrouparea.drag(
         function(dx, dy, x, y, e) { // drag
@@ -533,12 +534,12 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, grouptran
             if (blockedmode)
                 return; 
             else if (brotatemode)
-                tstr = "r"+(dx*0.34)+","+cx+","+cy+grouptransform.transform; 
+                tstr = "r"+(dx*0.34)+","+cx+","+cy+pathgroupingtstr.tstr; 
             else
-                tstr = "t"+(dx*paper1scale)+","+(dy*paper1scale)+grouptransform.transform; 
+                tstr = "t"+(dx*paper1scale)+","+(dy*paper1scale)+pathgroupingtstr.tstr; 
             tstr = pgrouparea.transform(tstr).transform(); // compose and extract the simplified transform
-            for (var k = 1; k < lpaths.length; k++) 
-                lpaths[k].transform(tstr); 
+            for (var i = 1; i < lpaths.length; i++) 
+                lpaths[i].transform(tstr); 
             elfadividphi.textContent = "t"+pgrouparea._.dx.toFixed()+","+pgrouparea._.dy.toFixed()+"r"+pgrouparea._.deg.toFixed(); 
         }, 
         function(x, y, e)  {  // mouse down
@@ -560,7 +561,7 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, grouptran
         },  
         function(e) {    // mouse up
             if (!blockedmode)
-                grouptransform.transform = tstr;  
+                pathgroupingtstr.tstr = tstr;  
             elfadividphi.classList.remove("moving"); 
             pgrouparea.attr("fill", groupcolour); 
             e.stopPropagation(); e.preventDefault(); 
@@ -625,7 +626,7 @@ console.log("hghghg", grouptype, spnumscp);
 SVGfileprocess.prototype.updateLgrouppaths = function()
 {
     // remove old groups if they exist (mapping across the transforms that were originally applied when dragging the boundingrect)
-    var tstr = (this.Lgrouppaths.length != 0 ? this.Lgrouppaths[0][0].transform() : "t0,0"); 
+    //var tstr = (this.Lgrouppaths.length != 0 ? this.Lgrouppaths[0][0].transform() : "t0,0"); 
     for (var i = 0; i < this.Lgrouppaths.length; i++) {
         var pgroup = this.Lgrouppaths[i][0]; 
         pgroup.undrag(); 
@@ -657,7 +658,6 @@ console.log("moving boundrect needs fixing", tstr);
     var eldpositions = document.getElementById(this.fadivid).getElementsByClassName("dposition")[0]; 
     while (eldpositions.firstChild)  
         eldpositions.removeChild(eldpositions.firstChild); 
-    this.grouptransforms = [ ]; 
     
     // this.Lgrouppaths is the parallel arrays of actual pathgroupings and containing area (the first element of each is the derived outline or box, and not in the list
     // this.grouptransforms = [ { transform:tstr, fadividphi:fadividpgi } ]
@@ -673,7 +673,7 @@ console.log("moving boundrect needs fixing", tstr);
         // [ "id", [outerpathlist], [innerpathlist1], [innerpathlist2], ..., [engpathlist(unorderedindexes)] ]
         
         // form the area object from the directed cut paths and the engraved paths (whose direction is not encoded)
-        var dgroup = [ ]; 
+        var dgroup = [ ]; // used to build pgroup
         var fillcolour = (this.btunnelxtype ? this.spnumlist[this.rlistb[pathgrouping[1][0]/2|0].spnum].fillcolour : this.cutfillcolour); 
         for (var j = 1; j < pathgrouping.length - 1; j++) {
             if (pathgrouping[j].length != 0)
@@ -683,7 +683,8 @@ console.log("moving boundrect needs fixing", tstr);
         var lengpaths = [ ]
         for (var i = 0; i < engpaths.length; i++)
             lengpaths = lengpaths.concat(dlist[engpaths[i]]); 
-        var pgroup; 
+            
+        var pgroup; // to become the bounding shape of the group 
         if ((pathgrouping[0] == "boundrect") || (pathgrouping[0] == "unmatchedsinglets")) {
             var bbox = Raphael.pathBBox(lengpaths); 
             pgroup = paper1.path("M"+bbox.x+","+bbox.y+"H"+bbox.x2+"V"+bbox.y2+"H"+bbox.x+"Z"); 
@@ -694,12 +695,14 @@ console.log("moving boundrect needs fixing", tstr);
             pgroup[0].style["fillRule"] = "evenodd"; // hack value in as this cannot be implemented via Raphaeljs interface (till we get the orientations right)
         }
         
-        var grouptransform = { transform:tstr, fadividphi:this.fadivid+"_pg"+k }; 
-        this.grouptransforms.push(grouptransform); 
+console.log(this.pathgroupingtstrs.length, k);
+        if (this.pathgroupingtstrs.length <= k) 
+            this.pathgroupingtstrs.push({tstr:this.pathgroupingtstrs.length == 0 ? "t0,0" : this.pathgroupingtstrs[0].tstr}); 
+console.log(this.pathgroupingtstrs.length, k, this.pathgroupingtstrs);
+        this.pathgroupingtstrs[k].fadividphi = this.fadivid+"k"+k; 
 
-        pgroup.transform(grouptransform.transform); 
-        eldpositions.insertAdjacentHTML("beforeend", '<option id="'+grouptransform.fadividphi+'" title="group'+k+'">'+"t"+pgroup._.dx.toFixed()+","+pgroup._.dy.toFixed()+"r"+pgroup._.deg.toFixed()+'</option>'); 
-        document.getElementById(grouptransform.fadividphi).onclick = function() { this.classList.toggle("locked"); }; 
+        eldpositions.insertAdjacentHTML("beforeend", '<option id="'+this.pathgroupingtstrs[k].fadividphi+'" title="group'+k+'">'+"t"+pgroup._.dx.toFixed()+","+pgroup._.dy.toFixed()+"r"+pgroup._.deg.toFixed()+'</option>'); 
+        document.getElementById(this.pathgroupingtstrs[k].fadividphi).onclick = function() { this.classList.toggle("locked"); }; 
 
         var eldposition = document.getElementById(this.fadivid).getElementsByClassName("dposition")[0]; 
         
@@ -712,9 +715,13 @@ console.log("moving boundrect needs fixing", tstr);
         }
         for (var i = 0; i < engpaths.length; i++)
             lpaths.push(this.rlistb[engpaths[i]].path); 
+            
+        for (var i = 0; i < lpaths.length; i++)
+            lpaths[i].transform(this.pathgroupingtstrs[k].tstr); // use the transforms that were put there
+            
         this.Lgrouppaths.push(lpaths); 
 
-        this.applygroupdrag(pgroup, lpaths, grouptransform); 
+        this.applygroupdrag(pgroup, lpaths, this.pathgroupingtstrs[k]); 
     }; 
 }
 
