@@ -18,7 +18,9 @@
 var filenamelist = { }; 
 var rlist = [ ]; 
 
-var svgprocesses = { };      // indexed by fadivid (type SVGfileprocess)
+var svgprocesses = { };         // indexed by fadivid (type SVGfileprocess)
+var mainthingsposition = null;  // loaded and applied to files as their names match
+
 var fadividlast = null; 
 var Dsvgprocess = undefined; // most recent one
 var pathselected = null; 
@@ -143,7 +145,7 @@ div#filearea .dposition span.moving { font-weight: bold }
 	  The code is at <a href="https://bitbucket.org/goatchurch/laserplacer/">bitbucket/laserplacer</a></p>
   </div>
   <div id="filearea">
-    FileArea<input type="button" value="thingpos" id="thingpos"/>
+    FileArea<input type="button" value="thingpos" id="thingpos"/><select id="importedthingpos"></select>
   </div>
   
   <div id="panelheader">

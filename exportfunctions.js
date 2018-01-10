@@ -264,12 +264,45 @@ function exportANC()
 }
 
 
+
+function updateAvailableThingPositions()   // see jsonThingsPositions for format
+{
+    // go through and find any svgprocesses that match by name with any unconsumed thingpositions
+    var svgprocesseskeys = Object.keys(svgprocesses); 
+    for (var i = 0; i < svgprocesseskeys.length; i++) {
+        var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
+        if (svgprocess.state == "processimportsvgr") {
+            for (var j = 0; j < mainthingsposition.svgprocesses.length; j++) {
+                if ((!mainthingsposition.svgprocesses[j].done) && (svgprocess.fname == mainthingsposition.svgprocesses[j].fname)) {
+                    svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
+                    mainthingsposition.svgprocesses[j].done = true; 
+                    break; 
+                }
+            }
+        }
+    }
+
+    // put in remaining thing positions
+    var elimportedthingpos = document.getElementById("importedthingpos"); 
+    while (elimportedthingpos.firstChild)  
+        elimportedthingpos.removeChild(elimportedthingpos.firstChild); 
+    for (var j = 0; j < mainthingsposition.svgprocesses.length; j++)
+        elimportedthingpos.insertAdjacentHTML("beforeend", "<option style='"+(mainthingsposition.svgprocesses[j].done ? "color:blue" : "")+"'>"+mainthingsposition.svgprocesses[j].fname+"</option>"); 
+}
+
 var Df; 
 var filecountid = 0; 
 function importSVGfiles(files)
 {
-    for (var i = 0; i < files.length; i++) 
-        importSVGfile(i, files[i]); // this function already kicks off independent loading processes
+    for (var i = 0; i < files.length; i++) {
+        if (files[i].type == "application/json") {
+            var reader = new FileReader(); 
+            reader.onload = function(e) {  mainthingsposition = JSON.parse(reader.result);  updateAvailableThingPositions();  }; 
+            reader.readAsText(files[i]); 
+        } else {
+            importSVGfile(i, files[i]);   // this function already kicks off independent loading processes
+        }
+    }
 }
 
 function deletesvgprocess()
@@ -423,7 +456,7 @@ function importSVGfile(i, f)
     fileblock.push('<span class="fprocessstatus">VV</span>'); 
     if (!bstockdefinitiontype)
         fileblock.push('<span class="groupprocess" title="Group geometry">Group</span>'); 
-    fileblock.push('<span class="dposition"></span>'); 
+    fileblock.push('<select class="dposition"></select>'); 
     if (bstockdefinitiontype)
         fileblock.push('<span class="genpathorder">GenPath</span>'); 
     
@@ -448,10 +481,10 @@ function importSVGfile(i, f)
 Dsvgprocess = svgprocess; 
 Df = f;  
 
-    var reader = new FileReader(); 
     if (bsvgizedtext) {
         svgprocess.InitiateLoadingProcess(f.svgtext); 
     } else if (bsvg) {
+        var reader = new FileReader(); 
         reader.onload = (function(e) { svgprocess.InitiateLoadingProcess(reader.result); }); 
         reader.readAsText(f); 
     } else {
@@ -472,9 +505,10 @@ function exportThingPositions()
     var svgprocesseskeys = Object.keys(svgprocesses); 
     for (var i = 0; i < svgprocesseskeys.length; i++) {
         var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
-        res["svgprocesses"].push(svgprocess.jsonObjectSummary()); 
+        res["svgprocesses"].push(svgprocess.jsonThingsPositions()); 
     }
     
+    // generate the json download file
     var a = document.createElement('a');
     var blob = new Blob([JSON.stringify(res)], {'type':"text/plain"});
     a.href = window.URL.createObjectURL(blob);

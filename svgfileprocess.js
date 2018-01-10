@@ -17,28 +17,52 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
     this.spnumlist = [ ]; 
     this.spnummap = { }; 
     this.pathgroupings = [ ]; // the actual primary data, returned from ProcessToPathGroupings()
+    this.pathgroupingtstrs = [ ]; // the transform strings (which run in parallel to the pathgroupings)
     this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with (the 0th element is the area, which is not part of the geometry)
 
     this.elprocessstatus = document.getElementById(this.fadivid).getElementsByClassName("fprocessstatus")[0]; 
 }
 
-SVGfileprocess.prototype.jsonObjectSummary = function()
+SVGfileprocess.prototype.jsonThingsPositions = function()   // to be used by importThingPositions(lthingsposition) 
 {
-    var res = { name:this.fname, state:this.state, currentabsolutescale:this.currentabsolutescale }; 
-    res["spnumsselected"] = getspnumsselected(this.fadivid); 
-    res["rlistblength"] = this.rlistb.length; 
-    res["pathgroupingsinfo"] = [ ]; 
+    var thingpos = { fname:this.fname, state:this.state, currentabsolutescale:this.currentabsolutescale }; 
+    thingpos["spnumsselected"] = getspnumsselected(this.fadivid); 
+    thingpos["rlistblength"] = this.rlistb.length; 
+    thingpos["pathgroupingsinfo"] = [ ]; 
     
     for (var i = 0; i < this.pathgroupings.length; i++) {
-        res["pathgroupingsinfo"].push({ pathgroupname:this.pathgroupings[i][0], tstr:this.Lgrouppaths[i][0].transform() }); 
+        thingpos["pathgroupingsinfo"].push({ pathgroupname:this.pathgroupings[i][0], tstr:this.Lgrouppaths[i][0].transform() }); 
     }
-    return res; 
+    return thingpos; 
 }
 
-SVGfileprocess.prototype.applyObjectSummary = function()
+// only to be called after loading (the positions can be looked up later)
+SVGfileprocess.prototype.applyThingsPosition = function(thingpos)   // to be used by importThingPositions(lthingsposition) 
 {
+    console.assert(this.state == "processimportsvgr"); 
+    if (!this.bstockdefinitiontype) {
+        var elfadiv = document.getElementById(this.fadivid); 
+        elfadiv.getElementsByClassName("tfscale")[0].value = thingpos.currentabsolutescale; 
+        rescalefileabs(elfadiv); 
+        
+        // do the reverse of getspnumsselected
+        var elcolspans = document.getElementById(this.fadivid).getElementsByClassName("spnumcols")[0].getElementsByTagName("span"); 
+        for (var i = 0; i < elcolspans.length; i++) {
+            var spnum = parseInt(elcolspans[i].id.match(/\d+$/g)[0]); 
+            if (thingpos.spnumsselected.indexOf(spnum) != -1)
+                elcolspans[i].classList.add("spnumselected"); 
+            else
+                elcolspans[i].classList.remove("spnumselected"); 
+        }
+    }
+    
+    // and now fill in the parallel list of transformations for each of the pathgroups
+    for (var j = 0; j < thingpos.pathgroupingsinfo.length; j++) {
+        if (this.pathgroupingtstrs.length < j)
+            this.pathgroupingtstrs.push(""); 
+        this.pathgroupingtstrs[j] = thingpos.pathgroupingsinfo[j].tstr; 
+    }
 }
-
 
 SVGfileprocess.prototype.scalestrokewidth = function(drawstrokewidth, cutstrokewidth)
 {
@@ -658,7 +682,7 @@ console.log("moving boundrect needs fixing", tstr);
         this.grouptransforms.push(grouptransform); 
 
         pgroup.transform(grouptransform.transform); 
-        eldpositions.insertAdjacentHTML("beforeend", '<span id="'+grouptransform.fadividphi+'" title="group'+k+'">'+"t"+pgroup._.dx.toFixed()+","+pgroup._.dy.toFixed()+"r"+pgroup._.deg.toFixed()+'</span>'); 
+        eldpositions.insertAdjacentHTML("beforeend", '<option id="'+grouptransform.fadividphi+'" title="group'+k+'">'+"t"+pgroup._.dx.toFixed()+","+pgroup._.dy.toFixed()+"r"+pgroup._.deg.toFixed()+'</option>'); 
         document.getElementById(grouptransform.fadividphi).onclick = function() { this.classList.toggle("locked"); }; 
 
         var eldposition = document.getElementById(this.fadivid).getElementsByClassName("dposition")[0]; 
