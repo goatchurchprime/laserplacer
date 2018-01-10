@@ -5,6 +5,7 @@
 <script type="text/javascript" src="raphael.js"></script>    
 <script type="text/javascript" src="polygonsorting.js?1801"></script>    
 <script type="text/javascript" src="svgfileprocess.js?1801"></script>    
+<script type="text/javascript" src="svgfileprocesstunnel.js?1801"></script>    
 <script type="text/javascript" src="svgizingtext.js?1801"></script>    
 <script type="text/javascript" src="exportfunctions.js?1801"></script>    
 <script type="text/javascript" src="viewcontrols.js?1801"></script>    
@@ -56,6 +57,7 @@ function setup()
     }); 
 
 	setfiledragoverfunctions(document.getElementById("paper1")); 
+    document.getElementById("thingpos").onclick = exportThingPositions; 
 
     
     // setup the raphael paper and bits
@@ -90,6 +92,7 @@ div#helparea { z-index: 10; position: fixed; top:60px; right:10px; width: 700px;
 #err { color:red }
 
 div#filearea  { cursor:pointer; }
+div#filearea  input[button] { padding:0; margin:0; }
 div#filearea .tfscale { width: 30px; height: 15px; border: thin black solid; padding:0; margin: 0 }
 div#filearea .fprocessstatus:hover { background: red; cursor: pointer }
 div#filearea .spnumcols span { border: thin black solid }
@@ -140,7 +143,7 @@ div#filearea .dposition span.moving { font-weight: bold }
 	  The code is at <a href="https://bitbucket.org/goatchurch/laserplacer/">bitbucket/laserplacer</a></p>
   </div>
   <div id="filearea">
-    FileArea<span id="thingpos"></span>
+    FileArea<input type="button" value="thingpos" id="thingpos"/>
   </div>
   
   <div id="panelheader">

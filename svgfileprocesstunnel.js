@@ -1,0 +1,141 @@
+
+SVGfileprocess.prototype.LoadTunnelxDrawingDetails = function() 
+{
+    console.assert(this.btunnelxtype); 
+    this.state = "detailsloading"; 
+
+    var imatrix = Raphael.matrix(this.fsca, 0, 0, this.fsca, 0, 0); 
+    this.pback = {pos:-1, raphtranslist:[imatrix.toTransformString()], strokelist:[undefined], cmatrix:imatrix };
+    this.pstack = [ ]; 
+    this.cstack = [ this.tsvg ]; 
+    importSVGpathRR(this); 
+}
+
+
+// this could still break into totally disconnected contours with islands that don't overlap
+// (but that's for later when we are even trimming the symbols)
+function ProcessToPathGroupingsTunnelX(rlistb, spnumlist)
+{
+    var subsetnamemaps = { }; 
+    for (var i = 0; i < rlistb.length; i++) {
+        var spnumobj = spnumlist[rlistb[i].spnum]; 
+        if (spnumobj.linestyle == "subsetarea") {
+            var subsetname = spnumobj.subsetname; 
+            if (subsetnamemaps[subsetname] === undefined) 
+                subsetnamemaps[subsetname] = [ subsetname ]; 
+            subsetnamemaps[subsetname].push([i*2+1]); 
+        }
+    }
+
+    var subsetnames = Object.keys(subsetnamemaps); 
+    res = [ ]; 
+    for (var i = 0; i < subsetnames.length; i++) {
+        var lres = subsetnamemaps[subsetnames[i]]; 
+        lres.push([]); // the list of engraving edges
+        res.push(lres); 
+    }
+
+    // engraving edge groups
+    for (var i = 0; i < rlistb.length; i++) {
+        var spnumobj = spnumlist[rlistb[i].spnum]; 
+        if (spnumobj.linestyle != "subsetarea") {
+            var subsetname = spnumobj.subsetname; 
+            if (subsetnamemaps[subsetname] !== undefined) 
+                subsetnamemaps[subsetname][subsetnamemaps[subsetname].length-1].push(i); 
+        }
+    }
+
+    console.log("resresX", res); 
+    return res; 
+}
+
+
+SVGfileprocess.prototype.processSingleSVGpathTunnelx = function(d, stroke, cc)
+{
+    var dtrans = Raphael.path2curve(d); 
+    var cclass = cc.attr("class"); 
+    var mcs = this.mclassstyle[cclass]; 
+    var dlinestyle = mcs.dlinestyle; 
+    this.spnummapGetCreate(cclass, mcs, stroke); 
+    if (this.state == "importsvgrareas") {
+        if (mcs.dlinestyle === undefined) {
+            console.log(cclass); 
+            return; 
+        } else if (mcs.dlinestyle.match("subsetarea") == null) {
+            return; 
+        }
+    } else if (this.state == "detailsloading") {
+        if (mcs.dlinestyle == undefined) 
+            return; // this is due to a label arrow!
+        if (mcs.dlinestyle.match("OSA|CCA|subsetarea") != null)
+            return; 
+    }
+    
+    // convert all to extended classes with these strokes in?
+    var spnum = this.spnummap[cclass]; 
+    var spnumobj = this.spnumlist[spnum]; 
+    var strokecolour = spnumobj.strokecolour; 
+    if (this.state == "importsvgrareas") 
+        strokecolour = spnumobj.fillcolour; 
+    var bMsplits = (mcs.dlinestyle.match(/symb/) != null);  // sumbols don't get broken up even if made of several disconnected strokes, please
+    this.processSingleSVGpathFinal(dtrans, bMsplits, d, spnum, strokecolour, null); 
+}
+
+
+// simplified of importSVGpathR
+SVGfileprocess.prototype.importSVGpathRtunnelx = function() 
+{
+    while (this.cstack.length == this.pback.pos) 
+        this.pback = this.pstack.pop(); 
+    if (this.cstack.length == 0) 
+        return false; 
+    var cc = this.cstack.pop(); 
+    var tag = cc.prop("tagName").toLowerCase(); 
+    console.assert(cc.attr("transform") == null); 
+
+    if (tag == "clippath") {
+        console.log("skip clippath"); // will deploy Raphael.pathIntersection(path1, path2) eventually
+        // <clipPath id="cp1"> <path d="M497.7 285.2 Z"/></clipPath>
+        // then clippath="url(#cp1)" in a path for a trimmed symbol type
+    } else if (tag == "path") {
+        var cclass = cc.attr("class"); 
+        var cstroke = this.mclassstyle[cclass]["stroke"]; 
+        this.processSingleSVGpathTunnelx(cc.attr("d"), cstroke, cc); 
+    } else {
+        this.pstack.push(this.pback); 
+        this.pback = { pos:this.cstack.length }; 
+        var cs = cc.children(); 
+        for (var i = cs.length - 1; i >= 0; i--) 
+            this.cstack.push($(cs[i]));   // in reverse order for the stack
+    }
+    this.elprocessstatus.textContent = (this.rlistb.length+"/"+this.cstack.length); 
+    return true; 
+}
+
+SVGfileprocess.prototype.processdetailSVGtunnelx = function()
+{
+    var subsetnamemapsI = { }; 
+    for (var i = 0; i < this.pathgroupings.length; i++) {
+        subsetnamemapsI[this.pathgroupings[i][0]] = i; 
+        console.assert(this.pathgroupings[i][this.pathgroupings[i].length-1].length == 0); 
+    }
+    
+    var rlistb = this.rlistb; 
+    var spnumlist = this.spnumlist; 
+    // engraving edge groups
+    for (var j = 0; j < rlistb.length; j++) {
+        var spnumobj = spnumlist[rlistb[j].spnum]; 
+        if (spnumobj.linestyle != "subsetarea") {
+            var subsetname = spnumobj.subsetname; 
+            var i = subsetnamemapsI[subsetname]; 
+            if (i !== undefined) {
+                this.pathgroupings[i][this.pathgroupings[i].length-1].push(j); 
+                var pgroup = this.Lgrouppaths[i][0]; 
+                rlistb[j].path.transform(pgroup.matrix.toTransformString()); 
+                this.Lgrouppaths[i].push(rlistb[j].path); 
+            }
+        }
+    }
+    
+    this.state = "done"+this.state; 
+}

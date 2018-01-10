@@ -455,9 +455,33 @@ Df = f;
         reader.onload = (function(e) { svgprocess.InitiateLoadingProcess(reader.result); }); 
         reader.readAsText(f); 
     } else {
-        alert("not svg type"); 
+        alert("not svg type: "+f.name); 
+        elfadiv.getElementsByClassName("fname")[0].style.background = "red"; 
     }
 }
 
 //if (svgprocess.state.match(/doneimportsvgr|doneimportsvgrareas/))
 //    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
+
+
+function exportThingPositions()
+{
+    // build up a list of thing positions for each file included
+    var res = { "datecreated":new Date().toISOString() }; 
+    res["svgprocesses"] = [ ]; 
+    var svgprocesseskeys = Object.keys(svgprocesses); 
+    for (var i = 0; i < svgprocesseskeys.length; i++) {
+        var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
+        res["svgprocesses"].push(svgprocess.jsonObjectSummary()); 
+    }
+    
+    var a = document.createElement('a');
+    var blob = new Blob([JSON.stringify(res)], {'type':"text/plain"});
+    a.href = window.URL.createObjectURL(blob);
+    a.download = "thingpositions.json";
+    document.body.appendChild(a); 
+    a.onclick = function() { 
+        document.body.removeChild(a); 
+    }; 
+    a.click();
+}
