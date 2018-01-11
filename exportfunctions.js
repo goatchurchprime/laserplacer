@@ -278,6 +278,8 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
                 if ((!mainthingsposition.svgprocesses[j].done) && (svgprocess.fname == mainthingsposition.svgprocesses[j].fname)) {
                     svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
                     mainthingsposition.svgprocesses[j].done = true; 
+                    if (svgprocess.elprocessstatus.textContent == "BD")
+                        setTimeout(groupingprocess, 1,svgprocess); 
                     break; 
                 }
             }
@@ -318,6 +320,7 @@ function deletesvgprocess()
     elfadiv.remove(); 
 }
 
+
 function groupsvgprocess() 
 {
     var elfadiv = this.parentElement; 
@@ -325,7 +328,7 @@ function groupsvgprocess()
     if (this.classList.contains("selected")) {
         ; // this.classList.remove("selected"); // should this delete and regroup feature (currently disabled feature)
     } else {
-        this.classList.add("selected"); 
+        this.classList.add("selected"); // also done in the groupingprocess
 
         // disable tunnel code
         //if (svgprocess.svgstate.match(/doneimportsvgr|doneimportsvgrareas/))
@@ -336,15 +339,7 @@ function groupsvgprocess()
         //    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); // reprocess again
         
         // normal case
-        var closedist = 0.2; // should be a setting
-        var spnumscp = getspnumsselected(svgprocess.fadivid); 
-    
-        // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
-        svgprocess.elprocessstatus.textContent = "Gstart"; 
-        svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedist, spnumscp, svgprocess.fadivid, svgprocess.elprocessstatus); 
-        svgprocess.elprocessstatus.textContent = "GD"; 
-        svgprocess.updateLgrouppaths(); 
-        updateAvailableThingPositions(); 
+        groupingprocess(svgprocess); 
     }
 }
 

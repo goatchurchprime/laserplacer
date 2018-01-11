@@ -42,6 +42,8 @@ SVGfileprocess.prototype.jsonThingsPositions = function()   // to be used by imp
     return thingpos; 
 }
 
+
+
 // only to be called after loading (the positions can be looked up later)
 SVGfileprocess.prototype.applyThingsPosition = function(thingpos)   // to be used by importThingPositions(lthingsposition) 
 {
@@ -546,10 +548,9 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, pathgroup
             blockedmode = elfadividphi.classList.contains("locked"); 
             brotatemode = e.ctrlKey; 
             pathselected = pgrouparea; // this is only a remnant of the collision testing stuff
-            elfadividphi.classList.add("moving"); 
-                
-            //basematrix = pgrouparea.matrix.toTransformString(); 
-            basematrix = pgrouparea.transform(); 
+            //elfadividphi.classList.add("moving"); // doesn't work
+            elfadividphi.selected = true; 
+            
             groupcolour = pgrouparea.attr("fill"); 
             pgrouparea.attr("fill", "#fa0"); 
             if (brotatemode) {
@@ -622,6 +623,24 @@ console.log("hghghg", grouptype, spnumscp);
 
     this.updateLgrouppaths(); 
 }
+
+function groupingprocess(svgprocess) 
+{
+    console.log(svgprocess.fadivid, document.getElementById(svgprocess.fadivid)); 
+    document.getElementById(svgprocess.fadivid).getElementsByClassName("groupprocess")[0].classList.add("selected"); 
+
+    // normal case
+    var closedist = 0.2; // should be a setting
+    var spnumscp = getspnumsselected(svgprocess.fadivid); 
+
+    // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
+    svgprocess.elprocessstatus.textContent = "Gstart"; 
+    svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedist, spnumscp, svgprocess.fadivid, svgprocess.elprocessstatus); 
+    svgprocess.elprocessstatus.textContent = "GD"; 
+    svgprocess.updateLgrouppaths(); 
+    updateAvailableThingPositions(); 
+}
+
 
 SVGfileprocess.prototype.updateLgrouppaths = function()
 {
