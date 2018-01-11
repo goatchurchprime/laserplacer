@@ -8,7 +8,7 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
     this.bstockdefinitiontype = bstockdefinitiontype; 
     //this.svgstate = "constructed";   // want to replace this with elprocessstatus
     this.bcancelIm = false; 
-    this.cutfillcolour = "#0a8"; 
+    //this.cutfillcolour = "#0a8"; 
     this.processcountnumber = Iprocesscount++; // used for positioning on drop
     this.currentabsolutescale = 1.0; 
     
@@ -79,7 +79,7 @@ console.log("strokewidths", this.fadivid, drawstrokewidth, cutstrokewidth);
         for (var j = 0; j < this.Lgrouppaths[i].length; j++) {
             this.Lgrouppaths[i][j].attr("stroke-width", drawstrokewidth); 
         };
-        if (this.pathgroupings[i][0] != "boundrect")
+//        if (this.pathgroupings[i][0] != "boundrect")
             this.Lgrouppaths[i][0].attr("stroke-width", cutstrokewidth); 
     }
 }
@@ -696,7 +696,6 @@ console.log("moving boundrect needs fixing", tstr);
         
         // form the area object from the directed cut paths and the engraved paths (whose direction is not encoded)
         var dgroup = [ ]; // used to build pgroup
-        var fillcolour = (this.btunnelxtype ? this.spnumlist[this.rlistb[pathgrouping[1][0]/2|0].spnum].fillcolour : this.cutfillcolour); 
         for (var j = 1; j < pathgrouping.length - 1; j++) {
             if (pathgrouping[j].length != 0)
                 dgroup = dgroup.concat(PolySorting.JDgeoseq(pathgrouping[j], dlist)); 
@@ -710,12 +709,17 @@ console.log("moving boundrect needs fixing", tstr);
         if ((pathgrouping[0] == "boundrect") || (pathgrouping[0] == "unmatchedsinglets")) {
             var bbox = Raphael.pathBBox(lengpaths); 
             pgroup = paper1.path("M"+bbox.x+","+bbox.y+"H"+bbox.x2+"V"+bbox.y2+"H"+bbox.x+"Z"); 
-            pgroup.attr({stroke:"none", fill:(pathgrouping[0] == "boundrect" ? "#aae" : "#e99"), "fill-opacity":"0.16"}); 
+            pgroup.attr(pathgrouping[0] == "boundrect" ? areacolvals.boundrect : areacolvals.unmatchedsingletsrect); 
         } else {   // pathgrouping[0] is the id of this component
             pgroup = paper1.path(dgroup); 
-            pgroup.attr({stroke:(this.btunnelxtype ? "black" : "white"), "stroke-width": gcutstrokewidth, fill:fillcolour, "fill-opacity":"0.1", "stroke-linejoin":"round"}); 
+            //if (this.btunnelxtype)
+            //      var fillcolour = this.spnumlist[this.rlistb[pathgrouping[1][0]/2|0].spnum].fillcolour; 
+            //      pgroup.attr({stroke:"black", "stroke-width": gcutstrokewidth, fill:fillcolour, "fill-opacity":"0.1", "stroke-linejoin":"round"}); 
+            pgroup.attr(this.bstockdefinitiontype ? areacolvals.stockarea : areacolvals.groupedarea); 
+            pgroup.attr("stroke-width", gcutstrokewidth); 
             pgroup[0].style["fillRule"] = "evenodd"; // hack value in as this cannot be implemented via Raphaeljs interface (till we get the orientations right)
-            if (this.bstockdefinitiontype)
+
+            if (this.bstockdefinitiontype) 
                 pgroup.toBack(); 
         }
         
@@ -743,6 +747,11 @@ console.log(this.pathgroupingtstrs.length, k, this.pathgroupingtstrs);
         for (var i = 0; i < lpaths.length; i++)
             lpaths[i].transform(this.pathgroupingtstrs[k].tstr); // use the transforms that were put there
             
+        if (this.bstockdefinitiontype) {  // all need to get behind the overlay or the gcutlinewidth outline part gets confusing
+            for (var i = 1; i < lpaths.length; i++)
+                lpaths[i].toBack(); 
+        }
+
         this.Lgrouppaths.push(lpaths); 
 
         this.applygroupdrag(pgroup, lpaths, this.pathgroupingtstrs[k]); 
