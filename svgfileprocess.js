@@ -360,6 +360,8 @@ function importSVGpathRR(lthis)
             lthis.elprocessstatus.textContent = "BD"; 
             lthis.updateLgrouppaths(); 
             updateAvailableThingPositions(); 
+            if (lthis.bstockdefinitiontype)
+                setTimeout(groupingprocess, 1, lthis); 
         }
     }
 }
@@ -627,7 +629,8 @@ console.log("hghghg", grouptype, spnumscp);
 function groupingprocess(svgprocess) 
 {
     console.log(svgprocess.fadivid, document.getElementById(svgprocess.fadivid)); 
-    document.getElementById(svgprocess.fadivid).getElementsByClassName("groupprocess")[0].classList.add("selected"); 
+    if (!svgprocess.bstockdefinitiontype)
+        document.getElementById(svgprocess.fadivid).getElementsByClassName("groupprocess")[0].classList.add("selected"); 
 
     // normal case
     var closedist = 0.2; // should be a setting
@@ -712,6 +715,8 @@ console.log("moving boundrect needs fixing", tstr);
             pgroup = paper1.path(dgroup); 
             pgroup.attr({stroke:(this.btunnelxtype ? "black" : "white"), "stroke-width": gcutstrokewidth, fill:fillcolour, "fill-opacity":"0.1", "stroke-linejoin":"round"}); 
             pgroup[0].style["fillRule"] = "evenodd"; // hack value in as this cannot be implemented via Raphaeljs interface (till we get the orientations right)
+            if (this.bstockdefinitiontype)
+                pgroup.toBack(); 
         }
         
 console.log(this.pathgroupingtstrs.length, k);

@@ -279,7 +279,7 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
                     svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
                     mainthingsposition.svgprocesses[j].done = true; 
                     if (svgprocess.elprocessstatus.textContent == "BD")
-                        setTimeout(groupingprocess, 1,svgprocess); 
+                        setTimeout(groupingprocess, 1, svgprocess); 
                     break; 
                 }
             }
