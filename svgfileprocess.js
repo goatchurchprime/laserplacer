@@ -552,6 +552,7 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, pathgroup
             elfadividphi.textContent = "t"+pgrouparea._.dx.toFixed()+","+pgrouparea._.dy.toFixed()+"r"+pgrouparea._.deg.toFixed(); 
         }, 
         function(x, y, e)  {  // mouse down
+            tstr = pathgroupingtstr.tstr; 
             blockedmode = elfadividphi.classList.contains("locked"); 
             brotatelocked15 = document.getElementById("rotatelock15").classList.contains("selected"); 
             orgrotdeg = pgrouparea._.deg; 
@@ -684,6 +685,7 @@ console.log("moving boundrect needs fixing", tstr);
     }
 */
 
+    // empty the select dropdown list
     var eldpositions = document.getElementById(this.fadivid).getElementsByClassName("dposition")[0]; 
     while (eldpositions.firstChild)  
         eldpositions.removeChild(eldpositions.firstChild); 
@@ -736,9 +738,6 @@ console.log(this.pathgroupingtstrs.length, k);
 console.log(this.pathgroupingtstrs.length, k, this.pathgroupingtstrs);
         this.pathgroupingtstrs[k].fadividphi = this.fadivid+"k"+k; 
 
-        eldpositions.insertAdjacentHTML("beforeend", '<option id="'+this.pathgroupingtstrs[k].fadividphi+'" title="group'+k+'">'+"t"+pgroup._.dx.toFixed()+","+pgroup._.dy.toFixed()+"r"+pgroup._.deg.toFixed()+'</option>'); 
-        document.getElementById(this.pathgroupingtstrs[k].fadividphi).onclick = function() { this.classList.toggle("locked"); }; 
-
         var eldposition = document.getElementById(this.fadivid).getElementsByClassName("dposition")[0]; 
         
         // form the list of all paths belonging to this area object
@@ -761,6 +760,9 @@ console.log(this.pathgroupingtstrs.length, k, this.pathgroupingtstrs);
 
         this.Lgrouppaths.push(lpaths); 
 
+        // problem with select/option construct is you can have no decoration of the cells; only plain text
+        eldpositions.insertAdjacentHTML("beforeend", '<option id="'+this.pathgroupingtstrs[k].fadividphi+'">'+"t"+pgroup._.dx.toFixed()+","+pgroup._.dy.toFixed()+"r"+pgroup._.deg.toFixed()+'</option>'); 
+        document.getElementById(this.pathgroupingtstrs[k].fadividphi).onclick = function() { this.classList.toggle("locked"); }; 
         this.applygroupdrag(pgroup, lpaths, this.pathgroupingtstrs[k]); 
     }; 
 }

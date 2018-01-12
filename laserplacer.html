@@ -23,7 +23,7 @@ var svgprocesses = { };         // indexed by fadivid (type SVGfileprocess)
 var mainthingsposition = {svgprocesses:[]};  // loaded and applied to files as their names match
 
 var fadividlast = null; 
-var Dsvgprocess = undefined; // most recent one
+var Dsvgprocess = undefined; // most recent one (for debugging)
 var pathselected = null; 
 var opts; 
 var ylo, yhi; 
@@ -32,11 +32,6 @@ var Lgrouppath = [];
 
 
 var Deee; 
-
-function togglerotatelock15()
-{
-	
-}
 
 var dropsvgherenote = null; 
 function setup()
