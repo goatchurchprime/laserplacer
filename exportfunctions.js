@@ -343,6 +343,80 @@ function groupsvgprocess()
     }
 }
 
+
+// returns [ {fadivid:fadivid, j:j, bbox:bbox } ]
+function GetGroupsoverlayingstock(stockbbox)
+{
+    // find all pathgroups that overlap this stockbbox
+    var groupsoverlayingstock = [ ]; 
+    var svgprocesseskeys = Object.keys(svgprocesses); 
+    for (var i = 0; i < svgprocesseskeys.length; i++) {
+        var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
+        if (!svgprocess.bstockdefinitiontype) {
+            console.assert(svgprocess.Lgrouppaths.length == svgprocess.pathgroupings.length); 
+            
+            // boundary only done case (gives option of including this raw without grouping) 
+            if (svgprocess.elprocessstatus.textContent == "BD") {
+                console.assert(svgprocess.pathgroupings.length == 1); 
+                console.assert(svgprocess.pathgroupings[0][0] == "boundrect"); 
+                var groupbbox = svgprocess.Lgrouppaths[0][0].getBBox(); 
+                if (Raphael.isBBoxIntersect(stockbbox, groupbbox))
+                    groupsoverlayingstock.push({fadivid:svgprocess.fadivid, j:0, bbox:groupbbox}); 
+                
+            // grouped done case
+            } else {
+                for (var j = 0; j < svgprocess.pathgroupings.length; j++) {
+                    if ((svgprocess.pathgroupings[j][0] != "boundrect") && (svgprocess.pathgroupings[j][0] != "unmatchedsinglets")) {
+                        var groupbbox = svgprocess.Lgrouppaths[j][0].getBBox(); 
+                        if (Raphael.isBBoxIntersect(stockbbox, groupbbox))
+                            groupsoverlayingstock.push({fadivid:svgprocess.fadivid, j:j, bbox:groupbbox}); 
+                    }
+                }
+            }
+        }
+    }
+    return groupsoverlayingstock; 
+}
+
+
+// finish 
+// returns [ { ptype:cutouter/cutisland/etch, d:dvalue, reversed:true/false, colour:col, tstr:tstr, xtransseq:[], ytransseq:[] } ] 
+function GetPathsPensSequences(svgprocess, pathgrouping, tstr) 
+{
+    var res = [ ]; 
+    for (var i = 1; i < pathgrouping.length; i++) {
+        for (var k = 0; k < pathgrouping[i].length; k++) {
+            var rres = { ptype:(i == pathgrouping.length - 1 ? "etch" : (i == 1 ? "cutouter" : "cutinner")), tstr:tstr, pgindex:k }; 
+            var jr; 
+            if (rres.ptype == "etch") {
+                jr = pathgrouping[i][k]; 
+                rres["reversed"] = false; 
+            } else {
+                jr = pathgrouping[i][k]/2|0; 
+                rres["reversed"] = ((pathgrouping[i][k]%2) == 0); 
+            }
+            rres["rspnum"] = svgprocess.rlistb[jr].spnum; 
+            rres["cmatrix"] = svgprocess.rlistb[jr].cmatrix; 
+            rres["dmi"] = svgprocess.rlistb[jr].dmi; 
+            res.push(rres); 
+        }
+    }
+    return res; 
+}
+
+function PenCutSeqToPoints(penseq, ftol)
+{
+    penseq["xtransseq"] = [ ]; 
+    penseq["ytransseq"] = [ ]; 
+    
+    var dtrans = Raphael.mapPath(penseq.dmi, penseq.cmatrix); 
+    dtrans = Raphael.transformPath(dtrans, penseq.tstr); 
+    for (var j = 0; j < dtrans.length; j++) {
+        penseq.xtransseq.push(dtrans[j][dtrans[j].length-2])
+        penseq.ytransseq.push(dtrans[j][dtrans[j].length-1])
+    }        
+}
+
 var Dpens = null; 
 function genpathorderonstock() 
 {
@@ -350,54 +424,41 @@ function genpathorderonstock()
     var svgstockprocess = svgprocesses[elfadiv.id]; 
     console.assert(svgstockprocess.bstockdefinitiontype); 
     var stockbbox = svgstockprocess.Lgrouppaths[0][0].getBBox(); 
+
+    var groupsoverlayingstock = GetGroupsoverlayingstock(stockbbox); 
+console.log("groups we will merge in", groupsoverlayingstock); 
     
-    // find all pathgroups that overlap this stockbbox
-    var groupstoindex = [ ]; 
-    var svgprocesseskeys = Object.keys(svgprocesses); 
-    for (var i = 0; i < svgprocesseskeys.length; i++) {
-        var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
-        if (svgprocess.bstockdefinitiontype)
-            continue; 
-        console.assert(svgprocess.fadivid != elfadiv.id); 
-        console.assert(svgprocess.Lgrouppaths.length == svgprocess.pathgroupings.length); 
-        for (var j = 0; j < svgprocess.pathgroupings.length; j++) {
-            if ((svgprocess.pathgroupings[j][0] != "boundrect") && (svgprocess.pathgroupings[j][0] != "unmatchedsinglets")) {
-                var groupbbox = svgprocess.Lgrouppaths[j][0].getBBox(); 
-                if (Raphael.isBBoxIntersect(stockbbox, groupbbox))
-                    groupstoindex.push([svgprocess.fadivid, j]); 
-            }
-        }
-    }
-    console.log("groups we will merge in", groupstoindex); 
-    
-    // collect all the penciled edges
-    var etchingmarks = [ ]; // [rlistb, additional-transform] type
-    for (var i = 0; i < groupstoindex.length; i++) {
-        var svgprocess = svgprocesses[groupstoindex[i][0]]; 
-        var pathgrouping = svgprocess.pathgroupings[groupstoindex[i][1]]; 
-        var etchinglist = pathgrouping[pathgrouping.length-1]; 
-        console.log("penlist", etchinglist); 
-        var tstr = svgprocess.Lgrouppaths[groupstoindex[i][1]][0].transform(); 
-        for (var j = 0; j < etchinglist.length; j++)
-            etchingmarks.push([svgprocess.rlistb[etchinglist[j]], tstr]); 
+    // collect all the penciled edges into the su
+    var pencutseqs = [ ]; 
+    for (var i = 0; i < groupsoverlayingstock.length; i++) {
+        var svgprocess = svgprocesses[groupsoverlayingstock[i].fadivid]; 
+        var gj = groupsoverlayingstock[i].j; 
+        var pencutseq = GetPathsPensSequences(svgprocess, svgprocess.pathgroupings[gj], svgprocess.pathgroupingtstrs[gj].tstr); 
+        pencutseqs = pencutseqs.concat(pencutseq); 
+console.log("pencutseq", pencutseq); 
     }
     
-    // we can now penplot
+    for (var i = 0; i < pencutseqs.length; i++) 
+        PenCutSeqToPoints(pencutseqs[i], 0.1);
+
+    console.log("pencutseqs", pencutseqs); 
+    // the sorting part
+    // pencutseqs.sort()  // 
+
+    // all in one go now
     var dseq = [ ]; 
-    for (var i = 0; i < etchingmarks.length; i++) {
-        var d = etchingmarks[i][0].path.attr("path"); 
-        var dtrans = Raphael.mapPath(d, etchingmarks[i][0].cmatrix); 
-        dtrans = Raphael.transformPath(dtrans, etchingmarks[i][1]); 
-console.log(dtrans);         
-        for (var j = 0; j < dtrans.length; j++) {
-            dseq.push("L", dtrans[j][dtrans[j].length-2], dtrans[j][dtrans[j].length-1]); 
-        }   
-        dseq[0] = "M"; 
+    for (var i = 0; i < pencutseqs.length; i++) {
+        for (var j = 0; j < pencutseqs[i].xtransseq.length; j++) 
+            dseq.push("L", pencutseqs[i].xtransseq[j], pencutseqs[i].ytransseq[j]); 
     }
+    dseq[0] = "M"; 
+    
 if (Dpens !== null)
     Dpens.remove(); 
 Dpens = paper1.path(dseq); 
 }
+
+
 
 var gdrawstrokewidth = 1.0; 
 var gcutstrokewidth = 0.8; 
@@ -469,7 +530,7 @@ function importSVGfile(i, f)
         fileblock.push('<span class="groupprocess" title="Group geometry">Group</span>'); 
     fileblock.push('<select class="dposition"></select>'); 
     if (bstockdefinitiontype)
-        fileblock.push('<span class="genpathorder">GenPath</span>'); 
+        fileblock.push('<input type="button" value="GenPath" class="genpathorder"/>'); 
     
     fileblock.push('</div>'); 
     elfilearea.insertAdjacentHTML("beforeend", fileblock.join("")); 
@@ -525,8 +586,6 @@ function exportThingPositions()
     a.href = window.URL.createObjectURL(blob);
     a.download = "thingpositions.json";
     document.body.appendChild(a); 
-    a.onclick = function() { 
-        document.body.removeChild(a); 
-    }; 
+    a.onclick = function() {  document.body.removeChild(a); }; 
     a.click();
 }

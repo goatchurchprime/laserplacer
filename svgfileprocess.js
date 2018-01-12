@@ -131,21 +131,28 @@ SVGfileprocess.prototype.WorkOutPixelScale = function()
     this.fsca = 1.0/this.fmmpixwidth; 
 }
 
-// necessaryfor the final splitting of the path by the M values
+// necessaryfor the final splitting of the path by the M values (we set bMsplits=false only in tunnel importing)
 SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, d, spnum, strokecolour, cmatrix)
 {
     var i0 = 0; 
     var mi = 0; 
+    var im0 = 0; 
     while (i0 < dtrans.length) {
         var i1 = i0 + 1; 
         while ((i1 < dtrans.length) && ((dtrans[i1][0] != "M") || !bMsplits))
             i1++; 
+
+        console.assert(d[im0] == "M"); 
+        var dim1 = d.substr(im0+1).search("M")
+        console.assert((dim1 == -1) == (i1 == dtrans.length)); 
+        
         // this is the place to separate out the paths by M positions
         var path = paper1.path(dtrans.slice(i0, i1)); 
         path.attr({stroke:strokecolour, "stroke-width":this.drawstrokewidth}); 
         rlist.push(path); 
-        this.rlistb.push({path:path, spnum:spnum, d:d, mi:mi, cmatrix:cmatrix}); 
+        this.rlistb.push({path:path, spnum:spnum, d:d, mi:mi, dmi:(dim1 == -1 ? d.substr(im0) : d.substr(im0, dim1+im0+1)), cmatrix:cmatrix}); 
         
+        im0 = dim1+im0+1; 
         i0 = i1; 
         mi++; 
     }
