@@ -54,7 +54,6 @@ function setup()
 		
     $("#exportSVG").click(exportSVG); 
     $("#exportPLT").click(exportPLT); 
-    document.getElementById("exportANC").onclick = exportANC; 
     $("#movecollide").click(MoveCollide); 
     $("#nest1").click(Nest1); 
     $("#files").change(function(e) { importSVGfiles(e.target.files); });  
@@ -158,7 +157,6 @@ div#filearea select#importedthingpos { Dvisibility: hidden }
   <div id="panelheader">
     <input type="button" value="exportSVG" id="exportSVG"/>
     <input type="button" value="exportPLT" id="exportPLT"/>
-    <input type="button" value="exportANC" id="exportANC"/>
     <!--input type="button" value="MOVE!" id="movecollide"-->
     <!--input type="button" value="Nest1" id="nest1"-->
     <input type="file" id="files" name="files[]" multiple />
