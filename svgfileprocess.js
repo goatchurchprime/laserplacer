@@ -527,6 +527,9 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, pathgroup
         // closured values shared between the drag functions
     var blockedmode = false; 
     var brotatemode = false;  
+    var brotatelocked15 = false; 
+    var orgrotdeg = 0.0; // required to move the locking to the nearest 15
+    
     var cx = 0, cy = 0; 
     var tstr; 
     var groupcolour = pgrouparea.attr("fill"); // original colour before coloured to highlight it is being dragged
@@ -537,10 +540,12 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, pathgroup
             e.stopPropagation(); e.preventDefault(); 
             if (blockedmode)
                 return; 
-            else if (brotatemode)
-                tstr = "r"+(dx*0.34)+","+cx+","+cy+pathgroupingtstr.tstr; 
-            else
+            else if (!brotatemode)
                 tstr = "t"+(dx*paper1scale)+","+(dy*paper1scale)+pathgroupingtstr.tstr; 
+            else if (brotatelocked15) 
+                tstr = "r"+(-orgrotdeg + 15*Math.round((orgrotdeg+dx*0.34)/15))+","+cx+","+cy+pathgroupingtstr.tstr; 
+            else
+                tstr = "r"+(dx*0.34)+","+cx+","+cy+pathgroupingtstr.tstr; 
             tstr = pgrouparea.transform(tstr).transform(); // compose and extract the simplified transform
             for (var i = 1; i < lpaths.length; i++) 
                 lpaths[i].transform(tstr); 
@@ -548,6 +553,8 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, pathgroup
         }, 
         function(x, y, e)  {  // mouse down
             blockedmode = elfadividphi.classList.contains("locked"); 
+            brotatelocked15 = document.getElementById("rotatelock15").classList.contains("selected"); 
+            orgrotdeg = pgrouparea._.deg; 
             brotatemode = e.ctrlKey; 
             pathselected = pgrouparea; // this is only a remnant of the collision testing stuff
             //elfadividphi.classList.add("moving"); // doesn't work

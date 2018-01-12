@@ -33,6 +33,11 @@ var Lgrouppath = [];
 
 var Deee; 
 
+function togglerotatelock15()
+{
+	
+}
+
 var dropsvgherenote = null; 
 function setup()
 {
@@ -42,12 +47,16 @@ function setup()
 	
 	document.getElementById("thinnerstrokes").onclick = function() { scalestrokewidths(0.5); }; 
 	document.getElementById("thickerstrokes").onclick = function() { scalestrokewidths(2); }; 
-	document.getElementById("togglebackgroundcolour").onclick = function() { setbackgroundcolour(true); }
+	document.getElementById("togglebackgroundcolour").onclick = function() { setbackgroundcolour(true); }; 
+	document.getElementById("rotatelock15").onclick = function() { this.classList.toggle("selected");  hashoptions["r"] = (this.classList.contains("selected") ? "15" : "0"); writewindowurlhash(); }; 
+	
 	setbackgroundcolour(false); 
 	document.getElementById("closehelp").onclick = hidehelparea; 
 	if (hashoptions["h"] === "0")
 		hidehelparea(); 
-
+	if (hashoptions["r"] === "15")
+		document.getElementById("rotatelock15").classList.add("selected"); 
+		
     $("#exportSVG").click(exportSVG); 
     $("#exportPLT").click(exportPLT); 
     document.getElementById("exportANC").onclick = exportANC; 
@@ -116,7 +125,8 @@ div#filearea .dposition span.locked { background: #aaa }
 div#filearea .dposition span.moving { font-weight: bold }
 div#filearea select#importedthingpos { Dvisibility: hidden }
 
-#thinnerstrokes, #thickerstrokes, #togglebackgroundcolour { border: 0; padding: 0; color: blue }
+#thinnerstrokes, #thickerstrokes, #togglebackgroundcolour, #rotatelock15 { border: 0; padding: 0; color: blue }
+#rotatelock15.selected { background: #ee5 }
 
 #texttosvgize { height: 1em }
 
@@ -161,6 +171,7 @@ div#filearea select#importedthingpos { Dvisibility: hidden }
     <input type="button" value="<<" id="thinnerstrokes" title="Thinner strokes">
     <input type="button" value=">>" id="thickerstrokes" title="Thicker strokes">
     <input type="button" value=".*." id="togglebackgroundcolour" title="Toggle background colour" style="background: #eee" >
+    <input type="button" value="Rot15" id="rotatelock15" title="Lock rotations to 15deg intervals">
     
     <textarea id="texttosvgize">svgizing letters here</textarea>
     <input type="button" value="svgizetext" id="svgizetext">
