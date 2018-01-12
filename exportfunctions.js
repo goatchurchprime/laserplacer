@@ -456,7 +456,7 @@ function PenCutSeqsToPltCode(pencutseqs, stockbbox)
         }
     }
 
-    lc.push("PU;\n", "VS 1000;\n", "PA 0,0;\n", "!PG\n"); 
+    lc.push("PU;\n", "VS 1000;\n", "PU;\n", "PA 0,0;\n", "!PG;\n"); 
     return lc; 
 } 
 
