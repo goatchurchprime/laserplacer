@@ -1,20 +1,29 @@
 // (also contains importSVGfiles() at the bottom)
 
 
+function AutoDownloadBlob(stringlist, downloadfilename) 
+{
+    var a = document.createElement('a');
+    a.style = "display: none"; 
+    var mimetype = "text/plain"; 
+    if (downloadfilename.match("svg$"))
+        mimetype = "image/svg+xml"; 
+    else if (downloadfilename.match("json$"))
+        mimetype = "application/json"; 
+    
+    var blob = new Blob(stringlist, {'type':mimetype});
+    a.href = window.URL.createObjectURL(blob);
+    a.download = downloadfilename;
+    document.body.appendChild(a); 
+    a.onclick = function() { document.body.removeChild(a); }; 
+    a.click();
+}
+
 function exportSVG()
 {
     var xs = new XMLSerializer();
     var data = document.getElementById("paper1").children[0]; // gets the svg element put there by Raphael
-    var a = document.createElement('a');
-    a.style = "display: none"; 
-    var blob = new Blob([xs.serializeToString(data)], {'type':"image/svg+xml"});
-    a.href = window.URL.createObjectURL(blob);
-    a.download = "test.svg";
-    document.body.appendChild(a); 
-    a.onclick = function() { 
-		document.body.removeChild(a); 
-	}; 
-    a.click();
+    AutoDownloadBlob([xs.serializeToString(data)], "test.svg");
 }
 
 
@@ -68,15 +77,7 @@ function exportPLT()
         } else {
             lplt.push("SP0;\n"); 
             var a = document.createElement('a');
-            var blob = new Blob(lplt, {'type':"text/plain"});
-            a.href = window.URL.createObjectURL(blob);
-            a.style = "display: none"; 
-            a.download = "test.plt";
-			document.body.appendChild(a); 
-			a.onclick = function() { 
-				document.body.removeChild(a); 
-			}; 
-			a.click();
+            AutoDownloadBlob(lplt, "test.plt"); 
         }
         $("#readingcancel").text(i+"/"+rlist.length); 
     };
@@ -123,16 +124,7 @@ function exportJSON()
             setTimeout(exportJSONpathR, 1); 
         } else {
             lplt.push(""); 
-            var a = document.createElement('a');
-            a.style = "display: none"; 
-            var blob = new Blob(lplt, {'type':"text/plain"});
-            a.href = window.URL.createObjectURL(blob);
-            a.download = "test.plt";
-			document.body.appendChild(a); 
-			a.onclick = function() { 
-				document.body.removeChild(a); 
-			}; 
-            a.click();
+            AutoDownloadBlob(lplt, "test.plt"); 
         }
         $("#readingcancel").text(i+"/"+rlist.length); 
     };
@@ -246,6 +238,7 @@ function exportANC()
         } else {
             var movex = (finalx > 0 ? finalx-100 : finalx+100);
             lgcode.push("PU;\nPA 0,0\n!PG"); 
+            
 			var a = document.createElement('a');
 			var blob = new Blob(lgcode, {'type':"text/plain"});
 			a.href = window.URL.createObjectURL(blob);
@@ -417,6 +410,56 @@ function PenCutSeqToPoints(penseq, ftol)
     }        
 }
 
+function PenCutSeqsToPltCode(pencutseqs, stockbbox)
+{
+    lc = [ "POST: https://bitbucket.org/goatchurch/laserplacer\n" ];  
+    lc.push("START\n"); 
+    lc.push("'(name of files and entities loaded go here)\n"); 
+    lc.push("%4 1000;\n", "%5 1000;\n", "%6 100;\n", "%7 10;\n", "%8 10;\n", "%9 10;\n"); 
+    
+    var currx, curry, currsp, currvs; 
+    var jointol = 0.1; 
+    // origin to offset is stockbbox.x, stockbbox.y2-; 
+    
+    // [ { ptype:cutouter/cutisland/etch, d:dvalue, reversed:true/false, colour:col, tstr:tstr, xtransseq:[], ytransseq:[] } ] 
+    for (var i = 0; i < pencutseqs.length; i++) {
+        var pencutseq = pencutseqs[i]; 
+        var sp = (pencutseq.ptype == "etch" ? 1 : 2); 
+        var n = pencutseq.xtransseq.length; 
+        var p0x = (pencutseq.reversed ? pencutseq.xtransseq[n-1] : pencutseq.xtransseq[0]); 
+        var p0y = (pencutseq.reversed ? pencutseq.ytransseq[n-1] : pencutseq.ytransseq[0]); 
+        var bliftpen = ((i == 0) || (Math.hypot(currx - p0x, curry - p0y) > jointol)); 
+        var bchangepen = ((i == 0) || (sp != currsp)); 
+        if (bliftpen || bchangepen) {
+            if (i != 0)
+                lc.push("PU;\n"); 
+            lc.push("VS 1000;\n"); 
+            currvs = 1000; 
+            lc.push("PA "+(p0x-stockbbox.x).toFixed(2)+","+(stockbbox.y2-p0y).toFixed(2)+";\n");  // flipping the y
+            if (bchangepen)
+                lc.push("SP "+sp+";\n"); 
+            lc.push("PD;\n"); 
+            currsp = sp; 
+        }
+        var vs = (pencutseq.ptype == "etch" ? 500 : 140); 
+        if (vs != currvs) 
+            lc.push("VS "+vs+";\n"); 
+        currvs = vs;  
+        currx = p0x; 
+        curry = p0y; 
+            
+        for (var j = 1; j < n; j++) {
+            var rj = (pencutseq.reversed ? n-1-j : j); 
+            currx = pencutseq.xtransseq[rj]; 
+            curry = pencutseq.ytransseq[rj]; 
+            lc.push("PA "+(currx-stockbbox.x).toFixed(2)+","+(stockbbox.y2-curry).toFixed(2)+";\n"); 
+        }
+    }
+
+    lc.push("PU;\n", "VS 1000;\n", "PA 0,0;\n", "!PG\n"); 
+    return lc; 
+} 
+
 var Dpens = null; 
 function genpathorderonstock() 
 {
@@ -452,11 +495,14 @@ console.log("pencutseq", pencutseq);
             dseq.push("L", pencutseqs[i].xtransseq[j], pencutseqs[i].ytransseq[j]); 
     }
     dseq[0] = "M"; 
-    
+
 if (Dpens !== null)
     Dpens.remove(); 
 Dpens = paper1.path(dseq); 
+
+    AutoDownloadBlob(PenCutSeqsToPltCode(pencutseqs, stockbbox), "pencut.anc"); 
 }
+
 
 
 
@@ -579,13 +625,5 @@ function exportThingPositions()
         var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
         res["svgprocesses"].push(svgprocess.jsonThingsPositions()); 
     }
-    
-    // generate the json download file
-    var a = document.createElement('a');
-    var blob = new Blob([JSON.stringify(res)], {'type':"text/plain"});
-    a.href = window.URL.createObjectURL(blob);
-    a.download = "thingpositions.json";
-    document.body.appendChild(a); 
-    a.onclick = function() {  document.body.removeChild(a); }; 
-    a.click();
+    AutoDownloadBlob([JSON.stringify(res)], "thingpositions.json"); 
 }
