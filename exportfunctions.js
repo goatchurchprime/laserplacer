@@ -254,7 +254,7 @@ function GetPathsPensSequences(svgprocess, pathgrouping, tstr)
     var res = [ ]; 
     for (var i = 1; i < pathgrouping.length; i++) {
         for (var k = 0; k < pathgrouping[i].length; k++) {
-            var rres = { ptype:(i == pathgrouping.length - 1 ? "etch" : (i == 1 ? "cutouter" : "cutinner")), tstr:tstr, pgindex:k }; 
+            var rres = { ptype:(i == pathgrouping.length - 1 ? "etch" : (i == 1 ? "cutouter" : "cutinner")), tstr:tstr, fadivid:svgprocess.fadivid, pgi:i, pgik:k }; 
             var jr; 
             if (rres.ptype == "etch") {
                 jr = pathgrouping[i][k]; 
@@ -335,7 +335,30 @@ function PenCutSeqsToPltCode(pencutseqs, stockbbox)
     return lc; 
 } 
 
+
+
 var Dpens = null; 
+
+function pencutordercompare(a, b)
+{
+    if (a.ptype == "etch") {
+        if (b.ptype != "etch")
+            return -1; 
+        return (a.xtransseq[0] < b.xtransseq[0]); 
+    }
+    if (b.ptype == "etch")
+        return 1; 
+    
+    if (a.fadivid != b.fadivid) 
+        return (a.fadivid < b.fadivid ? -1 : 1); 
+        
+    if (a.pgi != b.pgi)
+        return (a.pgi - b.pgi);
+        
+    return (a.pgik - b.pgik);
+}
+
+
 function genpathorderonstock() 
 {
     var elfadiv = this.parentElement; 
@@ -360,8 +383,8 @@ console.log("pencutseq", pencutseq);
         PenCutSeqToPoints(pencutseqs[i], 0.1);
 
     console.log("pencutseqs", pencutseqs); 
-    // the sorting part
-    // pencutseqs.sort()  // 
+    pencutseqs.sort(pencutordercompare);   
+    console.log("pencutseqsordered", pencutseqs); 
 
     // all in one go now
     var dseq = [ ]; 
