@@ -82,6 +82,8 @@ console.log("strokewidths", this.fadivid, drawstrokewidth, cutstrokewidth);
 //        if (this.pathgroupings[i][0] != "boundrect")
             this.Lgrouppaths[i][0].attr("stroke-width", cutstrokewidth); 
     }
+    if (this.rjspath !== undefined)
+        this.rjspath.attr("stroke-width", cutstrokewidth); 
 }
 
 function converttomm(s) 

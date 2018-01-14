@@ -361,9 +361,83 @@ function pencutordercompare(a, b)
     return (a.pgik - b.pgik);
 }
 
+
+var PenCutAnimation = function(svgstockprocess, pencutseqs) 
+{
+    this.pencutanimtimeout = null; 
+    this.svgstockprocess = svgstockprocess; 
+    this.pencutseqs = pencutseqs; 
+    this.elstockprocess = document.getElementById(svgstockprocess.fadivid); 
+    this.elseqindex = this.elstockprocess.getElementsByClassName("pencutseqindex")[0]; 
+    this.seqindex = parseInt(this.elseqindex.value); 
+    if (this.seqindex >= this.pencutseqs.length)
+        this.seqindex = 0; 
+    this.seqseqindex = -1; 
+    this.pencutanimtimeout = null; 
+    this.svgstockprocess.rjspath = paper1.path("M0,0").attr({stroke:"red", "stroke-width":gcutstrokewidth}); 
+    svgstockprocess.rjsnode = paper1.circle(0, 0, 0).attr({fill:"blue", "stroke":"none", "fill-opacity":0.5}); 
+    this.rjslinelink = paper1.path("M0,0").attr({stroke:"magenta", "stroke-width":gcutstrokewidth}); 
+    this.rjslinecurr = paper1.path("M0,0").attr({stroke:"pink", "stroke-width":gcutstrokewidth}); 
+    this.rjspath = paper1.path("M0,0").attr({stroke:"red", "stroke-width":gcutstrokewidth}); 
+    this.rjsnode = paper1.circle(0, 0, gcutstrokewidth*2+20).attr({fill:"blue", "stroke":"none", "fill-opacity":0.5}); 
+    this.elstockprocess.getElementsByClassName("pencutseqcount")[0].textContent = this.pencutseqs.length; 
+    this.prevx = null; 
+    this.prevy = null; 
+    this.advancetime = 500; 
+}
+
+PenCutAnimation.prototype.clearAnimation = function() 
+{
+    if (this.pencutanimtimeout != null)  { 
+        clearTimeout(this.pencutanimtimeout); 
+        this.pencutanimtimeout = null; 
+    }
+    this.rjspath.remove(); 
+    this.rjsnode.remove(); 
+    this.rjslinecurr.remove(); 
+    this.rjslinelink.remove(); 
+}
+
+PenCutAnimation.prototype.advancenodeLooper = function() 
+{
+console.log(this);     
+    this.pencutanimtimeout = null; 
+    var pencutseq = this.pencutseqs[this.seqindex]; 
+    this.seqseqindex++; 
+    this.prevx
+    if ((this.seqseqindex == 0) || (this.seqseqindex >= pencutseq.xtransseq.length)) {
+        if (this.seqseqindex !== 0)
+        this.seqindex++; 
+        this.elseqindex.value = this.seqindex; 
+        if (this.seqindex == this.pencutseqs.length)
+            return; // no callback
+        pencutseq = this.pencutseqs[this.seqindex]; 
+        var dseq = [ ]; 
+        for (var j = 0; j < pencutseq.xtransseq.length; j++) 
+            dseq.push("L", pencutseq.xtransseq[j], pencutseq.ytransseq[j]); 
+        dseq[0] = "M"; 
+        this.rjspath.attr("path", dseq); 
+        this.seqseqindex = 0; 
+    }
+    
+    var px = pencutseq.xtransseq[this.seqseqindex]; 
+    var py = pencutseq.ytransseq[this.seqseqindex]; 
+    this.rjsnode.attr({cx:px, cy:py}); 
+    if (this.prevx !== null) { 
+        var d = ["M", this.prevx, this.prevy, "L", px, py]; 
+        this.rjslinecurr.attr("path", d); 
+        if (this.seqseqindex === 0) 
+            this.rjslinelink.attr("path", d); 
+    }
+    this.prevx = px; 
+    this.prevy = py; 
+    this.pencutanimtimeout = setTimeout(this.advancenodeLooper.bind(this), this.advancetime); 
+}
+
 // maybe these should be members of svgprocess (when process is a stock)
 function plotpencutseq(svgstockprocess, iadvance)
 {
+    pencutseqclearanimate(); 
     var elstockprocess = document.getElementById(svgstockprocess.fadivid); 
     var elseqindex = elstockprocess.getElementsByClassName("pencutseqindex")[0]; 
     console.log(elseqindex); 
@@ -378,6 +452,21 @@ function plotpencutseq(svgstockprocess, iadvance)
 
     svgstockprocess.rjspath.attr("path", dseq); 
 }
+
+var pencutanimation_one = null; 
+
+function pencutseqanimate(svgstockprocess)
+{
+    if (Dpens !== null)
+        Dpens.remove(); 
+    Dpens = null; 
+
+    if (pencutanimation_one !== null)
+        pencutanimation_one.clearAnimation(); 
+    pencutanimation_one = new PenCutAnimation(svgstockprocess, svgstockprocess.Dpencutseqs); 
+    pencutanimation_one.advancenodeLooper(); 
+}
+
 
 function genpathorderonstock() 
 {
@@ -420,7 +509,6 @@ if (Dpens !== null)
 Dpens = paper1.path(dseq); 
 
     svgstockprocess.Dpencutseqs = pencutseqs; 
-    svgstockprocess.rjspath = paper1.path("M0,0").attr("stroke", "green"); 
     elfadiv.getElementsByClassName("pencutseqcount")[0].textContent = pencutseqs.length; 
     
     AutoDownloadBlob(PenCutSeqsToPltCode(pencutseqs, stockbbox), "pencut.anc"); 
@@ -501,8 +589,9 @@ function importSVGfile(i, f)
     if (bstockdefinitiontype) {
         fileblock.push('<input type="button" value="GenPath" class="genpathorder"/>'); 
         fileblock.push('<input type="text" class="pencutseqindex" value="0"/>/<span class="pencutseqcount">1</span>'); 
-        fileblock.push('<input type="button" value=">>" class="pencutseqadvance" title="advance"/>'); 
         fileblock.push('<input type="button" value="<<" class="pencutseqback" title="go back"/>'); 
+        fileblock.push('<input type="button" value=">>" class="pencutseqadvance" title="advance"/>'); 
+        fileblock.push('<input type="button" value="A" class="pencutseqanimate" title="animate"/>'); 
     }
     
     fileblock.push('</div>'); 
@@ -516,8 +605,9 @@ function importSVGfile(i, f)
     elfadiv.getElementsByClassName("delbutton")[0].onclick = deletesvgprocess; 
     if (bstockdefinitiontype) {
         elfadiv.getElementsByClassName("genpathorder")[0].onclick = genpathorderonstock; 
-        elfadiv.getElementsByClassName("pencutseqadvance")[0].onclick = function() { plotpencutseq(svgprocess, 1) }; 
-        elfadiv.getElementsByClassName("pencutseqback")[0].onclick = function() { plotpencutseq(svgprocess, -1) }; 
+        //elfadiv.getElementsByClassName("pencutseqadvance")[0].onclick = function() { plotpencutseq(svgprocess, 1) }; 
+        //elfadiv.getElementsByClassName("pencutseqback")[0].onclick = function() { plotpencutseq(svgprocess, -1) }; 
+        elfadiv.getElementsByClassName("pencutseqanimate")[0].onclick = function() { pencutseqanimate(svgprocess) }; 
     } else {
         elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
         elfadiv.getElementsByClassName("groupprocess")[0].onclick = groupsvgprocess; 
