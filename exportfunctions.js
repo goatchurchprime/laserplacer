@@ -249,12 +249,12 @@ function GetGroupsoverlayingstock(stockbbox)
 
 // finish 
 // returns [ { ptype:cutouter/cutisland/etch, d:dvalue, reversed:true/false, colour:col, tstr:tstr, xtransseq:[], ytransseq:[] } ] 
-function GetPathsPensSequences(svgprocess, pathgrouping, tstr) 
+function GetPathsPensSequences(svgprocess, pgi, pathgrouping, tstr) 
 {
     var res = [ ]; 
     for (var i = 1; i < pathgrouping.length; i++) {
         for (var k = 0; k < pathgrouping[i].length; k++) {
-            var rres = { ptype:(i == pathgrouping.length - 1 ? "etch" : (i == 1 ? "cutouter" : "cutinner")), tstr:tstr, fadivid:svgprocess.fadivid, pgi:i, pgik:k }; 
+            var rres = { ptype:(i == pathgrouping.length - 1 ? "etch" : (i == 1 ? "cutouter" : "cutinner")), tstr:tstr, fadivid:svgprocess.fadivid, pgi:pgi, contnum:i, pgik:k }; 
             var jr; 
             if (rres.ptype == "etch") {
                 jr = pathgrouping[i][k]; 
@@ -355,9 +355,29 @@ function pencutordercompare(a, b)
     if (a.pgi != b.pgi)
         return (a.pgi - b.pgi);
         
+    if (a.contnum != b.contnum)
+        return (a.contnum - b.contnum);
+
     return (a.pgik - b.pgik);
 }
 
+// maybe these should be members of svgprocess (when process is a stock)
+function plotpencutseq(svgstockprocess, iadvance)
+{
+    var elstockprocess = document.getElementById(svgstockprocess.fadivid); 
+    var elseqindex = elstockprocess.getElementsByClassName("pencutseqindex")[0]; 
+    console.log(elseqindex); 
+    var i = parseInt(elseqindex.value) + iadvance; 
+    elseqindex.value = i; 
+    
+    var pencutseq = svgstockprocess.Dpencutseqs[i]; 
+    var dseq = [ ]; 
+    for (var j = 0; j < pencutseq.xtransseq.length; j++) 
+        dseq.push("L", pencutseq.xtransseq[j], pencutseq.ytransseq[j]); 
+    dseq[0] = "M"; 
+
+    svgstockprocess.rjspath.attr("path", dseq); 
+}
 
 function genpathorderonstock() 
 {
@@ -374,11 +394,12 @@ console.log("groups we will merge in", groupsoverlayingstock);
     for (var i = 0; i < groupsoverlayingstock.length; i++) {
         var svgprocess = svgprocesses[groupsoverlayingstock[i].fadivid]; 
         var gj = groupsoverlayingstock[i].j; 
-        var pencutseq = GetPathsPensSequences(svgprocess, svgprocess.pathgroupings[gj], svgprocess.pathgroupingtstrs[gj].tstr); 
+        var pencutseq = GetPathsPensSequences(svgprocess, gj, svgprocess.pathgroupings[gj], svgprocess.pathgroupingtstrs[gj].tstr); 
         pencutseqs = pencutseqs.concat(pencutseq); 
 console.log("pencutseq", pencutseq); 
     }
     
+    // make the point sequences for each path
     for (var i = 0; i < pencutseqs.length; i++) 
         PenCutSeqToPoints(pencutseqs[i], 0.1);
 
@@ -398,6 +419,10 @@ if (Dpens !== null)
     Dpens.remove(); 
 Dpens = paper1.path(dseq); 
 
+    svgstockprocess.Dpencutseqs = pencutseqs; 
+    svgstockprocess.rjspath = paper1.path("M0,0").attr("stroke", "green"); 
+    elfadiv.getElementsByClassName("pencutseqcount")[0].textContent = pencutseqs.length; 
+    
     AutoDownloadBlob(PenCutSeqsToPltCode(pencutseqs, stockbbox), "pencut.anc"); 
 }
 
@@ -473,8 +498,12 @@ function importSVGfile(i, f)
     if (!bstockdefinitiontype)
         fileblock.push('<span class="groupprocess" title="Group geometry">Group</span>'); 
     fileblock.push('<select class="dposition"></select>'); 
-    if (bstockdefinitiontype)
+    if (bstockdefinitiontype) {
         fileblock.push('<input type="button" value="GenPath" class="genpathorder"/>'); 
+        fileblock.push('<input type="text" class="pencutseqindex" value="0"/>/<span class="pencutseqcount">1</span>'); 
+        fileblock.push('<input type="button" value=">>" class="pencutseqadvance" title="advance"/>'); 
+        fileblock.push('<input type="button" value="<<" class="pencutseqback" title="go back"/>'); 
+    }
     
     fileblock.push('</div>'); 
     elfilearea.insertAdjacentHTML("beforeend", fileblock.join("")); 
@@ -487,6 +516,8 @@ function importSVGfile(i, f)
     elfadiv.getElementsByClassName("delbutton")[0].onclick = deletesvgprocess; 
     if (bstockdefinitiontype) {
         elfadiv.getElementsByClassName("genpathorder")[0].onclick = genpathorderonstock; 
+        elfadiv.getElementsByClassName("pencutseqadvance")[0].onclick = function() { plotpencutseq(svgprocess, 1) }; 
+        elfadiv.getElementsByClassName("pencutseqback")[0].onclick = function() { plotpencutseq(svgprocess, -1) }; 
     } else {
         elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
         elfadiv.getElementsByClassName("groupprocess")[0].onclick = groupsvgprocess; 

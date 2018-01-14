@@ -3,16 +3,16 @@
 <head>
 <script src="jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="raphael.js"></script>    
-<script type="text/javascript" src="visualsettings.js?18011"></script>
-<script type="text/javascript" src="polygonsorting.js?18011"></script>    
-<script type="text/javascript" src="svgfileprocess.js?18011"></script>    
-<script type="text/javascript" src="svgfileprocesstunnel.js?18011"></script>    
-<script type="text/javascript" src="svgizingtext.js?18011"></script>    
-<script type="text/javascript" src="exportfunctions.js?18011"></script>    
-<script type="text/javascript" src="viewcontrols.js?18011"></script>    
-<script type="text/javascript" src="collisiontests.js?18011"></script>    
+<script type="text/javascript" src="visualsettings.js?18012"></script>
+<script type="text/javascript" src="polygonsorting.js?18012"></script>    
+<script type="text/javascript" src="svgfileprocess.js?18012"></script>    
+<script type="text/javascript" src="svgfileprocesstunnel.js?18012"></script>    
+<script type="text/javascript" src="svgizingtext.js?18012"></script>    
+<script type="text/javascript" src="exportfunctions.js?18012"></script>    
+<script type="text/javascript" src="viewcontrols.js?18012"></script>    
+<script type="text/javascript" src="collisiontests.js?18012"></script>
 <meta charset="utf-8">
-<title>Laser placer V18.01.11</title>
+<title>Laser placer V2018.01.12</title>
 <script>
 
 
@@ -28,7 +28,7 @@ var pathselected = null;
 var opts; 
 var ylo, yhi; 
 var perprods; 
-var Lgrouppath = []; 
+var Lgrouppath = [ ]; 
 
 
 var Deee; 
@@ -101,13 +101,13 @@ div#filearea  { cursor:pointer; }
 div#filearea  input[type="button"] { padding:0; margin:0; }
 div#filearea .tfscale { width: 30px; height: 15px; border: thin black solid; padding:0; margin: 0 }
 div#filearea .fprocessstatus:hover { background: red; cursor: pointer }
-div#filearea .spnumcols span { border: thin black solid }
+
 div#filearea  span.delbutton { color: red }
 div#filearea  span.delbutton:hover { background: red; color: black }
 
-div#filearea .spnumcols span { color: white }
-div#filearea .spnumcols span.spnumselected { color: black }
-div#filearea .spnumcols span:hover { border-color:white }
+div#filearea .spnumcols span { color: white; height: 8px; border-top-style: solid; border-top-width: 3px; border-top-color:cyan; border-bottom-style: solid; border-bottom-width: 3px; border-bottom-color:cyan }
+div#filearea .spnumcols span.spnumselected { border-top-color:black; border-bottom-color:black; }
+div#filearea .spnumcols span:hover { color: #888; }
 
 div#filearea .groupprocess { background:#ffc }
 div#filearea .groupprocess:hover { background:#ccf }
@@ -121,6 +121,8 @@ div#filearea select#importedthingpos { Dvisibility: hidden }
 
 #thinnerstrokes, #thickerstrokes, #togglebackgroundcolour, #rotatelock15 { border: 0; padding: 0; color: blue }
 #rotatelock15.selected { background: #ee5 }
+
+div#filearea .pencutseqindex { width: 25px; height: 15px; border: thin black solid; padding:0; margin: 0 }
 
 #texttosvgize { height: 1em }
 
@@ -151,7 +153,7 @@ div#filearea select#importedthingpos { Dvisibility: hidden }
 	  The code is at <a href="https://bitbucket.org/goatchurch/laserplacer/">bitbucket/laserplacer</a></p>
   </div>
   <div id="filearea">
-    FileArea<input type="button" value="thingpos" id="thingpos"/><select id="importedthingpos"></select>
+    FileArea<input type="button" value="thingpos" id="thingpos" title="Download positions of everything in a JSON file"/><select id="importedthingpos"></select>
   </div>
   
   <div id="panelheader">
@@ -161,13 +163,14 @@ div#filearea select#importedthingpos { Dvisibility: hidden }
     <!--input type="button" value="Nest1" id="nest1"-->
     <input type="file" id="files" name="files[]" multiple />
     <span id="readingcancel">0/0</span>
-    <input type="button" value="<<" id="thinnerstrokes" title="Thinner strokes">
-    <input type="button" value=">>" id="thickerstrokes" title="Thicker strokes">
-    <input type="button" value=".*." id="togglebackgroundcolour" title="Toggle background colour" style="background: #eee" >
-    <input type="button" value="Rot15" id="rotatelock15" title="Lock rotations to 15deg intervals">
+    <input type="button" value="<<" id="thinnerstrokes" title="Thinner strokes"/>
+    <input type="button" value=">>" id="thickerstrokes" title="Thicker strokes"/>
+    <input type="button" value=".*." id="togglebackgroundcolour" title="Toggle background colour" style="background: #eee"/>
+    <input type="button" value="Rot15" id="rotatelock15" title="Lock rotations to 15deg intervals"/>
     
     <textarea id="texttosvgize">svgizing letters here</textarea>
-    <input type="button" value="svgizetext" id="svgizetext">
+    <input type="button" value="svgizetext" id="svgizetext"/>
+    <a href="https://bitbucket.org/goatchurch/laserplacer/">[source]</a>
   </div>
   
   <div style="border: thin black solid; background: #e8e8e8" id="paper1">
