@@ -521,13 +521,17 @@ console.log(pathgroupingtstr, pathgroupingtstr.tstr);
     var orgrotdeg = 0.0; // required to move the locking to the nearest 15
     
     var cx = 0, cy = 0; 
-    var tstr; 
+    var tstr = null; 
     var groupcolour = pgrouparea.attr("fill"); // original colour before coloured to highlight it is being dragged
     var elfadividphi = document.getElementById(pathgroupingtstr.fadividphi); 
     var eltfscale = (this.bstockdefinitiontype ? null : document.getElementById(this.fadivid).getElementsByClassName("tfscale")[0]); 
     
+    
     pgrouparea.drag(
         function(dx, dy, x, y, e) { // drag
+            if (tstr == null)
+                return
+
             e.stopPropagation(); e.preventDefault(); 
             if (blockedmode)
                 return; 
@@ -543,7 +547,11 @@ console.log(pathgroupingtstr, pathgroupingtstr.tstr);
             elfadividphi.textContent = "t"+pgrouparea._.dx.toFixed()+","+pgrouparea._.dy.toFixed()+"r"+pgrouparea._.deg.toFixed(); 
         }, 
         function(x, y, e)  {  // mouse down
-console.log(pathgroupingtstr, pathgroupingtstr.tstr); 
+            if (e.button !== 0) {
+                tstr = null; 
+                return; 
+            }
+            
             tstr = pathgroupingtstr.tstr; 
             blockedmode = elfadividphi.classList.contains("locked"); 
             brotatelocked15 = document.getElementById("rotatelock15").classList.contains("selected"); 
@@ -563,14 +571,16 @@ console.log(pathgroupingtstr, pathgroupingtstr.tstr);
             e.stopPropagation(); e.preventDefault(); 
         },  
         function(e) {    // mouse up
+            if (tstr == null)
+                return
+            e.stopPropagation(); e.preventDefault(); 
             if (!blockedmode)
                 pathgroupingtstr.tstr = tstr;  
-console.log(tstr); 
             elfadividphi.classList.remove("moving"); 
             pgrouparea.attr("fill", groupcolour); 
-            e.stopPropagation(); e.preventDefault(); 
             if (eltfscale !== null)
                 eltfscale.disabled = true; 
+            tstr = null; 
         }
     ); 
 }

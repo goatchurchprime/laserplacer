@@ -153,7 +153,7 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
                 continue; 
             
             for (var j = 0; j < mainthingsposition.svgprocesses.length; j++) {
-                if ((mainthingsposition.svgprocesses[j].matchingprocessfadivid === undefined)) && (svgprocess.fname == mainthingsposition.svgprocesses[j].fname)) {
+                if ((mainthingsposition.svgprocesses[j].matchingprocessfadivid === undefined) && (svgprocess.fname == mainthingsposition.svgprocesses[j].fname)) {
                     svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
                     mainthingsposition.svgprocesses[j].matchingprocessfadivid = svgprocess.fadivid; 
                     if (svgprocess.elprocessstatus.textContent == "BD")

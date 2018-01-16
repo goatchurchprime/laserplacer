@@ -45,7 +45,7 @@ function updatepixwidth()
     Rmmscalebar = paper1.path("M10,10h"+(woodwidth)+"v5 M10,10v"+(woodheight)+"h5").attr("stroke", "#888"); 
 }
 
-
+// look to SVGfileprocess.prototype.applygroupdrag for dragging on a shape area
 var zoomfuncsobj = {
 	ex: 0, 
 	ey: 0,

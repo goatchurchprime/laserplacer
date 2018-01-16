@@ -79,6 +79,8 @@ function setup()
 	paper1.canvas.onmousemove = function(e) { zoomfuncsobj.mousemoveoffshape(e) }; 
 	paper1.canvas.onmouseup = function(e) { zoomfuncsobj.mouseupoffshape(e) }; 
 
+	paper1.canvas.oncontextmenu = function (e) { e.preventDefault(); }
+	
     dropsvgherenote = paper1.text(200, 60, "Drop SVG here").attr({fill: "orange"}).transform("s3").attr("fill-opacity", 0.3); 
     setraphsize(); 
 }
