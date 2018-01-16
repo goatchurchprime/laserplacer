@@ -46,7 +46,7 @@ function exportPLT()
     var ytop = 10000; 
     var i = 0; 
     bcancelExIm = false; 
-    $("#readingcancel").text("exportPLT"); 
+    document.getElementById("readingcancel").textContent = "exportPLT"; 
     function exportPLTpathR() {
         var path = rlistb[i].path; 
         var d = path.attr("path"); 
@@ -79,7 +79,7 @@ function exportPLT()
             var a = document.createElement('a');
             AutoDownloadBlob(lplt, "test.plt"); 
         }
-        $("#readingcancel").text(i+"/"+rlist.length); 
+        document.getElementById("readingcancel").textContent = (i+"/"+rlist.length); 
     };
     exportPLTpathR(); 
 }
@@ -96,7 +96,7 @@ function exportJSON()
     var ytop = 0; 
     var i = 0; 
     bcancelExIm = false; 
-    $("#readingcancel").text("exportPLT"); 
+    document.getElementById("readingcancel").textContent = ("exportPLT"); 
     function exportJSONpathR() {
         var path = rlistb[i].path; 
         var d = path.attr("path"); 
@@ -126,7 +126,7 @@ function exportJSON()
             lplt.push(""); 
             AutoDownloadBlob(lplt, "test.plt"); 
         }
-        $("#readingcancel").text(i+"/"+rlist.length); 
+        document.getElementById("readingcancel").textContent = (i+"/"+rlist.length); 
     };
     exportJSONpathR(); 
 }

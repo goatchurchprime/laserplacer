@@ -91,17 +91,9 @@ var zoomfuncsobj = {
 		}
 	},
 	scrollwheelzoom: function(e) {
-		//console.log(e); 
-		if (e.handleObj && (e.handleObj.type == "DOMMouseScroll"))  {// firefox issue
-			//console.log(e.originalEvent); 
-			this.ex = e.originalEvent.clientX; 
-			this.ey = e.originalEvent.clientY; 
-			this.ed = (e.originalEvent.detail > 0); 
-		} else {
-			this.ex = e.clientX; 
-			this.ey = e.clientY; 
-			this.ed = (e.originalEvent.deltaY > 0); 
-		}
+        this.ex = e.clientX; 
+        this.ey = e.clientY; 
+        this.ed = (e.deltaY > 0); 
 		this.Bpaper1scale = paper1scale; 
 		this.Bpaper1x0 = paper1x0; 
 		this.Bpaper1y0 = paper1y0; 

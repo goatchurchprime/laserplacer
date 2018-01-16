@@ -52,15 +52,15 @@ function setup()
 	if (hashoptions["r"] === "15")
 		document.getElementById("rotatelock15").classList.add("selected"); 
 		
-    $("#exportSVG").click(exportSVG); 
-    $("#exportPLT").click(exportPLT); 
-    $("#movecollide").click(MoveCollide); 
-    $("#nest1").click(Nest1); 
-    $("#files").change(function(e) { importSVGfiles(e.target.files); });  
+    document.getElementById("exportSVG").onclick = exportSVG; 
+    document.getElementById("exportPLT").onclick = exportPLT; 
+    //document.getElementById("movecollide").onclick = MoveCollide; 
+    //document.getElementById("nest1").onclick = Nest1; 
+    document.getElementById("files").onchange = function(e) { importSVGfiles(e.target.files); };  
     
-    $("#svgizetext").click(function() { 
-		importSVGfiles([{type:'svgizedtext', svgtext:svgizetext($("#texttosvgize").val())}]); 
-    }); 
+    document.getElementById("svgizetext").onclick = function() { 
+		importSVGfiles([{type:'svgizedtext', svgtext:document.getElementById("texttosvgize").value()}]); 
+    }; 
 
 	setfiledragoverfunctions(document.getElementById("paper1")); 
     document.getElementById("thingpos").onclick = exportThingPositions; 
@@ -74,7 +74,7 @@ function setup()
 	setviewboxfrompaperscale(); 
     
     // can't reference directly as context will be canvas instead of zoomfuncsobj
-    $(paper1.canvas).bind('mousewheel DOMMouseScroll', function(e) { zoomfuncsobj.scrollwheelzoom(e) });
+    paper1.canvas.on wheel = function(e) { zoomfuncsobj.scrollwheelzoom(e) };
 	paper1.canvas.onmousedown = function(e) { zoomfuncsobj.mousedownoffshape(e) }; 
 	paper1.canvas.onmousemove = function(e) { zoomfuncsobj.mousemoveoffshape(e) }; 
 	paper1.canvas.onmouseup = function(e) { zoomfuncsobj.mouseupoffshape(e) }; 
@@ -86,7 +86,6 @@ function setup()
 }
 
 
-//$(document).ready(setup);   // function to call only *after* page has finished loading
 Raphael(setup); 
 </script>
 
