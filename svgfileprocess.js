@@ -324,26 +324,6 @@ SVGfileprocess.prototype.importSVGpathR = function()
 
 
 
-SVGfileprocess.prototype.spnummapGetCreate = function(cclass, mcs, strokecolour)
-{
-    // convert all to extended classes with these strokes in?
-    if (this.spnummap[cclass] === undefined) {
-        var fillcolour = Raphael.getColor(1.0); 
-        var spnumobj = { spnum:this.spnumlist.length, strokecolour:strokecolour, fillcolour:fillcolour, subsetname:mcs.dsubsetname, linestyle:mcs.dlinestyle }; 
-        var stitle = spnumobj.subsetname+"-"+spnumobj.linestyle; 
-        this.spnummap[cclass] = spnumobj.spnum; 
-        this.spnumlist.push(spnumobj); 
-        if (spnumobj.linestyle == "Wall") {
-            $('div#'+this.fadivid+' .spnumcols').append($('<span class="spnum'+spnumobj.spnum+'" title="'+stitle+'">'+('X')+'</span>').css("background", fillcolour||strokecolour)); 
-            $('div#'+this.fadivid+' .spnumcols span.spnum'+spnumobj.spnum).click(function() {
-                if ($(this).hasClass("selected")) 
-                    $(this).removeClass("selected"); 
-                else
-                    $(this).addClass("selected"); 
-            });
-        }
-    }
-}
 
 
 // this operates the settimeout loop (done this way because some files we've tried are very very large)
@@ -741,10 +721,8 @@ console.log("moving boundrect needs fixing", tstr);
                 pgroup.toBack(); 
         }
         
-console.log(this.pathgroupingtstrs.length, k);
         if (this.pathgroupingtstrs.length <= k) 
             this.pathgroupingtstrs.push({tstr:this.pathgroupingtstrs.length == 0 ? "t0,0" : this.pathgroupingtstrs[0].tstr}); 
-console.log(this.pathgroupingtstrs.length, k, this.pathgroupingtstrs);
         this.pathgroupingtstrs[k].fadividphi = this.fadivid+"k"+k; 
 
         var eldposition = document.getElementById(this.fadivid).getElementsByClassName("dposition")[0]; 

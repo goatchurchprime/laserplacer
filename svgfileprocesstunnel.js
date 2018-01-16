@@ -49,6 +49,27 @@ function ProcessToPathGroupingsTunnelX(rlistb, spnumlist)
     return res; 
 }
 
+SVGfileprocess.prototype.spnummapGetCreate = function(cclass, mcs, strokecolour)
+{
+    // convert all to extended classes with these strokes in?
+    if (this.spnummap[cclass] === undefined) {
+        var fillcolour = Raphael.getColor(1.0); 
+        var spnumobj = { spnum:this.spnumlist.length, strokecolour:strokecolour, fillcolour:fillcolour, subsetname:mcs.dsubsetname, linestyle:mcs.dlinestyle }; 
+        var stitle = spnumobj.subsetname+"-"+spnumobj.linestyle; 
+        this.spnummap[cclass] = spnumobj.spnum; 
+        this.spnumlist.push(spnumobj); 
+        if (spnumobj.linestyle == "Wall") {
+            $('div#'+this.fadivid+' .spnumcols').append($('<span class="spnum'+spnumobj.spnum+'" title="'+stitle+'">'+('X')+'</span>').css("background", fillcolour||strokecolour)); 
+            $('div#'+this.fadivid+' .spnumcols span.spnum'+spnumobj.spnum).click(function() {
+                if ($(this).hasClass("selected")) 
+                    $(this).removeClass("selected"); 
+                else
+                    $(this).addClass("selected"); 
+            });
+        }
+    }
+}
+
 
 SVGfileprocess.prototype.processSingleSVGpathTunnelx = function(d, stroke, cc)
 {

@@ -264,6 +264,7 @@ function GetPathsPensSequences(svgprocess, pgi, pathgrouping, tstr)
                 rres["reversed"] = ((pathgrouping[i][k]%2) == 0); 
             }
             rres["rspnum"] = svgprocess.rlistb[jr].spnum; 
+            rres["absolutescale"] = svgprocess.currentabsolutescale; 
             rres["cmatrix"] = svgprocess.rlistb[jr].cmatrix; 
             rres["dmi"] = svgprocess.rlistb[jr].dmi; 
             res.push(rres); 
@@ -277,11 +278,17 @@ function PenCutSeqToPoints(penseq, ftol)
     penseq["xtransseq"] = [ ]; 
     penseq["ytransseq"] = [ ]; 
     
+    // we should transform paths across preserving arcs
     var dtrans = Raphael.mapPath(penseq.dmi, penseq.cmatrix); 
+    if (penseq.absolutescale !== 1)
+        dtrans = Raphael.mapPath(dtrans, Raphael.matrix(penseq.absolutescale, 0, 0, Math.abs(penseq.absolutescale), 0, 0))
     dtrans = Raphael.transformPath(dtrans, penseq.tstr); 
-    for (var j = 0; j < dtrans.length; j++) {
-        penseq.xtransseq.push(dtrans[j][dtrans[j].length-2])
-        penseq.ytransseq.push(dtrans[j][dtrans[j].length-1])
+    var pts = PolySorting.flattenpath(dtrans, cosangdot, ftol); 
+
+    // maybe keep as segment objects, not in xtransseq arrays
+    for (var j = 0; j < pts.length; j++) {
+        penseq.xtransseq.push(pts[j][0])
+        penseq.ytransseq.push(pts[j][1])
     }        
 }
 
@@ -344,7 +351,7 @@ function pencutordercompare(a, b)
     if (a.ptype == "etch") {
         if (b.ptype != "etch")
             return -1; 
-        return (a.xtransseq[0] < b.xtransseq[0]); 
+        return (a.xtransseq[0] - b.xtransseq[0]); 
     }
     if (b.ptype == "etch")
         return 1; 
@@ -376,9 +383,9 @@ var PenCutAnimation = function(svgstockprocess, pencutseqs)
     this.pencutanimtimeout = null; 
     this.svgstockprocess.rjspath = paper1.path("M0,0").attr({stroke:"red", "stroke-width":gcutstrokewidth}); 
     svgstockprocess.rjsnode = paper1.circle(0, 0, 0).attr({fill:"blue", "stroke":"none", "fill-opacity":0.5}); 
-    this.rjslinelink = paper1.path("M0,0").attr({stroke:"magenta", "stroke-width":gcutstrokewidth}); 
-    this.rjslinecurr = paper1.path("M0,0").attr({stroke:"pink", "stroke-width":gcutstrokewidth}); 
     this.rjspath = paper1.path("M0,0").attr({stroke:"red", "stroke-width":gcutstrokewidth}); 
+    this.rjslinelink = paper1.path("M0,0").attr({stroke:"yellow", "stroke-width":gcutstrokewidth}); 
+    this.rjslinecurr = paper1.path("M0,0").attr({stroke:"cyan", "stroke-width":gcutstrokewidth}); 
     this.rjsnode = paper1.circle(0, 0, gcutstrokewidth*2+20).attr({fill:"blue", "stroke":"none", "fill-opacity":0.5}); 
     this.elstockprocess.getElementsByClassName("pencutseqcount")[0].textContent = this.pencutseqs.length; 
     this.prevx = null; 
@@ -386,42 +393,49 @@ var PenCutAnimation = function(svgstockprocess, pencutseqs)
     this.advancetime = 500; 
 }
 
-PenCutAnimation.prototype.clearAnimation = function() 
+PenCutAnimation.prototype.pauseAnimation = function() 
 {
     if (this.pencutanimtimeout != null)  { 
         clearTimeout(this.pencutanimtimeout); 
         this.pencutanimtimeout = null; 
     }
+}
+
+PenCutAnimation.prototype.clearAnimation = function() 
+{
+    this.pauseAnimation(); 
     this.rjspath.remove(); 
     this.rjsnode.remove(); 
     this.rjslinecurr.remove(); 
     this.rjslinelink.remove(); 
 }
 
-PenCutAnimation.prototype.advancenodeLooper = function() 
+
+PenCutAnimation.prototype.advancenodeD = function() 
 {
-console.log(this);     
-    this.pencutanimtimeout = null; 
     var pencutseq = this.pencutseqs[this.seqindex]; 
     this.seqseqindex++; 
-    this.prevx
     if ((this.seqseqindex == 0) || (this.seqseqindex >= pencutseq.xtransseq.length)) {
         if (this.seqseqindex !== 0)
-        this.seqindex++; 
+            this.seqindex++; 
         this.elseqindex.value = this.seqindex; 
         if (this.seqindex == this.pencutseqs.length)
-            return; // no callback
+            return false; // no callback
         pencutseq = this.pencutseqs[this.seqindex]; 
         var dseq = [ ]; 
-        for (var j = 0; j < pencutseq.xtransseq.length; j++) 
-            dseq.push("L", pencutseq.xtransseq[j], pencutseq.ytransseq[j]); 
+        
+        for (var j = 0; j < pencutseq.xtransseq.length; j++) {
+            var jr = (pencutseq.reversed ? pencutseq.xtransseq.length - 1 - j : j); 
+            dseq.push("L", pencutseq.xtransseq[jr], pencutseq.ytransseq[jr]); 
+        }
         dseq[0] = "M"; 
         this.rjspath.attr("path", dseq); 
         this.seqseqindex = 0; 
     }
     
-    var px = pencutseq.xtransseq[this.seqseqindex]; 
-    var py = pencutseq.ytransseq[this.seqseqindex]; 
+    var ir = (pencutseq.reversed ? pencutseq.xtransseq.length - 1 - this.seqseqindex : this.seqseqindex); 
+    var px = pencutseq.xtransseq[ir]; 
+    var py = pencutseq.ytransseq[ir]; 
     this.rjsnode.attr({cx:px, cy:py}); 
     if (this.prevx !== null) { 
         var d = ["M", this.prevx, this.prevy, "L", px, py]; 
@@ -431,13 +445,69 @@ console.log(this);
     }
     this.prevx = px; 
     this.prevy = py; 
-    this.pencutanimtimeout = setTimeout(this.advancenodeLooper.bind(this), this.advancetime); 
+    return true; 
 }
 
+
+PenCutAnimation.prototype.advancenodeLooper = function() 
+{
+    this.pencutanimtimeout = null; 
+    if (this.advancenodeD())
+        this.pencutanimtimeout = setTimeout(this.advancenodeLooper.bind(this), this.advancetime); 
+    else
+        this.elstockprocess.getElementsByClassName("pencutseqanimate")[0].classList.remove("selected"); 
+}
+
+
+var pencutanimation_one = null; 
+var Dsvgstockprocess = null; 
+function pencutseqanimate(svgstockprocess)
+{
+Dsvgstockprocess = svgstockprocess; 
+    if (!svgstockprocess.Dpencutseqs)
+        return; 
+    var elfadiv = document.getElementById(svgstockprocess.fadivid); 
+    var elanimbutt = elfadiv.getElementsByClassName("pencutseqanimate")[0]; 
+    elanimbutt.classList.toggle("selected"); 
+    
+    if (elanimbutt.classList.contains("selected")) {
+        if (Dpens !== null)
+            Dpens.remove(); 
+        Dpens = null; 
+
+        if (pencutanimation_one !== null)
+            pencutanimation_one.clearAnimation(); 
+        pencutanimation_one = new PenCutAnimation(svgstockprocess, svgstockprocess.Dpencutseqs); 
+        pencutanimation_one.advancenodeLooper();   // gets it into the timeout loop
+    } else {
+        if (pencutanimation_one !== null)
+            pencutanimation_one.pauseAnimation(); 
+    }
+}
+
+function plotpencutseqadvance(svgstockprocess, iadvance)
+{
+Dsvgstockprocess = svgstockprocess; 
+    if (!svgstockprocess.Dpencutseqs)
+        return; 
+    if (pencutanimation_one !== null) {
+        pencutanimation_one.pauseAnimation(); 
+        pencutanimation_one.elstockprocess.getElementsByClassName("pencutseqanimate")[0].classList.remove("selected"); 
+        if (iadvance == 1) {
+            pencutanimation_one.advancenodeD(); 
+        } else {
+            pencutanimation_one.seqindex--; 
+            pencutanimation_one.seqseqindex = -1; 
+            this.prevx = null; 
+            pencutanimation_one.advancenodeD(); 
+        }
+    }
+}
 // maybe these should be members of svgprocess (when process is a stock)
 function plotpencutseq(svgstockprocess, iadvance)
 {
-    pencutseqclearanimate(); 
+    if (pencutanimation_one !== null)
+        pencutanimation_one.pencutseqclearanimate(); 
     var elstockprocess = document.getElementById(svgstockprocess.fadivid); 
     var elseqindex = elstockprocess.getElementsByClassName("pencutseqindex")[0]; 
     console.log(elseqindex); 
@@ -451,20 +521,6 @@ function plotpencutseq(svgstockprocess, iadvance)
     dseq[0] = "M"; 
 
     svgstockprocess.rjspath.attr("path", dseq); 
-}
-
-var pencutanimation_one = null; 
-
-function pencutseqanimate(svgstockprocess)
-{
-    if (Dpens !== null)
-        Dpens.remove(); 
-    Dpens = null; 
-
-    if (pencutanimation_one !== null)
-        pencutanimation_one.clearAnimation(); 
-    pencutanimation_one = new PenCutAnimation(svgstockprocess, svgstockprocess.Dpencutseqs); 
-    pencutanimation_one.advancenodeLooper(); 
 }
 
 
@@ -488,9 +544,12 @@ console.log("groups we will merge in", groupsoverlayingstock);
 console.log("pencutseq", pencutseq); 
     }
     
-    // make the point sequences for each path
-    for (var i = 0; i < pencutseqs.length; i++) 
-        PenCutSeqToPoints(pencutseqs[i], 0.1);
+    // make the point sequences for each path and do all etches from left to right
+    for (var i = 0; i < pencutseqs.length; i++) {
+        PenCutSeqToPoints(pencutseqs[i], 0.5);
+        if (pencutseqs[i].ptype == "etch")
+            pencutseqs[i].reversed = (pencutseqs[i].xtransseq[0] > pencutseqs[i].xtransseq[pencutseqs[i].xtransseq.length - 1]); 
+    }
 
     console.log("pencutseqs", pencutseqs); 
     pencutseqs.sort(pencutordercompare);   
@@ -499,8 +558,12 @@ console.log("pencutseq", pencutseq);
     // all in one go now
     var dseq = [ ]; 
     for (var i = 0; i < pencutseqs.length; i++) {
-        for (var j = 0; j < pencutseqs[i].xtransseq.length; j++) 
-            dseq.push("L", pencutseqs[i].xtransseq[j], pencutseqs[i].ytransseq[j]); 
+        var pencutseq = pencutseqs[i]; 
+        var pn = pencutseq.xtransseq.length; 
+        for (var j = 0; j < pencutseqs[i].xtransseq.length; j++) {
+            var jr = (pencutseq.reversed ? pn - 1 - j : j); 
+            dseq.push("L", pencutseq.xtransseq[jr], pencutseq.ytransseq[jr]); 
+        }
     }
     dseq[0] = "M"; 
 
@@ -569,7 +632,7 @@ function importSVGfile(i, f)
     var fadivid = 'fa'+filecountid; 
     filecountid++; 
     filenamelist[fadivid] = f.name; 
-    var bstockdefinitiontype = f.name.match(/^stockdef/); 
+    var bstockdefinitiontype = (f.name.match(/^stockdef/) ? true : false); 
 
     // create the control panel and functions for this process
     var elfilearea = document.getElementById("filearea"); 
@@ -589,8 +652,8 @@ function importSVGfile(i, f)
     if (bstockdefinitiontype) {
         fileblock.push('<input type="button" value="GenPath" class="genpathorder"/>'); 
         fileblock.push('<input type="text" class="pencutseqindex" value="0"/>/<span class="pencutseqcount">1</span>'); 
-        fileblock.push('<input type="button" value="<<" class="pencutseqback" title="go back"/>'); 
-        fileblock.push('<input type="button" value=">>" class="pencutseqadvance" title="advance"/>'); 
+        fileblock.push('<input type="button" value="<<<" class="pencutseqback" title="go back one path"/>'); 
+        fileblock.push('<input type="button" value=">" class="pencutseqadvance" title="advance on segment"/>'); 
         fileblock.push('<input type="button" value="A" class="pencutseqanimate" title="animate"/>'); 
     }
     
@@ -605,8 +668,8 @@ function importSVGfile(i, f)
     elfadiv.getElementsByClassName("delbutton")[0].onclick = deletesvgprocess; 
     if (bstockdefinitiontype) {
         elfadiv.getElementsByClassName("genpathorder")[0].onclick = genpathorderonstock; 
-        //elfadiv.getElementsByClassName("pencutseqadvance")[0].onclick = function() { plotpencutseq(svgprocess, 1) }; 
-        //elfadiv.getElementsByClassName("pencutseqback")[0].onclick = function() { plotpencutseq(svgprocess, -1) }; 
+        elfadiv.getElementsByClassName("pencutseqadvance")[0].onclick = function() { plotpencutseqadvance(svgprocess, 1) }; 
+        elfadiv.getElementsByClassName("pencutseqback")[0].onclick = function() { plotpencutseqadvance(svgprocess, -1) }; 
         elfadiv.getElementsByClassName("pencutseqanimate")[0].onclick = function() { pencutseqanimate(svgprocess) }; 
     } else {
         elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
