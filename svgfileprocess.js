@@ -512,6 +512,7 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocesss
 SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, pathgroupingtstr) 
 {
     console.assert(lpaths[0] === pgrouparea); 
+console.log(pathgroupingtstr, pathgroupingtstr.tstr); 
 
         // closured values shared between the drag functions
     var blockedmode = false; 
@@ -523,6 +524,7 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, pathgroup
     var tstr; 
     var groupcolour = pgrouparea.attr("fill"); // original colour before coloured to highlight it is being dragged
     var elfadividphi = document.getElementById(pathgroupingtstr.fadividphi); 
+    var eltfscale = (this.bstockdefinitiontype ? null : document.getElementById(this.fadivid).getElementsByClassName("tfscale")[0]); 
     
     pgrouparea.drag(
         function(dx, dy, x, y, e) { // drag
@@ -541,6 +543,7 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, pathgroup
             elfadividphi.textContent = "t"+pgrouparea._.dx.toFixed()+","+pgrouparea._.dy.toFixed()+"r"+pgrouparea._.deg.toFixed(); 
         }, 
         function(x, y, e)  {  // mouse down
+console.log(pathgroupingtstr, pathgroupingtstr.tstr); 
             tstr = pathgroupingtstr.tstr; 
             blockedmode = elfadividphi.classList.contains("locked"); 
             brotatelocked15 = document.getElementById("rotatelock15").classList.contains("selected"); 
@@ -562,9 +565,12 @@ SVGfileprocess.prototype.applygroupdrag = function(pgrouparea, lpaths, pathgroup
         function(e) {    // mouse up
             if (!blockedmode)
                 pathgroupingtstr.tstr = tstr;  
+console.log(tstr); 
             elfadividphi.classList.remove("moving"); 
             pgrouparea.attr("fill", groupcolour); 
             e.stopPropagation(); e.preventDefault(); 
+            if (eltfscale !== null)
+                eltfscale.disabled = true; 
         }
     ); 
 }
@@ -622,6 +628,7 @@ console.log("hghghg", grouptype, spnumscp);
 
     this.updateLgrouppaths(); 
 }
+
 
 function groupingprocess(svgprocess) 
 {
@@ -737,8 +744,10 @@ console.log("moving boundrect needs fixing", tstr);
         for (var i = 0; i < engpaths.length; i++)
             lpaths.push(this.rlistb[engpaths[i]].path); 
             
+        var tstr = this.pathgroupingtstrs[k].tstr; 
+console.log(tstr); 
         for (var i = 0; i < lpaths.length; i++)
-            lpaths[i].transform(this.pathgroupingtstrs[k].tstr); // use the transforms that were put there
+            lpaths[i].transform(tstr); // use the transforms that were put there
             
         if (this.bstockdefinitiontype) {  // all need to get behind the overlay or the gcutlinewidth outline part gets confusing
             for (var i = 1; i < lpaths.length; i++)

@@ -142,10 +142,20 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
         
         // we should only need to apply it once, because all the positions will be filled in ready in the pathgroupingtstrs array
         if ((svgprocess.elprocessstatus.textContent == "BD") || (svgprocess.elprocessstatus.textContent == "GD")) {
+            var jmatchedalready = -1; 
             for (var j = 0; j < mainthingsposition.svgprocesses.length; j++) {
-                if ((!mainthingsposition.svgprocesses[j].done) && (svgprocess.fname == mainthingsposition.svgprocesses[j].fname)) {
+                if (mainthingsposition.svgprocesses[j].matchingprocessfadivid === svgprocess.fadivid) {
+                    jmatchedalready = j; 
+                    break; 
+                }
+            }
+            if (jmatchedalready !== -1)
+                continue; 
+            
+            for (var j = 0; j < mainthingsposition.svgprocesses.length; j++) {
+                if ((mainthingsposition.svgprocesses[j].matchingprocessfadivid === undefined)) && (svgprocess.fname == mainthingsposition.svgprocesses[j].fname)) {
                     svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
-                    mainthingsposition.svgprocesses[j].done = true; 
+                    mainthingsposition.svgprocesses[j].matchingprocessfadivid = svgprocess.fadivid; 
                     if (svgprocess.elprocessstatus.textContent == "BD")
                         setTimeout(groupingprocess, 1, svgprocess); 
                     break; 
@@ -159,7 +169,7 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
     while (elimportedthingpos.firstChild)  
         elimportedthingpos.removeChild(elimportedthingpos.firstChild); 
     for (var j = 0; j < mainthingsposition.svgprocesses.length; j++)
-        elimportedthingpos.insertAdjacentHTML("beforeend", "<option>"+(mainthingsposition.svgprocesses[j].done?"-- ":"")+mainthingsposition.svgprocesses[j].fname+"</option>"); // can't put colours into option tag
+        elimportedthingpos.insertAdjacentHTML("beforeend", "<option>"+(mainthingsposition.svgprocesses[j].matchingprocessfadivid ?"["+mainthingsposition.svgprocesses[j].matchingprocessfadivid+"] ":"** ")+mainthingsposition.svgprocesses[j].fname+"</option>"); // can't put colours into option tag
     elimportedthingpos.hidden = (mainthingsposition.svgprocesses.length == 0); 
 }
 
@@ -707,5 +717,5 @@ function exportThingPositions()
         var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
         res["svgprocesses"].push(svgprocess.jsonThingsPositions()); 
     }
-    AutoDownloadBlob([JSON.stringify(res)], "thingpositions.json"); 
+    AutoDownloadBlob([JSON.stringify(res, null, 2)], "thingpositions.json"); 
 }
