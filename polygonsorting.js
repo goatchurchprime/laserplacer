@@ -16,9 +16,9 @@ patheval: function(p1x, p1y, c1x, c1y, c2x, c2y, p2x, p2y, t)
     return { x:x, y:y, tx:dx/dleng, ty:dy/dleng, t:t }; 
 }, 
 
+epsilont: 0.01,
 flattenpath: function(d, cosangdot, thinningtolerance) 
 {
-    var epsilont = 0.01; 
     console.assert(d[0][0] == "M"); 
     var p1x = d[0][1], p1y = d[0][2]; 
     var res = [ [p1x, p1y] ]; 
@@ -33,7 +33,7 @@ flattenpath: function(d, cosangdot, thinningtolerance)
             var peval0 = pevalstack.pop(); 
             var peval1 = pevalstack[pevalstack.length - 1]; 
             var dottang = peval0.tx*peval1.tx + peval0.ty*peval1.ty; 
-            if ((dottang < cosangdot) && (peval1.t - peval0.t >= epsilont)) {
+            if ((dottang < cosangdot) && (peval1.t - peval0.t >= this.epsilont)) {
                 pevalstack.push(this.patheval(p1x, p1y, c1x, c1y, c2x, c2y, p2x, p2y, (peval0.t+peval1.t)/2)); 
                 pevalstack.push(peval0); 
             } else {
@@ -77,6 +77,8 @@ flattenpath: function(d, cosangdot, thinningtolerance)
         return tol; 
     }
     
+// we should look for sideways angle tolerance here too and not just thin this blindly
+// do by selecting and diverging out again like the subdivision algorithm.    
     if (thinningtolerance != 0.0) {
         console.log("thinning to pixel tolerance", thinningtolerance); 
         var pts = res;
@@ -146,27 +148,33 @@ FindPathOrientation: function(darea)
     return diamondB <= diamondF; 
 },
 
-FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
+
+
+FPSrlends: function(dlist) 
 {
-    // create arrays of closest links
-    var closedistSq = closedist*closedist; 
-    var rlends = [ ]; // [ x, y, i, bfore ]
-    var rlidat = [ ]; // index*2 + (front ? 1 : 0[back])
-    Drlends = rlends; 
-    Drlidat = rlidat; 
+    var rlends = [ ]; // [ x, y, i, bfore, pathlength ]
     for (var i = 0; i < dlist.length; i++) {
-        rlidat.push([ ], [ ]); // each will be a list of cross connections [d, j]
         var pseq = dlist[i]; 
-        if (pseq) {
+        if (pseq !== null) {
+            var pathlength = Raphael.getTotalLength(pseq); 
             var seg0 = pseq[0]; 
-            rlends.push([ seg0[1], seg0[2], i, false ]); 
+            rlends.push([ seg0[1], seg0[2], i, false, pathlength ]); 
             var segE = pseq[pseq.length - 1]; 
-            rlends.push([ segE[segE.length-2], segE[segE.length-1], i, true ]); 
+            rlends.push([ segE[segE.length-2], segE[segE.length-1], i, true, pathlength ]); 
         }
     } 
     rlends.sort(); 
+    return rlends; 
+},
+
+FPSrlidat: function(rlends, dlistlen, closedist) 
+{
+    var rlidat = [ ]; // index*2 + (front ? 1 : 0[back])
+    for (var i = 0; i < dlistlen; i++) {
+        rlidat.push([ ], [ ]); // each will be a list of cross connections [d, j]
+    }
     
-    var rlconns = 0; 
+    var closedistSq = closedist*closedist; 
     for (var j = 0; j < rlends.length - 1; j++) {
         var rle = rlends[j]; 
         var xB = rle[0]; 
@@ -177,11 +185,10 @@ FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
             var dx = rle1[0] - xB;
             var dy = rle1[1] - yB; 
             var dCsq = dx*dx + dy*dy; 
-            if ((dCsq <= closedistSq) && ((rle[2] != rle1[2]) || (Raphael.getTotalLength(dlist[rle[2]]) > closedist))) { /* avoid connecting short line segment back to self (unless long enough to be a loop) */
+            if ((dCsq <= closedistSq) && ((rle[2] != rle1[2]) || (rle[4] > closedist))) { /* avoid connecting short line segment back to self (unless long enough to be a loop) */
                 var jd1 = rle1[2]*2 + (rle1[3] ? 1 : 0); 
                 rlidat[jd].push([dCsq, jd1]); 
                 rlidat[jd1].push([dCsq, jd]); 
-                rlconns++; 
             }
         }
     }
@@ -190,25 +197,35 @@ FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
     for (var j = 0; j < rlidat.length - 1; j++) {
         rlidat[j].sort(); 
     }
+    return rlidat; 
+},
 
-    function disconnectJD1(jd, jd1) {
-        var rlid1 = rlidat[jd1]; 
-        //console.log("disconjd", jd, jd1, rlid1.slice()); 
-        var d1i; 
-        for (d1i = rlid1.length - 1; d1i >= 0; d1i--) {
-            if (rlid1[d1i][1] == jd)
-                break; 
-        }
-        for (++d1i ; d1i < rlid1.length; d1i++)
-            rlid1[d1i-1] = rlid1[d1i]; 
-        rlid1.pop(); 
+disconnectJD1: function(rlidat, jd, jd1) 
+{
+    var rlid1 = rlidat[jd1]; 
+    //console.log("disconjd", jd, jd1, rlid1.slice()); 
+    var d1i; 
+    for (d1i = rlid1.length - 1; d1i >= 0; d1i--) {
+        if (rlid1[d1i][1] == jd)
+            break; 
     }
-    
+    for (++d1i ; d1i < rlid1.length; d1i++)
+        rlid1[d1i-1] = rlid1[d1i]; 
+    rlid1.pop(); 
+}, 
+
+FPSjdseqs: function(rlidat, dlistlen, bopencycles)
+{    
     // extract closed sequences of paths that join up
     var jdseqs = [ ];  
     var i = 0; 
-    var Dloops = rlconns*2 + dlist.length; 
-    while (i < dlist.length) {
+
+    var rlconns = 0; 
+    for (var j = 0; j < rlidat.length - 1; j++) 
+        rlconns += rlidat[j].length; 
+    var Dloops = rlconns*2 + dlistlen;  // used to trap infinite loops
+
+    while (i < dlistlen) {
         console.assert(Dloops-- >= 0); // catches infinite loops
         if (rlidat[i*2].length == 0) {
             if (rlidat[i*2 + 1].length == 0) {
@@ -216,13 +233,13 @@ FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
             } else {
                 var jd = i*2 + 1; 
                 while (rlidat[jd].length != 0) {
-                    disconnectJD1(jd, rlidat[jd].pop()[1]); 
+                    this.disconnectJD1(rlidat, jd, rlidat[jd].pop()[1]); 
                 }
             }
         } else if (rlidat[i*2 + 1].length == 0) {
             var jd = i*2; 
             while (rlidat[jd].length != 0) {
-                disconnectJD1(jd, rlidat[jd].pop()[1]); 
+                this.disconnectJD1(rlidat, jd, rlidat[jd].pop()[1]); 
             }
         } else {
             var jdseq = [ ]; 
@@ -232,11 +249,11 @@ FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
                 if (rlidat[jd].length == 0) {
                     var jdl = jdseq.pop(); 
                     //console.log("removing jdl", jdl, jd0); 
-                    disconnectJD1(jdl, rlidat[jdl].shift()[1]); 
+                    this.disconnectJD1(rlidat, jdl, rlidat[jdl].shift()[1]); 
                     break; 
-                } else if ((jdseq.length > dlist.length - i*0) || ((jdseq.length != 0) && (jdseq[jdseq.length-1] == jd))) {
+                } else if ((jdseq.length > dlistlen - i*0) || ((jdseq.length != 0) && (jdseq[jdseq.length-1] == jd))) {
                     //console.log("removing jd0 semiloop", jd0); 
-                    disconnectJD1(jd0, rlidat[jd0].shift()[1]); 
+                    this.disconnectJD1(rlidat, jd0, rlidat[jd0].shift()[1]); 
                     break; 
                 } else {
                     jdseq.push(jd); 
@@ -253,11 +270,11 @@ FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
                 for (var ijd = 0; ijd < jdseq.length; ijd++) {
                     var jd = jdseq[ijd]; 
                     while (rlidat[jd].length != 0) {
-                        disconnectJD1(jd, rlidat[jd].pop()[1]); 
+                        this.disconnectJD1(rlidat, jd, rlidat[jd].pop()[1]); 
                     }
                     jd1 = jd + ((jd%2) == 1 ? -1 : 1); 
                     while (rlidat[jd1].length != 0) {
-                        disconnectJD1(jd1, rlidat[jd1].pop()[1]); 
+                        this.disconnectJD1(rlidat, jd1, rlidat[jd1].pop()[1]); 
                     }
                 }
                 i++; 
@@ -266,6 +283,15 @@ FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
     }
     return jdseqs; 
 },
+
+FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
+{
+    // create arrays of closest links  (dlist can be padded with nulls to knock out values but retain the indexes)
+    var rlends = this.FPSrlends(dlist); // [ x, y, i, bfore ]
+    var rlidat = this.FPSrlidat(rlends, dlist.length, closedist); 
+    return this.FPSjdseqs(rlidat, dlist.length, bopencycles); 
+}, 
+
 
 GetSingletsList: function(jdseqs, dlistlength)
 {
@@ -284,6 +310,9 @@ GetSingletsList: function(jdseqs, dlistlength)
     }
     return singletslist; 
 },
+
+
+
 
 dpathappendsegs: function(darea, dpath, breversed) 
 {
@@ -492,5 +521,7 @@ SingletsToGroupingsD: function(dpath, cboundislands, jdgeos)
     }
     return Jb; 
 }
+
+
 }
 

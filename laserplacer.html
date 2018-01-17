@@ -74,7 +74,7 @@ function setup()
 	setviewboxfrompaperscale(); 
     
     // can't reference directly as context will be canvas instead of zoomfuncsobj
-    paper1.canvas.on wheel = function(e) { zoomfuncsobj.scrollwheelzoom(e) };
+    paper1.canvas.onwheel = function(e) { zoomfuncsobj.scrollwheelzoom(e) };
 	paper1.canvas.onmousedown = function(e) { zoomfuncsobj.mousedownoffshape(e) }; 
 	paper1.canvas.onmousemove = function(e) { zoomfuncsobj.mousemoveoffshape(e) }; 
 	paper1.canvas.onmouseup = function(e) { zoomfuncsobj.mouseupoffshape(e) }; 
@@ -114,6 +114,7 @@ div#filearea .spnumcols span:hover { color: #888; }
 div#filearea .groupprocess { background:#ffc }
 div#filearea .groupprocess:hover { background:#ccf }
 div#filearea .groupprocess.selected { background:#ee0 }
+div#filearea .groupprocess.working { background:green }
 
 div#filearea .dposition { color: green }
 div#filearea .dposition span { border-left: thin black solid }

@@ -578,8 +578,8 @@ console.log(pathgroupingtstr, pathgroupingtstr.tstr);
                 pathgroupingtstr.tstr = tstr;  
             elfadividphi.classList.remove("moving"); 
             pgrouparea.attr("fill", groupcolour); 
-            if (eltfscale !== null)
-                eltfscale.disabled = true; 
+//            if (eltfscale !== null)
+//                eltfscale.disabled = true; 
             tstr = null; 
         }
     ); 
@@ -643,19 +643,28 @@ console.log("hghghg", grouptype, spnumscp);
 function groupingprocess(svgprocess) 
 {
     console.log(svgprocess.fadivid, document.getElementById(svgprocess.fadivid)); 
-    if (!svgprocess.bstockdefinitiontype)
-        document.getElementById(svgprocess.fadivid).getElementsByClassName("groupprocess")[0].classList.add("selected"); 
+    var elgroupprocess = (svgprocess.bstockdefinitiontype ? null : document.getElementById(svgprocess.fadivid).getElementsByClassName("groupprocess")[0]); 
+    if (elgroupprocess != null)
+        elgroupprocess.classList.add("working")
 
-    // normal case
-    var closedist = 0.2; // should be a setting
-    var spnumscp = getspnumsselected(svgprocess.fadivid); 
+    // action this way so as to get the working-green thing lit up so we know it's working
+    setTimeout(function() {
+        // normal case
+        var closedist = 0.2; // should be a setting
+        var spnumscp = getspnumsselected(svgprocess.fadivid); 
 
-    // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
-    svgprocess.elprocessstatus.textContent = "Gstart"; 
-    svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedist, spnumscp, svgprocess.fadivid, svgprocess.elprocessstatus); 
-    svgprocess.elprocessstatus.textContent = "GD"; 
-    svgprocess.updateLgrouppaths(); 
-    updateAvailableThingPositions(); 
+        // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
+        svgprocess.elprocessstatus.textContent = "Gstart"; 
+        svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedist, spnumscp, svgprocess.fadivid, svgprocess.elprocessstatus); 
+        svgprocess.elprocessstatus.textContent = "GD"; 
+        svgprocess.updateLgrouppaths(); 
+        updateAvailableThingPositions(); 
+
+        if (elgroupprocess != null) {
+            elgroupprocess.classList.remove("working"); 
+            elgroupprocess.classList.remove("selected"); 
+        }
+    }, 1); 
 }
 
 

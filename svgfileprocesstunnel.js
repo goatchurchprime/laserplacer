@@ -1,4 +1,6 @@
 
+// there is still some jquery dependency here
+
 SVGfileprocess.prototype.LoadTunnelxDrawingDetails = function() 
 {
     console.assert(this.btunnelxtype); 

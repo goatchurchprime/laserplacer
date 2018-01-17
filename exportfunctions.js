@@ -356,25 +356,33 @@ function PenCutSeqsToPltCode(pencutseqs, stockbbox)
 
 var Dpens = null; 
 
-function pencutordercompare(a, b)
+function pencutordercompare(a, b)   // see GetPathsPensSequences for codes
 {
+    // all penmarks to happen first
     if (a.ptype == "etch") {
         if (b.ptype != "etch")
             return -1; 
         return (a.xtransseq[0] - b.xtransseq[0]); 
-    }
-    if (b.ptype == "etch")
+    } else if (b.ptype == "etch")
         return 1; 
     
+    // then by each file
     if (a.fadivid != b.fadivid) 
         return (a.fadivid < b.fadivid ? -1 : 1); 
         
+    // then by each object
     if (a.pgi != b.pgi)
         return (a.pgi - b.pgi);
-        
+
+    // cut inner types first
+    if (a.ptype != b.ptype)
+        return (a.ptype = "cutinner" ? -1 : 1); 
+    
+    // then in order of contours (only applies to inner contours, of which there can be several)
     if (a.contnum != b.contnum)
         return (a.contnum - b.contnum);
 
+    // then sequentially along the contour
     return (a.pgik - b.pgik);
 }
 
@@ -533,7 +541,6 @@ function plotpencutseq(svgstockprocess, iadvance)
     svgstockprocess.rjspath.attr("path", dseq); 
 }
 
-
 function genpathorderonstock() 
 {
     var elfadiv = this.parentElement; 
@@ -542,7 +549,6 @@ function genpathorderonstock()
     var stockbbox = svgstockprocess.Lgrouppaths[0][0].getBBox(); 
 
     var groupsoverlayingstock = GetGroupsoverlayingstock(stockbbox); 
-console.log("groups we will merge in", groupsoverlayingstock); 
     
     // collect all the penciled edges into the su
     var pencutseqs = [ ]; 
@@ -551,7 +557,6 @@ console.log("groups we will merge in", groupsoverlayingstock);
         var gj = groupsoverlayingstock[i].j; 
         var pencutseq = GetPathsPensSequences(svgprocess, gj, svgprocess.pathgroupings[gj], svgprocess.pathgroupingtstrs[gj].tstr); 
         pencutseqs = pencutseqs.concat(pencutseq); 
-console.log("pencutseq", pencutseq); 
     }
     
     // make the point sequences for each path and do all etches from left to right
@@ -564,6 +569,7 @@ console.log("pencutseq", pencutseq);
     console.log("pencutseqs", pencutseqs); 
     pencutseqs.sort(pencutordercompare);   
     console.log("pencutseqsordered", pencutseqs); 
+
 
     // all in one go now
     var dseq = [ ]; 
@@ -579,9 +585,10 @@ console.log("pencutseq", pencutseq);
 
 if (Dpens !== null)
     Dpens.remove(); 
-Dpens = paper1.path(dseq); 
+Dpens = paper1.path(dseq).attr("stroke-width", gcutstrokewidth); 
 
     svgstockprocess.Dpencutseqs = pencutseqs; 
+Dsvgstockprocess = svgstockprocess; 
     elfadiv.getElementsByClassName("pencutseqcount")[0].textContent = pencutseqs.length; 
     
     AutoDownloadBlob(PenCutSeqsToPltCode(pencutseqs, stockbbox), "pencut.anc"); 
