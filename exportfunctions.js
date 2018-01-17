@@ -566,9 +566,11 @@ function genpathorderonstock()
         pencutseqs = pencutseqs.concat(pencutseq); 
     }
     
+    var ftol = parseFloat(elfadiv.getElementsByClassName("genpathftol")[0].value); 
+    
     // make the point sequences for each path and do all etches from left to right
     for (var i = 0; i < pencutseqs.length; i++) {
-        PenCutSeqToPoints(pencutseqs[i], 0.5);
+        PenCutSeqToPoints(pencutseqs[i], ftol);
         if (pencutseqs[i].ptype == "etch")
             pencutseqs[i].reversed = (pencutseqs[i].xtransseq[0] > pencutseqs[i].xtransseq[pencutseqs[i].xtransseq.length - 1]); 
     }
@@ -735,8 +737,9 @@ function importSVGfile(i, f)
         fileblock.push('<span class="groupprocess" title="Group geometry">Group</span>'); 
     fileblock.push('<select class="dposition"></select>'); 
     if (bstockdefinitiontype) {
-        fileblock.push('<input type="button" value="GenPath" class="genpathorder"/>'); 
-        fileblock.push('<input type="text" class="pencutseqindex" value="0"/>/<span class="pencutseqcount">1</span>'); 
+        fileblock.push('<input type="button" class="genpathorder" value="GenPath"/>'); 
+        fileblock.push('<input type="text" class="genpathftol" value="0.5" title="Path thinning tolerance"/>'); 
+        fileblock.push('<input type="text" class="pencutseqindex" value="0" title="Path index"/>/<span class="pencutseqcount" title="Total path count">1</span>'); 
         fileblock.push('<input type="button" value="<<<" class="pencutseqback" title="go back one path"/>'); 
         fileblock.push('<input type="button" value=">" class="pencutseqadvance" title="advance on segment"/>'); 
         fileblock.push('<input type="button" value="A" class="pencutseqanimate" title="animate"/>'); 
