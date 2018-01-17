@@ -376,7 +376,7 @@ function pencutordercompare(a, b)   // see GetPathsPensSequences for codes
 
     // cut inner types first
     if (a.ptype != b.ptype)
-        return (a.ptype = "cutinner" ? -1 : 1); 
+        return (a.ptype == "cutinner" ? -1 : 1); 
     
     // then in order of contours (only applies to inner contours, of which there can be several)
     if (a.contnum != b.contnum)
@@ -541,6 +541,13 @@ function plotpencutseq(svgstockprocess, iadvance)
     svgstockprocess.rjspath.attr("path", dseq); 
 }
 
+
+var Dpencutseqs = null; 
+var Detchseqslen = -1; 
+var Drlends; 
+var Drlidat; 
+var Djdopseqs; 
+
 function genpathorderonstock() 
 {
     var elfadiv = this.parentElement; 
@@ -567,10 +574,70 @@ function genpathorderonstock()
     }
 
     console.log("pencutseqs", pencutseqs); 
-    pencutseqs.sort(pencutordercompare);   
+    pencutseqs.sort(pencutordercompare); 
     console.log("pencutseqsordered", pencutseqs); 
 
+    var etchseqslen = 0; 
+    for (  ; etchseqslen < pencutseqs.length; etchseqslen++) {
+        if (pencutseqs[etchseqslen].ptype != "etch") 
+            break; 
+    }
+    
+Dpencutseqs = pencutseqs; 
+Detchseqslen = etchseqslen; 
+    var rlends = PolySorting.FPSrlendsPC(pencutseqs, etchseqslen); 
+    var rlidat = PolySorting.FPSrlidat(rlends, etchseqslen, 0.02);  
+Drlends = rlends; 
+Drlidat = rlidat; 
+    var jdopseqs = PolySorting.FPSjdOpenseqsbetweenjcts(rlidat, etchseqslen); 
+Djdopseqs = jdopseqs.slice(); 
 
+// sod it; just do by closest
+var GetXY = function(pencutseq, jdopseq, bfront) {
+    var jd = (bfront ? jdopseq[0] : jdopseq[jdopseq.length-1]); 
+    var i = jd/2|0; 
+    var bfore = (((jd%2)==0)==bfront); 
+    var j = (bfore ? pencutseqs[i].xtransseq.length - 1 : 0); 
+    return [ pencutseqs[i].xtransseq[j], pencutseqs[i].ytransseq[j] ]; 
+}
+var FPSclosest = function(pencutseqs, jdopseqs, x0, y0) {
+    var dist = -1; 
+    var ijd; 
+    var idjbfront; 
+    for (var i = 0; i < jdopseqs.length; i++) {
+        var p0 = GetXY(pencutseqs, jdopseqs[i], true); 
+        var ldist0 = Math.hypot(p0[0]-x0, p0[1]-y0); 
+        var p1 = GetXY(pencutseqs, jdopseqs[i], false); 
+        var ldist1 = Math.hypot(p1[0]-x0, p1[1]-y0); 
+        if ((dist == -1) || (ldist0 < dist)) {
+            ijd = i; 
+            idjbfront = true; 
+            dist = ldist0; 
+        }
+        if ((dist == -1) || (ldist1 < dist)) {
+            ijd = i; 
+            idjbfront = false; 
+            dist = ldist1; 
+        }
+    }
+    return [ijd, idjbfront, dist]; 
+}
+
+    var Njdopseqs = [ jdopseqs.pop() ]; 
+    while (jdopseqs.length != 0) {
+        var n = Njdopseqs.length; 
+        var pp0 = GetXY(pencutseq, Njdopseqs[n-1], false); 
+        var igdl = FPSclosest(pencutseqs, jdopseqs, pp0[0], pp0[1]); 
+        Njdopseqs.push(jdopseqs.splice(igdl[0], 1)[0]); 
+        if (igdl[1]) {
+            Njdopseqs[n].reverse(); 
+            for (var k = 0; k < Njdopseqs[n].length; k++)
+                Njdopseqs[n][k] += ((Njdopseqs[n][k]%2)==0 ? 1 : -1); 
+        }
+    }
+console.log(Njdopseqs); 
+    PolySorting.FPScopybackreorderingPC(pencutseqs, etchseqslen, Njdopseqs); 
+ 
     // all in one go now
     var dseq = [ ]; 
     for (var i = 0; i < pencutseqs.length; i++) {
@@ -589,6 +656,7 @@ Dpens = paper1.path(dseq).attr("stroke-width", gcutstrokewidth);
 
     svgstockprocess.Dpencutseqs = pencutseqs; 
 Dsvgstockprocess = svgstockprocess; 
+
     elfadiv.getElementsByClassName("pencutseqcount")[0].textContent = pencutseqs.length; 
     
     AutoDownloadBlob(PenCutSeqsToPltCode(pencutseqs, stockbbox), "pencut.anc"); 

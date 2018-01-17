@@ -149,11 +149,47 @@ FindPathOrientation: function(darea)
 },
 
 
-
-FPSrlends: function(dlist) 
+FPSrlendsPC: function(pencutseqs, etchseqslen) // etchseqslen is the pencuts at the front that are etch numbers
 {
     var rlends = [ ]; // [ x, y, i, bfore, pathlength ]
-    for (var i = 0; i < dlist.length; i++) {
+    for (var i = 0; i < etchseqslen; i++) {
+        var pencutseq = pencutseqs[i]; 
+        var n = pencutseq.xtransseq.length; 
+        
+        var pathlength = 0; 
+        for (var j = 1; j < n; j++)
+            pathlength += Math.hypot(pencutseq.xtransseq[j]-pencutseq.xtransseq[j-1], pencutseq.ytransseq[j]-pencutseq.ytransseq[j-1]); 
+            
+        rlends.push([ pencutseq.xtransseq[0], pencutseq.ytransseq[0], i, false, pathlength ]); 
+        rlends.push([ pencutseq.xtransseq[n-1], pencutseq.ytransseq[n-1], i, true, pathlength ]); 
+    } 
+    rlends.sort(); 
+    return rlends; 
+},
+
+FPScopybackreorderingPC: function(pencutseqs, etchseqslen, jdopseqs)
+{
+    var etchpencutseqs = pencutseqs.slice(0, etchseqslen); 
+    var ic = 0; 
+    for (var j = 0; j < jdopseqs.length; j++) {
+        for (var k = 0; k < jdopseqs[j].length; k++) {
+            var i = jdopseqs[j][k]/2|0; 
+            console.assert(etchpencutseqs[i] !== null); 
+            console.assert(ic < etchseqslen); 
+            pencutseqs[ic] = etchpencutseqs[i]; 
+            pencutseqs[ic].reversed = ((jdopseqs[j][k]%2)==1); 
+            etchpencutseqs[i] = null; 
+            ic++; 
+        }
+    }
+    console.assert(ic === etchseqslen); 
+},
+
+
+FPSrlends: function(dlist, dlistlen) 
+{
+    var rlends = [ ]; // [ x, y, i, bfore, pathlength ]
+    for (var i = 0; i < dlistlen; i++) {
         var pseq = dlist[i]; 
         if (pseq !== null) {
             var pathlength = Raphael.getTotalLength(pseq); 
@@ -170,8 +206,8 @@ FPSrlends: function(dlist)
 FPSrlidat: function(rlends, dlistlen, closedist) 
 {
     var rlidat = [ ]; // index*2 + (front ? 1 : 0[back])
-    for (var i = 0; i < dlistlen; i++) {
-        rlidat.push([ ], [ ]); // each will be a list of cross connections [d, j]
+    for (var i = 0; i < dlistlen*2; i++) {
+        rlidat.push([ ]); // each will be a list of cross connections [d, j]  (these are not pairs of 
     }
     
     var closedistSq = closedist*closedist; 
@@ -200,7 +236,7 @@ FPSrlidat: function(rlends, dlistlen, closedist)
     return rlidat; 
 },
 
-disconnectJD1: function(rlidat, jd, jd1) 
+disconnectJD1: function(rlidat, jd, jd1)  // disconnects the other end of any link we are deleting (usually by popping)
 {
     var rlid1 = rlidat[jd1]; 
     //console.log("disconjd", jd, jd1, rlid1.slice()); 
@@ -214,7 +250,53 @@ disconnectJD1: function(rlidat, jd, jd1)
     rlid1.pop(); 
 }, 
 
-FPSjdseqs: function(rlidat, dlistlen, bopencycles)
+FPSjdOpenseqsbetweenjcts: function(rlidat, dlistlen)
+{
+    // extract closed sequences of paths that join up
+    var jdopseqs = [ ];  
+    
+    // find all isolated sequences between other 3-way nodes or with no connections
+    for (var i = 0; i < dlistlen; i++) {
+        if ((rlidat[i*2].length != 1) && (rlidat[i*2+1].length != 1)) 
+            jdopseqs.push([i*2]); 
+    }
+
+    // find sequences
+    for (var i = 0; i < dlistlen; i++) {
+        if ((rlidat[i*2].length == 1) || (rlidat[i*2+1].length == 1)) {
+            var jd = i*2; 
+            jdopseq = [ ]; 
+            while (rlidat[jd].length == 1) {
+                var jd1 = rlidat[jd].pop()[1];
+                this.disconnectJD1(rlidat, jd, jd1); 
+                jd = jd1 + ((jd1%2) == 1 ? -1 : 1); 
+                jdopseq.push(jd); // the going backwards one as we will reverse this sequence
+            }
+            jdopseq.reverse(); 
+            jdopseq.push(i*2); 
+            jd = i*2 + 1; 
+            while (rlidat[jd].length == 1) {
+                var jd1 = rlidat[jd].pop()[1];
+                jdopseq.push(jd1); // the going forwards half
+                this.disconnectJD1(rlidat, jd, jd1); 
+                jd = jd1 + ((jd1%2) == 1 ? -1 : 1); 
+            }
+            if (jdopseq[0] === jdopseq[jdopseq.length-1])  // looped cases get curve in twice
+                jdopseq.pop(); 
+            jdopseqs.push(jdopseq); 
+        }
+    }
+    
+    var Dsumjdopseq = 0; 
+    for (var i = 0; i < jdopseqs.length; i++)
+        Dsumjdopseq += jdopseqs[i].length; 
+    console.assert(Dsumjdopseq == dlistlen); 
+    
+    return jdopseqs; 
+}, 
+
+
+FPSjdseqs: function(rlidat, dlistlen)
 {    
     // extract closed sequences of paths that join up
     var jdseqs = [ ];  
@@ -227,7 +309,10 @@ FPSjdseqs: function(rlidat, dlistlen, bopencycles)
 
     while (i < dlistlen) {
         console.assert(Dloops-- >= 0); // catches infinite loops
+        
+        // disconnect any endpoint going forward
         if (rlidat[i*2].length == 0) {
+            // or backwards
             if (rlidat[i*2 + 1].length == 0) {
                 i++; 
             } else {
@@ -236,11 +321,13 @@ FPSjdseqs: function(rlidat, dlistlen, bopencycles)
                     this.disconnectJD1(rlidat, jd, rlidat[jd].pop()[1]); 
                 }
             }
+        // or backwards
         } else if (rlidat[i*2 + 1].length == 0) {
             var jd = i*2; 
             while (rlidat[jd].length != 0) {
                 this.disconnectJD1(rlidat, jd, rlidat[jd].pop()[1]); 
             }
+        // not an endpoint, follow round and disconnect
         } else {
             var jdseq = [ ]; 
             var jd0 = i*2 + 1; 
@@ -264,7 +351,8 @@ FPSjdseqs: function(rlidat, dlistlen, bopencycles)
                 }
             }
             
-            if ((jd == jd0) || (bopencycles && (jdseq.length != 0))) {
+            // got a closed cycle.  Disconnect everything else around it
+            if (jd == jd0) {
                 //console.log("found cycle", jdseq); 
                 jdseqs.push(jdseq); 
                 for (var ijd = 0; ijd < jdseq.length; ijd++) {
@@ -284,12 +372,12 @@ FPSjdseqs: function(rlidat, dlistlen, bopencycles)
     return jdseqs; 
 },
 
-FindClosedPathSequencesD: function(dlist, closedist, bopencycles)
+FindClosedPathSequencesD: function(dlist, closedist)
 {
     // create arrays of closest links  (dlist can be padded with nulls to knock out values but retain the indexes)
-    var rlends = this.FPSrlends(dlist); // [ x, y, i, bfore ]
+    var rlends = this.FPSrlends(dlist, dlist.length); // [ x, y, i, bfore ]
     var rlidat = this.FPSrlidat(rlends, dlist.length, closedist); 
-    return this.FPSjdseqs(rlidat, dlist.length, bopencycles); 
+    return this.FPSjdseqs(rlidat, dlist.length); 
 }, 
 
 

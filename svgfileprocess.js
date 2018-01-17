@@ -448,7 +448,7 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocesss
     for (var ispnum = 0; ispnum < spnumscp.length; ispnum++) {
         var spnum = spnumscp[ispnum]; 
         elprocessstatus.textContent = "Gjoining_spnum="+spnum; 
-        var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColour(rlistb, spnum), closedist, false); 
+        var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColour(rlistb, spnum), closedist); 
         var npathsleft = 0; 
         for (var i = 0; i < ljdseqs.length; i++)
             npathsleft += ljdseqs[i].length; 
