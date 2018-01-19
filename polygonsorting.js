@@ -188,7 +188,7 @@ FPScopybackreorderingPC: function(pencutseqs, etchseqslen, jdopseqs)
 
 FPSrlends: function(dlist, dlistlen) 
 {
-    var rlends = [ ]; // [ x, y, i, bfore, pathlength ]
+    var rlends = [ ]; // [ x, y, i, bfore, pathlength ]  (could combine the into i*2+bfore for consistency)
     for (var i = 0; i < dlistlen; i++) {
         var pseq = dlist[i]; 
         if (pseq !== null) {
@@ -203,6 +203,10 @@ FPSrlends: function(dlist, dlistlen)
     return rlends; 
 },
 
+// this is the source of the doubling up index and then odd/even value to denote either which node (front 
+// or back) of the edge, or the direction of the edge.  Recording as this way (rather than [index, bdirection] pairs) 
+// means we have a good way to index into parallel table of other things, in the way that pairs cannot look things up, 
+// even though this is a little less intuitive and clear. In C++ we would have done this as a struct with accessor functions
 FPSrlidat: function(rlends, dlistlen, closedist) 
 {
     var rlidat = [ ]; // index*2 + (front ? 1 : 0[back])
@@ -216,6 +220,8 @@ FPSrlidat: function(rlends, dlistlen, closedist)
         var xB = rle[0]; 
         var yB = rle[1]; 
         var jd = rle[2]*2 + (rle[3] ? 1 : 0);  // encoding the index as *2 + (forward ? 1 : 0)
+        
+        // loop through forwards (constrained by beyond the x-direction wider than closedist
         for (var j1 = j+1; ((j1 < rlends.length) && (rlends[j1][0] <= xB + closedist)); j1++) {
             var rle1 = rlends[j1]; 
             var dx = rle1[0] - xB;
@@ -230,7 +236,7 @@ FPSrlidat: function(rlends, dlistlen, closedist)
     }
 
     // sort adjacencies at endpoints by distance
-    for (var j = 0; j < rlidat.length - 1; j++) {
+    for (var j = 0; j < rlidat.length; j++) {
         rlidat[j].sort(); 
     }
     return rlidat; 
@@ -250,6 +256,7 @@ disconnectJD1: function(rlidat, jd, jd1)  // disconnects the other end of any li
     rlid1.pop(); 
 }, 
 
+// used for finding sequences
 FPSjdOpenseqsbetweenjcts: function(rlidat, dlistlen)
 {
     // extract closed sequences of paths that join up
@@ -307,12 +314,13 @@ FPSjdseqs: function(rlidat, dlistlen)
         rlconns += rlidat[j].length; 
     var Dloops = rlconns*2 + dlistlen;  // used to trap infinite loops
 
+    // this will only find forward following loops (jd=i*2+1)
     while (i < dlistlen) {
         console.assert(Dloops-- >= 0); // catches infinite loops
         
-        // disconnect any endpoint going forward
+        // disconnect any endpoint going backwards
         if (rlidat[i*2].length == 0) {
-            // or backwards
+            // then disconnect forward links from here
             if (rlidat[i*2 + 1].length == 0) {
                 i++; 
             } else {
@@ -321,36 +329,52 @@ FPSjdseqs: function(rlidat, dlistlen)
                     this.disconnectJD1(rlidat, jd, rlidat[jd].pop()[1]); 
                 }
             }
-        // or backwards
+        // line is an endpoint going forward 
         } else if (rlidat[i*2 + 1].length == 0) {
             var jd = i*2; 
             while (rlidat[jd].length != 0) {
                 this.disconnectJD1(rlidat, jd, rlidat[jd].pop()[1]); 
             }
-        // not an endpoint, follow round and disconnect
+            
+        // not an endpoint going forwards, follow round to see if it forms a loop
         } else {
             var jdseq = [ ]; 
             var jd0 = i*2 + 1; 
             var jd = jd0; 
             while (true) {
+                
+                // we've chased through and hit an end, take it out
                 if (rlidat[jd].length == 0) {
                     var jdl = jdseq.pop(); 
-                    //console.log("removing jdl", jdl, jd0); 
+                    console.log("removing jdl", jdl, jd0); 
                     this.disconnectJD1(rlidat, jdl, rlidat[jdl].shift()[1]); 
                     break; 
+                    
+                // we've exceeded the number of edges possible, so time to quit (and take out the starting point)
                 } else if ((jdseq.length > dlistlen - i*0) || ((jdseq.length != 0) && (jdseq[jdseq.length-1] == jd))) {
-                    //console.log("removing jd0 semiloop", jd0); 
+                    console.log("removing jd0 semiloop", jd0); 
                     this.disconnectJD1(rlidat, jd0, rlidat[jd0].shift()[1]); 
                     break; 
+                    
+                // this is the part actually continue chasing through the 2-way connections (pretty important but hard)
                 } else {
                     jdseq.push(jd); 
-                    var jd1 = rlidat[jd][0][1];
+                    var jd1 = rlidat[jd][0][1];  // pick closest out of the list here
+                    
+                    // (except try to avoid looping back on self if possible)
+                    if ((jdseq.length >= 2) && (jdseq[jdseq.length - 2] == jd1)) {
+                        //console.log("Avoid obvious loop backwards"); 
+                        var jd1 = rlidat[jd][1][1];  // pick second closest out of the list here
+                    }
+
                     jd = jd1 + ((jd1%2) == 1 ? -1 : 1); 
+                    
+                    // we've looped around to starting point
                     if (jd == jd0) 
                         break; 
                 }
             }
-            
+
             // got a closed cycle.  Disconnect everything else around it
             if (jd == jd0) {
                 //console.log("found cycle", jdseq); 
@@ -372,11 +396,14 @@ FPSjdseqs: function(rlidat, dlistlen)
     return jdseqs; 
 },
 
+
 FindClosedPathSequencesD: function(dlist, closedist)
 {
     // create arrays of closest links  (dlist can be padded with nulls to knock out values but retain the indexes)
-    var rlends = this.FPSrlends(dlist, dlist.length); // [ x, y, i, bfore ]
+    var rlends = this.FPSrlends(dlist, dlist.length); // [ x, y, i, bfore, pathlength ]
+    //Drlends = rlends; 
     var rlidat = this.FPSrlidat(rlends, dlist.length, closedist); 
+    //Drlidat = this.FPSrlidat(rlends, dlist.length, closedist);   // recalculate to avoid consumption by FPSjdseqs
     return this.FPSjdseqs(rlidat, dlist.length); 
 }, 
 

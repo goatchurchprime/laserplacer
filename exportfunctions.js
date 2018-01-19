@@ -277,6 +277,8 @@ function GetPathsPensSequences(svgprocess, pgi, pathgrouping, tstr)
             rres["absolutescale"] = svgprocess.currentabsolutescale; 
             rres["cmatrix"] = svgprocess.rlistb[jr].cmatrix; 
             rres["dmi"] = svgprocess.rlistb[jr].dmi; 
+            rres["MX0"] = svgprocess.rlistb[jr].MX0; 
+            rres["MY0"] = svgprocess.rlistb[jr].MY0; 
             res.push(rres); 
         }
     }
@@ -289,7 +291,19 @@ function PenCutSeqToPoints(penseq, ftol)
     penseq["ytransseq"] = [ ]; 
     
     // we should transform paths across preserving arcs
-    var dtrans = Raphael.mapPath(penseq.dmi, penseq.cmatrix); 
+    // this depends on path2curve which converts all to paths; or we should use parsePathString; and then there's pathToAbsolute
+    
+    var dtrans; 
+    if (penseq.dmi[0] === "m") {
+        var dmiM = "M"+penseq.MX0+","+penseq.MY0+" "+ penseq.dmi; 
+        dtrans = Raphael.mapPath(dmiM, penseq.cmatrix); 
+        console.assert((dtrans[0][0] == "M") && (dtrans[1][0] == "M")); 
+        dtrans.shift(); 
+        console.log(dmiM, dtrans); 
+    } else {
+        dtrans = Raphael.mapPath(penseq.dmi, penseq.cmatrix); 
+    }
+    
     if (penseq.absolutescale !== 1)
         dtrans = Raphael.mapPath(dtrans, Raphael.matrix(penseq.absolutescale, 0, 0, Math.abs(penseq.absolutescale), 0, 0))
     dtrans = Raphael.transformPath(dtrans, penseq.tstr); 
@@ -304,10 +318,10 @@ function PenCutSeqToPoints(penseq, ftol)
 
 function PenCutSeqsToPltCode(pencutseqs, stockbbox)
 {
-    lc = [ "POST: https://bitbucket.org/goatchurch/laserplacer\n" ];  
-    lc.push("START\n"); 
-    lc.push("'(name of files and entities loaded go here)\n"); 
-    lc.push("%4 1000;\n", "%5 1000;\n", "%6 100;\n", "%7 10;\n", "%8 10;\n", "%9 10;\n"); 
+    lc = [ "POST: https://bitbucket.org/goatchurch/laserplacer\r\n" ];  
+    lc.push("START\r\n"); 
+    lc.push("'(Name of files and entities loaded go here)\r\n"); 
+    lc.push("%4 1000;\r\n", "%5 1000;\r\n", "%6 100;\r\n", "%7 10;\r\n", "%8 10;\r\n", "%9 10;\r\n"); 
     
     var currx, curry, currsp, currvs; 
     var jointol = 0.1; 
@@ -324,18 +338,18 @@ function PenCutSeqsToPltCode(pencutseqs, stockbbox)
         var bchangepen = ((i == 0) || (sp != currsp)); 
         if (bliftpen || bchangepen) {
             if (i != 0)
-                lc.push("PU;\n"); 
-            lc.push("VS 1000;\n"); 
+                lc.push("PU;\r\n"); 
+            lc.push("VS 1000;\r\n"); 
             currvs = 1000; 
-            lc.push("PA "+(p0x-stockbbox.x).toFixed(2)+","+(stockbbox.y2-p0y).toFixed(2)+";\n");  // flipping the y
+            lc.push("PA "+(p0x-stockbbox.x).toFixed(2)+","+(stockbbox.y2-p0y).toFixed(2)+";\r\n");  // flipping the y
             if (bchangepen)
-                lc.push("SP "+sp+";\n"); 
-            lc.push("PD;\n"); 
+                lc.push("SP "+sp+";\r\n"); 
+            lc.push("PD;\r\n"); 
             currsp = sp; 
         }
         var vs = (pencutseq.ptype == "etch" ? 500 : 140); 
         if (vs != currvs) 
-            lc.push("VS "+vs+";\n"); 
+            lc.push("VS "+vs+";\r\n"); 
         currvs = vs;  
         currx = p0x; 
         curry = p0y; 
@@ -344,11 +358,11 @@ function PenCutSeqsToPltCode(pencutseqs, stockbbox)
             var rj = (pencutseq.reversed ? n-1-j : j); 
             currx = pencutseq.xtransseq[rj]; 
             curry = pencutseq.ytransseq[rj]; 
-            lc.push("PA "+(currx-stockbbox.x).toFixed(2)+","+(stockbbox.y2-curry).toFixed(2)+";\n"); 
+            lc.push("PA "+(currx-stockbbox.x).toFixed(2)+","+(stockbbox.y2-curry).toFixed(2)+";\r\n"); 
         }
     }
 
-    lc.push("PU;\n", "VS 1000;\n", "PU;\n", "PA 0,0;\n", "!PG;\n"); 
+    lc.push("PU;\r\n", "VS 1000;\r\n", "PU;\r\n", "PA 0,0;\r\n", "!PG;\r\n"); 
     return lc; 
 } 
 
@@ -579,6 +593,7 @@ function genpathorderonstock()
     pencutseqs.sort(pencutordercompare); 
     console.log("pencutseqsordered", pencutseqs); 
 
+// sequencing the etch pens to be in sensible order
     var etchseqslen = 0; 
     for (  ; etchseqslen < pencutseqs.length; etchseqslen++) {
         if (pencutseqs[etchseqslen].ptype != "etch") 
@@ -587,8 +602,9 @@ function genpathorderonstock()
     
 Dpencutseqs = pencutseqs; 
 Detchseqslen = etchseqslen; 
+var closedist = 0.32; // distance we can join across
     var rlends = PolySorting.FPSrlendsPC(pencutseqs, etchseqslen); 
-    var rlidat = PolySorting.FPSrlidat(rlends, etchseqslen, 0.02);  
+    var rlidat = PolySorting.FPSrlidat(rlends, etchseqslen, closedist);  
 Drlends = rlends; 
 Drlidat = rlidat; 
     var jdopseqs = PolySorting.FPSjdOpenseqsbetweenjcts(rlidat, etchseqslen); 
@@ -625,22 +641,23 @@ var FPSclosest = function(pencutseqs, jdopseqs, x0, y0) {
     return [ijd, idjbfront, dist]; 
 }
 
-    var Njdopseqs = [ jdopseqs.pop() ]; 
-    while (jdopseqs.length != 0) {
-        var n = Njdopseqs.length; 
-        var pp0 = GetXY(pencutseq, Njdopseqs[n-1], false); 
-        var igdl = FPSclosest(pencutseqs, jdopseqs, pp0[0], pp0[1]); 
-        Njdopseqs.push(jdopseqs.splice(igdl[0], 1)[0]); 
-        if (igdl[1]) {
-            Njdopseqs[n].reverse(); 
-            for (var k = 0; k < Njdopseqs[n].length; k++)
-                Njdopseqs[n][k] += ((Njdopseqs[n][k]%2)==0 ? 1 : -1); 
-        }
+var Njdopseqs = [ jdopseqs.pop() ]; 
+while (jdopseqs.length != 0) {
+    var n = Njdopseqs.length; 
+    var pp0 = GetXY(pencutseq, Njdopseqs[n-1], false); 
+    var igdl = FPSclosest(pencutseqs, jdopseqs, pp0[0], pp0[1]); 
+    Njdopseqs.push(jdopseqs.splice(igdl[0], 1)[0]); 
+    if (igdl[1]) {
+        Njdopseqs[n].reverse(); 
+        for (var k = 0; k < Njdopseqs[n].length; k++)
+            Njdopseqs[n][k] += ((Njdopseqs[n][k]%2)==0 ? 1 : -1); // reverse direction of each by exchanging odd for even
     }
-console.log(Njdopseqs); 
-    PolySorting.FPScopybackreorderingPC(pencutseqs, etchseqslen, Njdopseqs); 
+}
+console.log(Njdopseqs); // reorder the the pencuts from the index lookup
+PolySorting.FPScopybackreorderingPC(pencutseqs, etchseqslen, Njdopseqs); 
+
  
-    // all in one go now
+    // all in one seqence go now
     var dseq = [ ]; 
     for (var i = 0; i < pencutseqs.length; i++) {
         var pencutseq = pencutseqs[i]; 

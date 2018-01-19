@@ -133,7 +133,7 @@ SVGfileprocess.prototype.WorkOutPixelScale = function()
     this.fsca = 1.0/this.fmmpixwidth; 
 }
 
-// necessaryfor the final splitting of the path by the M values (we set bMsplits=false only in tunnel importing)
+// necessary for the final splitting of the path by the M values (we set bMsplits=false only in tunnel importing)
 SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, d, spnum, strokecolour, cmatrix)
 {
     var i0 = 0; 
@@ -141,18 +141,31 @@ SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, 
     var im0 = 0; 
     while (i0 < dtrans.length) {
         var i1 = i0 + 1; 
-        while ((i1 < dtrans.length) && ((dtrans[i1][0] != "M") || !bMsplits))
+        while ((i1 < dtrans.length) && ((dtrans[i1][0] != "M") || !bMsplits))  // only abs M values are in this case
             i1++; 
 
-        console.assert(d[im0] == "M"); 
-        var dim1 = d.substr(im0+1).search("M")
+        console.assert((d[im0] == "M") || (d[im0] == "m")); 
+        var dim1 = d.substr(im0+1).search("M"); 
+        var dim1m = d.substr(im0+1).search("m"); 
+        if ((dim1m != -1) && ((dim1 == -1) || (dim1m < dim1)))
+            dim1 = dim1m; 
+            
         console.assert((dim1 == -1) == (i1 == dtrans.length)); 
         
         // this is the place to separate out the paths by M positions
         var path = paper1.path(dtrans.slice(i0, i1)); 
         path.attr({stroke:strokecolour, "stroke-width":this.drawstrokewidth}); 
         rlist.push(path); 
-        this.rlistb.push({path:path, spnum:spnum, d:d, mi:mi, dmi:(dim1 == -1 ? d.substr(im0) : d.substr(im0, dim1+im0+1)), cmatrix:cmatrix}); 
+        var rb = {path:path, spnum:spnum, d:d, mi:mi, dmi:(dim1 == -1 ? d.substr(im0) : d.substr(im0, dim1+im0+1)), cmatrix:cmatrix}; 
+        console.assert((d[im0] == "M") || (i0 !== 0)); 
+        if (d[im0] == "m") {
+            rb["MX0"] = dtrans[i0-1][dtrans[i0-1].length - 2];  // the previous end point relative to which the next m motion goes from
+            rb["MY0"] = dtrans[i0-1][dtrans[i0-1].length - 1];  
+        } else {
+            rb["MX0"] = dtrans[i0][dtrans[i0].length - 2];  // the absolute M position here 
+            rb["MY0"] = dtrans[i0][dtrans[i0].length - 1];  
+        } 
+        this.rlistb.push(rb); 
         
         im0 = dim1+im0+1; 
         i0 = i1; 
@@ -276,6 +289,7 @@ SVGfileprocess.prototype.importSVGpathR = function()
     } else {
         cstroke = strokelist[strokelist.length - 1]; 
     }
+    
     if (tag == "pattern") {
         console.log("skip pattern"); 
     } else if (tag == "clippath") {
@@ -361,8 +375,12 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
 {
     // NB "stroke" actually means colour in SVG lingo
     this.txt = txt; 
+//console.log(txt);   
     this.tsvg = $($(txt).children()[0]).parent(); // seems not to work directly as $(txt).find("svg")
+//console.log(this.tsvg);   
     this.WorkOutPixelScale();  // sets the btunnelxtype
+    
+    // find the class definitions for style (using the replace function to look up all of them)
     this.mclassstyle = { }; 
     var mclassstyle = this.mclassstyle; 
     this.tsvg.find("style").text().replace(/\.([\w\d\-]+)\s*\{([^}]*)/gi, function(a, b, c) { 
@@ -526,7 +544,6 @@ console.log(pathgroupingtstr, pathgroupingtstr.tstr);
     var elfadividphi = document.getElementById(pathgroupingtstr.fadividphi); 
     var eltfscale = (this.bstockdefinitiontype ? null : document.getElementById(this.fadivid).getElementsByClassName("tfscale")[0]); 
     
-    
     pgrouparea.drag(
         function(dx, dy, x, y, e) { // drag
             if (tstr == null)
@@ -640,6 +657,7 @@ console.log("hghghg", grouptype, spnumscp);
 }
 
 
+var closedist = 0.2; // should be a setting
 function groupingprocess(svgprocess) 
 {
     console.log(svgprocess.fadivid, document.getElementById(svgprocess.fadivid)); 
@@ -650,7 +668,6 @@ function groupingprocess(svgprocess)
     // action this way so as to get the working-green thing lit up so we know it's working
     setTimeout(function() {
         // normal case
-        var closedist = 0.2; // should be a setting
         var spnumscp = getspnumsselected(svgprocess.fadivid); 
 
         // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
