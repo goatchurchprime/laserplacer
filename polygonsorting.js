@@ -346,13 +346,13 @@ FPSjdseqs: function(rlidat, dlistlen)
                 // we've chased through and hit an end, take it out
                 if (rlidat[jd].length == 0) {
                     var jdl = jdseq.pop(); 
-                    console.log("removing jdl", jdl, jd0); 
+                    //console.log("removing jdl", jdl, jd0); 
                     this.disconnectJD1(rlidat, jdl, rlidat[jdl].shift()[1]); 
                     break; 
                     
                 // we've exceeded the number of edges possible, so time to quit (and take out the starting point)
                 } else if ((jdseq.length > dlistlen - i*0) || ((jdseq.length != 0) && (jdseq[jdseq.length-1] == jd))) {
-                    console.log("removing jd0 semiloop", jd0); 
+                    //console.log("removing jd0 semiloop", jd0); 
                     this.disconnectJD1(rlidat, jd0, rlidat[jd0].shift()[1]); 
                     break; 
                     
@@ -362,7 +362,7 @@ FPSjdseqs: function(rlidat, dlistlen)
                     var jd1 = rlidat[jd][0][1];  // pick closest out of the list here
                     
                     // (except try to avoid looping back on self if possible)
-                    if ((jdseq.length >= 2) && (jdseq[jdseq.length - 2] == jd1)) {
+                    if ((jdseq.length >= 2) && (jdseq[jdseq.length - 2] == jd1) && (rlidat[jd].length >= 2)) {
                         //console.log("Avoid obvious loop backwards"); 
                         var jd1 = rlidat[jd][1][1];  // pick second closest out of the list here
                     }

@@ -435,12 +435,13 @@ function DcolourPathGrouping(rlistb, splist, pathgrouping, strokecolour, strokee
 }
 
 
-function CopyPathListOfColour(rlistb, spnum)
+
+function CopyPathListOfColourList(rlistb, spnumarray)
 {
     var dlist = [ ]; 
     var npathsc = 0; 
     for (var i = 0; i < rlistb.length; i++) {
-        if ((spnum === null) || ((rlistb[i].spnum == spnum) && (rlistb[i].path.getTotalLength() != 0)))
+        if ((spnumarray === null) || ((spnumarray.indexOf(rlistb[i].spnum) != -1) && (rlistb[i].path.getTotalLength() != 0)))
             dlist.push(rlistb[i].path.attr("path")); 
         else
             dlist.push(null); 
@@ -448,6 +449,7 @@ function CopyPathListOfColour(rlistb, spnum)
     }
     return dlist; 
 }
+
 
 function MakeContourcurvesFromSequences(dlist, jdseqs) 
 {
@@ -458,21 +460,35 @@ function MakeContourcurvesFromSequences(dlist, jdseqs)
     return jdgeos; 
 }
 
+
+
 // may need to be in callback type to spread the load and make the processstatus appear
+var bgroupcoloursindividually = true; 
 function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocessstatus)
 {
     // form the closed path sequences per spnum
     var jdseqs = [ ];  // indexes dlist
-    for (var ispnum = 0; ispnum < spnumscp.length; ispnum++) {
-        var spnum = spnumscp[ispnum]; 
-        elprocessstatus.textContent = "Gjoining_spnum="+spnum; 
-        var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColour(rlistb, spnum), closedist); 
+    if (bgroupcoloursindividually) {
+        for (var ispnum = 0; ispnum < spnumscp.length; ispnum++) {
+            var spnum = spnumscp[ispnum]; 
+            elprocessstatus.textContent = "Gjoining_spnum="+spnum; 
+            var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColourList(rlistb, [spnum]), closedist); 
+            var npathsleft = 0; 
+            for (var i = 0; i < ljdseqs.length; i++)
+                npathsleft += ljdseqs[i].length; 
+            //console.log("ljdseqs", spnum, "joined", npathsc, "left", npathsleft);  // could use not-joined paths as a guess of which colours to filter as engravings
+            jdseqs = jdseqs.concat(ljdseqs); 
+        }
+    } else {
+        elprocessstatus.textContent = "Gjoining_spnum="+spnumscp.join(","); 
+        var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColourList(rlistb, spnumscp), closedist); 
         var npathsleft = 0; 
         for (var i = 0; i < ljdseqs.length; i++)
             npathsleft += ljdseqs[i].length; 
         //console.log("ljdseqs", spnum, "joined", npathsc, "left", npathsleft);  // could use not-joined paths as a guess of which colours to filter as engravings
         jdseqs = jdseqs.concat(ljdseqs); 
     }
+    
     // jdseqs = [ [i1, i2, i3,...] sequence of dlist[ii/2|0], bfore=((ii%2)==1 ]
 
     // list of paths not included in any cycle
@@ -481,7 +497,7 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocesss
 
     // build the dlist without any holes parallel to rlistb to use for groupings
     elprocessstatus.textContent = "Gconcat_JDgeoseqs"; 
-    var dlist = CopyPathListOfColour(rlistb, null); 
+    var dlist = CopyPathListOfColourList(rlistb, null); 
     var jdgeos = MakeContourcurvesFromSequences(dlist, jdseqs); 
 
     // groups of jdsequences forming outercontour, islands, singlets 
@@ -640,7 +656,7 @@ SVGfileprocess.prototype.ProcessPathsToBoundingRect = function()
 }
 
 // could this be converted into a callback function if it takes too long
-SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
+/*SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
 {
     var closedist = 0.2; // should be a setting
     var spnumscp = getspnumsselected(this.fadivid); 
@@ -654,10 +670,10 @@ console.log("hghghg", grouptype, spnumscp);
     }
 
     this.updateLgrouppaths(); 
-}
+}*/
 
 
-var closedist = 0.2; // should be a setting
+var closedistgrouping = 0.2; // should be a setting
 function groupingprocess(svgprocess) 
 {
     console.log(svgprocess.fadivid, document.getElementById(svgprocess.fadivid)); 
@@ -672,7 +688,7 @@ function groupingprocess(svgprocess)
 
         // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
         svgprocess.elprocessstatus.textContent = "Gstart"; 
-        svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedist, spnumscp, svgprocess.fadivid, svgprocess.elprocessstatus); 
+        svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedistgrouping, spnumscp, svgprocess.fadivid, svgprocess.elprocessstatus); 
         svgprocess.elprocessstatus.textContent = "GD"; 
         svgprocess.updateLgrouppaths(); 
         updateAvailableThingPositions(); 
