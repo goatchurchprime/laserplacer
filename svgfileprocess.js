@@ -375,6 +375,13 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
 {
     // NB "stroke" actually means colour in SVG lingo
     this.txt = txt; 
+    
+// this is the last place jquery is used, for the parsing ofthe svg text.  
+// there must be a way using 
+//   this.Dtsvg = document.createElement("div"); 
+//   this.Dtsvg.innerHTML = txt; 
+// would also need a rewrite on the cstack using nodename and node value, and find out what .find does
+// to get it all done
 //console.log(txt);   
     this.tsvg = $($(txt).children()[0]).parent(); // seems not to work directly as $(txt).find("svg")
 //console.log(this.tsvg);   
