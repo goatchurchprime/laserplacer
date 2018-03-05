@@ -21,7 +21,7 @@ SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, 
         // this is the place to separate out the paths by M positions
         var path = paper1.path(dtrans.slice(i0, i1)); 
         path.attr({stroke:strokecolour, "stroke-width":this.drawstrokewidth}); 
-        var rb = {path:path, spnum:spnum, layerclass:layerclass, d:d, mi:mi, dmi:(dim1 == -1 ? d.substr(im0) : d.substr(im0, dim1+im0+1)), cmatrix:cmatrix}; 
+        var rb = {path:path, spnum:spnum, col:strokecolour, layerclass:layerclass, d:d, mi:mi, dmi:(dim1 == -1 ? d.substr(im0) : d.substr(im0, dim1+im0+1)), cmatrix:cmatrix}; 
         if ((d[im0] == "m") && (i0 !== 0)) {
             rb["MX0"] = dtrans[i0-1][dtrans[i0-1].length - 2];  // the previous end point relative to which the next m motion goes from
             rb["MY0"] = dtrans[i0-1][dtrans[i0-1].length - 1];  
@@ -158,6 +158,7 @@ SVGfileprocess.prototype.importSVGpathR = function()
         cstroke = strokelist[strokelist.length - 1]; 
     }
     
+    var layerclass = cc.attr("class") || ""; 
     if (tag == "pattern") {
         console.log("skip pattern"); 
     } else if (tag == "clippath") {
@@ -169,20 +170,20 @@ SVGfileprocess.prototype.importSVGpathR = function()
         var x0 = ppts.shift(); 
         var y0 = ppts.shift();
         var d = 'M'+x0+','+y0+'L'+ppts.join(' ')+(tag == "polygon" ? "Z" : ""); 
-        this.processSingleSVGpath(d, cmatrix, cstroke, cclass); 
+        this.processSingleSVGpath(d, cmatrix, cstroke, layerclass); 
     } else if (tag == "circle") {
         var cx = parseFloat(cc.attr("cx"));
         var cy = parseFloat(cc.attr("cy")); 
         var r = parseFloat(cc.attr("r")); 
         var d = "M"+(cx-r)+","+cy+"A"+r+","+r+",0,0,1,"+cx+","+(cy-r)+"A"+r+","+r+",0,1,1,"+(cx-r)+","+cy; 
-        this.processSingleSVGpath(d, cmatrix, cstroke, cclass); 
+        this.processSingleSVGpath(d, cmatrix, cstroke, layerclass); 
     } else if (tag == "line") {
         var x1 = parseFloat(cc.attr("x1"));
         var y1 = parseFloat(cc.attr("y1")); 
         var x2 = parseFloat(cc.attr("x2"));
         var y2 = parseFloat(cc.attr("y2")); 
         var d = "M"+x1+","+y1+"L"+x2+","+y2; 
-        this.processSingleSVGpath(d, cmatrix, cstroke, cclass); 
+        this.processSingleSVGpath(d, cmatrix, cstroke, layerclass); 
     } else if (tag == "rect") {
         var x0 = parseFloat(cc.attr("x"));
         var y0 = parseFloat(cc.attr("y")); 
@@ -190,9 +191,9 @@ SVGfileprocess.prototype.importSVGpathR = function()
         var y1 = y0 + parseFloat(cc.attr("height")); 
         var d = "M"+x0+","+y0+"L"+x0+","+y1+" "+x1+","+y1+" "+x1+","+y0+"Z"; 
         if (!this.btunnelxtype)
-            this.processSingleSVGpath(d, cmatrix, cstroke, cclass); 
+            this.processSingleSVGpath(d, cmatrix, cstroke, layerclass); 
     } else if (tag == "path") {
-        this.processSingleSVGpath(cc.attr("d"), cmatrix, cstroke, cclass); 
+        this.processSingleSVGpath(cc.attr("d"), cmatrix, cstroke, layerclass); 
     } else {
         this.pstack.push(this.pback); 
         this.pback = { pos:this.cstack.length, raphtranslist:raphtranslist, strokelist:strokelist, cmatrix:cmatrix }; 
@@ -273,12 +274,20 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
     //if (txt.length < 10000)
     //    $("div#"+this.fadivid+" .groupprocess").addClass("selected"); 
 
-    this.rlistb = [ ];  // list of type [ {path:paper1.path, spnum:spnum, d:org-d-value, mi:index-to-m cutoff, cmatrix:cmatrix} ]
+    this.rlistb = [ ];  // list of type [ {path       : paper1.path (raphaelJS object), 
+                        //                 spnum      : pen number object indexinginto spnumobj list
+                        //                 layerclass : classname from svg object, from layername in dxf
+                        //                 col        : stroke colour
+                        //                 d          : original path d definition string, 
+                        //                 mi         : index of M move within d-string, 
+                        //                 dmi        : sub d definition path string, 
+                        //                 cmatrix    : concatenated transform derived from svg grouping objects   } ]
                         // quickest shortcut is to use d = path.attr("path")
                         // also functions useful are: Raphael.mapPath(d, cmatrix) and PolySorting.flattenpath()
                         
     this.spnumlist = [ ]; 
     this.spnummap = { }; // maps into the above from concatenations of subset and strokecolour
+    
     this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with
     //this.pathgroupings = [ ]; // the actual primary data, returned from ProcessToPathGroupings()
 
@@ -341,6 +350,9 @@ function importSVGfile(i, f)
         fileblock.push('<input type="button" value=">" class="pencutseqadvance" title="advance on segment"/>'); 
         fileblock.push('<input type="button" value="A" class="pencutseqanimate" title="animate"/>'); 
     }
+    
+    if (!bstockdefinitiontype)
+        fileblock.push('<div class="layerclasslist">Yooo!!!</div>'); 
     
     fileblock.push('</div>'); 
     elfilearea.insertAdjacentHTML("beforeend", fileblock.join("")); 

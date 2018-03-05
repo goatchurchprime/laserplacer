@@ -131,6 +131,19 @@ function exportJSON()
     exportJSONpathR(); 
 }
 
+SVGfileprocess.prototype.jsonThingsPositions = function()   // to be used by importThingPositions(lthingsposition) 
+{
+    var thingpos = { fname:this.fname, svgstate:this.elprocessstatus.textContent, currentabsolutescale:this.currentabsolutescale }; 
+    thingpos["spnumsselected"] = getspnumsselected(this.fadivid); 
+    thingpos["rlistblength"] = this.rlistb.length; 
+    thingpos["pathgroupingsinfo"] = [ ]; 
+    
+    for (var i = 0; i < this.pathgroupings.length; i++) {
+        thingpos["pathgroupingsinfo"].push({ pathgroupname:this.pathgroupings[i][0], tstr:this.Lgrouppaths[i][0].transform() }); 
+    }
+    return thingpos; 
+}
+
 
 
 function updateAvailableThingPositions()   // see jsonThingsPositions for format

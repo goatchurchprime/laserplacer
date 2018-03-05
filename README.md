@@ -17,7 +17,17 @@ Now you can look at its contents.
 SVGprocess.spnummap maps from colours to colour numbers.  
 SVGprocess.spnumlist maps colour numbers back to colours, but also provides an index for rlistb elements via spnum
 
-Each rlistb element is of form {path:raphaeljspath, spnum:spnum, d:original-d-code, mi:move-number (how many Ms deep), cmatrix:transform-matrix}
+    this.rlistb = [ ];  // list of type [ {path       : paper1.path (raphaelJS object), 
+                        //                 spnum      : pen number object indexinginto spnumobj list
+                        //                 layerclass : classname from svg object, from layername in dxf
+                        //                 col        : stroke colour
+                        //                 d          : original path d definition string, 
+                        //                 mi         : index of M move within d-string, 
+                        //                 dmi        : sub d definition path string, 
+                        //                 cmatrix    : concatenated transform derived from svg grouping objects   } ]
+                        // quickest shortcut is to use d = path.attr("path")
+                        // also functions useful are: Raphael.mapPath(d, cmatrix) and PolySorting.flattenpath()
+
 
 processSingleSVGpath() sorts out the colours, then calls processSingleSVGpathfinal() which slices up the path code at every M-code in the sequence so they can be treated separately.
 

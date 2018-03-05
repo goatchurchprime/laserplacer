@@ -29,19 +29,6 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
     this.svgstate = lsvgstate; 
 }*/
 
-SVGfileprocess.prototype.jsonThingsPositions = function()   // to be used by importThingPositions(lthingsposition) 
-{
-    var thingpos = { fname:this.fname, svgstate:this.elprocessstatus.textContent, currentabsolutescale:this.currentabsolutescale }; 
-    thingpos["spnumsselected"] = getspnumsselected(this.fadivid); 
-    thingpos["rlistblength"] = this.rlistb.length; 
-    thingpos["pathgroupingsinfo"] = [ ]; 
-    
-    for (var i = 0; i < this.pathgroupings.length; i++) {
-        thingpos["pathgroupingsinfo"].push({ pathgroupname:this.pathgroupings[i][0], tstr:this.Lgrouppaths[i][0].transform() }); 
-    }
-    return thingpos; 
-}
-
 
 
 // only to be called after loading (the positions can be looked up later)
@@ -350,16 +337,6 @@ SVGfileprocess.prototype.removeall = function()
 
 
 var Dlengpaths; 
-
-function getspnumsselected(fadivid)
-{
-    var spnumscp = [ ]; 
-    var elcolspans = document.getElementById(fadivid).getElementsByClassName("spnumselected"); 
-console.log(elcolspans);    
-    for (var i = 0; i < elcolspans.length; i++)
-        spnumscp.push(parseInt(elcolspans[i].id.match(/\d+$/g)[0]));  // _spnum(\d+) 
-    return spnumscp; 
-}
 
 SVGfileprocess.prototype.ProcessPathsToBoundingRect = function()
 {
