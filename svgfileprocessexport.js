@@ -79,7 +79,7 @@ function exportPLT()
             var a = document.createElement('a');
             AutoDownloadBlob(lplt, "test.plt"); 
         }
-        document.getElementById("readingcancel").textContent = (i+"/"+rlist.length); 
+        document.getElementById("readingcancel").textContent = (i+"/"+rlistb.length); 
     };
     exportPLTpathR(); 
 }
@@ -126,7 +126,7 @@ function exportJSON()
             lplt.push(""); 
             AutoDownloadBlob(lplt, "test.plt"); 
         }
-        document.getElementById("readingcancel").textContent = (i+"/"+rlist.length); 
+        document.getElementById("readingcancel").textContent = (i+"/"+rlistb.length); 
     };
     exportJSONpathR(); 
 }
@@ -177,6 +177,7 @@ var Df;
 var filecountid = 0; 
 function importSVGfiles(files)
 {
+    console.log("importSVGfiles", files.length); 
     for (var i = 0; i < files.length; i++) {
         if (files[i].type == "application/json") {
             var reader = new FileReader(); 
@@ -196,29 +197,6 @@ function deletesvgprocess()
     svgprocesses[elfadiv.id].removeall(); // kill off the geometry that derived from this file
     delete svgprocesses[elfadiv.id]; 
     elfadiv.remove(); 
-}
-
-
-function groupsvgprocess() 
-{
-    var elfadiv = this.parentElement; 
-    var svgprocess = svgprocesses[elfadiv.id]; 
-    if (this.classList.contains("selected")) {
-        ; // this.classList.remove("selected"); // should this delete and regroup feature (currently disabled feature)
-    } else {
-        this.classList.add("selected"); // also done in the groupingprocess
-
-        // disable tunnel code
-        //if (svgprocess.svgstate.match(/doneimportsvgr|doneimportsvgrareas/))
-        //    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
-        //else if (svgprocess.svgstate.match(/processimportsvgrareas/))
-        //    svgprocess.LoadTunnelxDrawingDetails(); 
-        //else 
-        //    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); // reprocess again
-        
-        // normal case
-        groupingprocess(svgprocess); 
-    }
 }
 
 
@@ -715,91 +693,6 @@ function rescalefileabs(elfadiv)
     svgprocess.currentabsolutescale = newabsolutescale; 
 }
 
-
-function importSVGfile(i, f)
-{ 
-    var beps = f.type.match('image/x-eps'); 
-    var bsvg = f.type.match('image/svg\\+xml'); 
-    var bsvgizedtext = f.type.match('svgizedtext');  // this is the letters case
-    var bdxf = f.type.match('image/vnd\\.dxf'); 
-    
-    if (!beps && !bsvg && !bdxf && !bsvgizedtext) {
-        alert(f.name+" not SVG, EPS or DXF file: "+f.type); 
-        return;
-    }
-    if (dropsvgherenote !== null) {
-        dropsvgherenote.remove(); 
-        dropsvgherenote = null; 
-    }
-
-    // create the new unique id and the process behind it
-    var fadivid = 'fa'+filecountid; 
-    filecountid++; 
-    filenamelist[fadivid] = f.name; 
-    var bstockdefinitiontype = (f.name.match(/^stockdef/) ? true : false); 
-
-    // create the control panel and functions for this process
-    var elfilearea = document.getElementById("filearea"); 
-    var fileblock = ['<div id="'+fadivid+'"><span class="delbutton" title="Delete geometry">&times;</span>' ]; 
-    if (!bstockdefinitiontype) 
-        fileblock.push('<input class="tfscale" type="text" name="fscale" value="1.0" title="Apply scale"/>'); 
-    fileblock.push('<b class="fname">'+f.name+'</b>'); 
-
-// shouldn't have numcols in     stockdef kind
-    //if (!bstockdefinitiontype)
-        fileblock.push(': <span class="spnumcols"></span>'); 
-    
-    fileblock.push('<span class="fprocessstatus">VV</span>'); 
-    if (!bstockdefinitiontype)
-        fileblock.push('<span class="groupprocess" title="Group geometry">Group</span>'); 
-    fileblock.push('<select class="dposition"></select>'); 
-    if (bstockdefinitiontype) {
-        fileblock.push('<input type="button" class="genpathorder" value="GenPath"/>'); 
-        fileblock.push('<input type="text" class="genpathftol" value="0.5" title="Path thinning tolerance"/>'); 
-        fileblock.push('<input type="text" class="pencutseqindex" value="0" title="Path index"/>/<span class="pencutseqcount" title="Total path count">1</span>'); 
-        fileblock.push('<input type="button" value="<<<" class="pencutseqback" title="go back one path"/>'); 
-        fileblock.push('<input type="button" value=">" class="pencutseqadvance" title="advance on segment"/>'); 
-        fileblock.push('<input type="button" value="A" class="pencutseqanimate" title="animate"/>'); 
-    }
-    
-    fileblock.push('</div>'); 
-    elfilearea.insertAdjacentHTML("beforeend", fileblock.join("")); 
-
-    // now the actual process (which has links into the control panel just made
-    var svgprocess = new SVGfileprocess(f.name, fadivid, bstockdefinitiontype); 
-    svgprocesses[fadivid] = svgprocess; 
-
-    var elfadiv = document.getElementById(fadivid); 
-    elfadiv.getElementsByClassName("delbutton")[0].onclick = deletesvgprocess; 
-    if (bstockdefinitiontype) {
-        elfadiv.getElementsByClassName("genpathorder")[0].onclick = genpathorderonstock; 
-        elfadiv.getElementsByClassName("pencutseqadvance")[0].onclick = function() { plotpencutseqadvance(svgprocess, 1) }; 
-        elfadiv.getElementsByClassName("pencutseqback")[0].onclick = function() { plotpencutseqadvance(svgprocess, -1) }; 
-        elfadiv.getElementsByClassName("pencutseqanimate")[0].onclick = function() { pencutseqanimate(svgprocess) }; 
-    } else {
-        elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
-        elfadiv.getElementsByClassName("groupprocess")[0].onclick = groupsvgprocess; 
-        elfadiv.getElementsByClassName("tfscale")[0].onkeydown = function(e) { if (e.keyCode == 13)  { e.preventDefault(); rescalefileabs(elfadiv) }; }; 
-    }
-    
-    fadividlast = fadivid; 
-Dsvgprocess = svgprocess; 
-Df = f;  
-
-    if (bsvgizedtext) {
-        svgprocess.InitiateLoadingProcess(f.svgtext); 
-    } else if (bsvg) {
-        var reader = new FileReader(); 
-        reader.onload = (function(e) { svgprocess.InitiateLoadingProcess(reader.result); }); 
-        reader.readAsText(f); 
-    } else {
-        alert("not svg type: "+f.name); 
-        elfadiv.getElementsByClassName("fname")[0].style.background = "red"; 
-    }
-}
-
-//if (svgprocess.svgstate.match(/doneimportsvgr|doneimportsvgrareas/))
-//    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
 
 
 function exportThingPositions()

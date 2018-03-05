@@ -51,6 +51,7 @@ function ProcessToPathGroupingsTunnelX(rlistb, spnumlist)
     return res; 
 }
 
+// out of date regarding spnumcols
 SVGfileprocess.prototype.spnummapGetCreate = function(cclass, mcs, strokecolour)
 {
     // convert all to extended classes with these strokes in?
@@ -100,8 +101,8 @@ SVGfileprocess.prototype.processSingleSVGpathTunnelx = function(d, stroke, cc)
     var strokecolour = spnumobj.strokecolour; 
     if (this.svgstate == "importsvgrareas") 
         strokecolour = spnumobj.fillcolour; 
-    var bMsplits = (mcs.dlinestyle.match(/symb/) != null);  // sumbols don't get broken up even if made of several disconnected strokes, please
-    this.processSingleSVGpathFinal(dtrans, bMsplits, d, spnum, strokecolour, null); 
+    var bMsplits = (mcs.dlinestyle.match(/symb/) != null);  // symbols don't get broken up even if made of several disconnected strokes, please
+    this.processSingleSVGpathFinal(dtrans, bMsplits, d, spnum, strokecolour, layerclass, null); 
 }
 
 

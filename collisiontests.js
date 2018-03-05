@@ -1,6 +1,7 @@
 
 var collidestepout = 10, collidestepover = 10; 
 
+// duff
 function TestCollision(dx, dy) 
 {
     for (var i = 0; i < opts.length; i++) {

@@ -6,9 +6,11 @@
 <script type="text/javascript" src="visualsettings.js?18032"></script>
 <script type="text/javascript" src="polygonsorting.js?18032"></script>    
 <script type="text/javascript" src="svgfileprocess.js?18032"></script>    
+<script type="text/javascript" src="svgfileprocessimport.js?18032"></script>    
+<script type="text/javascript" src="svgfileprocessgrouping.js?18032"></script>    
+<script type="text/javascript" src="svgfileprocessexport.js?18032"></script>    
 <script type="text/javascript" src="svgfileprocesstunnel.js?18032"></script>    
-<script type="text/javascript" src="svgizingtext.js?18032"></script>    
-<script type="text/javascript" src="exportfunctions.js?18032"></script>    
+<script type="text/javascript" src="svgizingtext.js?18032"></script>
 <script type="text/javascript" src="viewcontrols.js?18032"></script>    
 <script type="text/javascript" src="collisiontests.js?18032"></script>
 <meta charset="utf-8">
@@ -17,7 +19,6 @@
 
 
 var filenamelist = { }; 
-var rlist = [ ]; 
 
 var svgprocesses = { };         // indexed by fadivid (type SVGfileprocess)
 var mainthingsposition = {svgprocesses:[]};  // loaded and applied to files as their names match
@@ -116,6 +117,11 @@ div#filearea .groupprocess { background:#ffc }
 div#filearea .groupprocess:hover { background:#ccf }
 div#filearea .groupprocess.selected { background:#ee0 }
 div#filearea .groupprocess.working { background:green }
+
+div#filearea .makelayers { background:#ffc }
+div#filearea .makelayers:hover { background:#ccf }
+div#filearea .makelayers.selected { background:#ee0 }
+div#filearea .makelayers.working { background:green }
 
 div#filearea .dposition { color: green }
 div#filearea .dposition span { border-left: thin black solid }
