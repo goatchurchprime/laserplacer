@@ -170,7 +170,7 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
                     svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
                     mainthingsposition.svgprocesses[j].matchingprocessfadivid = svgprocess.fadivid; 
                     if (svgprocess.elprocessstatus.textContent == "BD")
-                        setTimeout(groupingprocess, 1, svgprocess); 
+                        setTimeout(groupingprocess, 1, svgprocess.fadivid); 
                     break; 
                 }
             }
@@ -202,14 +202,14 @@ function importSVGfiles(files)
     }
 }
 
-function deletesvgprocess()
+function deletesvgprocess(fadivid)
 {
     var elfadiv = this.parentElement;  
-    if (fadividlast === elfadiv.id)
+    if (fadividlast === fadivid)
         fadividlast = null; 
-    svgprocesses[elfadiv.id].removeall(); // kill off the geometry that derived from this file
-    delete svgprocesses[elfadiv.id]; 
-    elfadiv.remove(); 
+    svgprocesses[fadivid].removeall(); // kill off the geometry that derived from this file
+    delete svgprocesses[fadivid]; 
+    document.getElementById(fadivid).remove(); 
 }
 
 

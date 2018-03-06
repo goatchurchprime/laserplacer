@@ -1,14 +1,5 @@
 
 
-function getspnumsselected(fadivid)
-{
-    var spnumscp = [ ]; 
-    var elcolspans = document.getElementById(fadivid).getElementsByClassName("spnumselected"); 
-console.log(elcolspans);    
-    for (var i = 0; i < elcolspans.length; i++)
-        spnumscp.push(parseInt(elcolspans[i].id.match(/\d+$/g)[0]));  // _spnum(\d+) 
-    return spnumscp; 
-}
 
 function getspnumsCSP(fadivid)
 {
@@ -64,7 +55,7 @@ function UpdateWingDingVisibility(spnumid)
         if (rlistb[i].spnum === spnum) {
             if (bvisible) {
                 rlistb[i].path.show(); 
-                rlistb[i].path.attr("stroke-dasharray", (bcuttype ? "" : ".")); 
+                rlistb[i].path.attr("stroke-dasharray", (bcuttype ? "" : "-")); 
                 rlistb[i].path.attr("stroke", (bslottype ? "#F90" : rlistb[i].col)); 
             } else {
                 rlistb[i].path.hide(); 
@@ -94,11 +85,11 @@ console.log("makelayers", layerselectindex);
         return; 
     }
     if (layerselectindex == 4) {
-//        groupingprocess();
+        groupingprocess(lthis.fadivid);
         return; 
     }
     if (layerselectindex == 5) {
-//        deletesvgprocess();
+        deletesvgprocess(lthis.fadivid);
         return; 
     }
     
@@ -111,8 +102,7 @@ console.log("makelayers", layerselectindex);
 
     var splcnamematch = { }; 
     lthis.nspnumcols = 0; 
-//getspnumsselected
-//spnummap
+    
     for (var i = 0; i < rlistb.length; i++) {
         var splc = (layerselectindex == 1 ? rlistb[i].col : (layerselectindex == 2 ? rlistb[i].layerclass : (rlistb[i].layerclass+" | "+rlistb[i].col))); 
         if (splcnamematch[splc] == undefined) {
@@ -140,43 +130,23 @@ console.log("makelayers", layerselectindex);
 }
 
 
-function groupsvgprocess() 
-{
-    var elfadiv = this.parentElement; 
-    var svgprocess = svgprocesses[elfadiv.id]; 
-    if (this.classList.contains("selected")) {
-        ; // this.classList.remove("selected"); // should this delete and regroup feature (currently disabled feature)
-    } else {
-        this.classList.add("selected"); // also done in the groupingprocess
-
-        // disable tunnel code
-        //if (svgprocess.svgstate.match(/doneimportsvgr|doneimportsvgrareas/))
-        //    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
-        //else if (svgprocess.svgstate.match(/processimportsvgrareas/))
-        //    svgprocess.LoadTunnelxDrawingDetails(); 
-        //else 
-        //    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); // reprocess again
-        
-        // normal case
-// do this with a settimeout to get the class selected to be visible?        
-        groupingprocess(svgprocess); 
-    }
-}
-
-
 var closedistgrouping = 0.2; // should be a setting
-function groupingprocess(svgprocess) 
+function groupingprocess(fadivid) 
 {
-    console.log(svgprocess.fadivid, document.getElementById(svgprocess.fadivid)); 
-    var elgroupprocess = (svgprocess.bstockdefinitiontype ? null : document.getElementById(svgprocess.fadivid).getElementsByClassName("groupprocess")[0]); 
-    if (elgroupprocess != null)
-        elgroupprocess.classList.add("working")
-
+    console.log(fadivid, document.getElementById(fadivid)); 
+    var svgprocess = svgprocesses[fadivid]; 
+    var elgroupprocess = null; 
+    
     // action this way so as to get the working-green thing lit up so we know it's working
     setTimeout(function() {
         // normal case
-        var spnumCSP = getspnumsCSP(svgprocess.fadivid); 
-
+        var spnumCSP; 
+        if (svgprocess.bstockdefinitiontype) {
+            spnumCSP = { "cutpaths": [ 0 ], "slotpaths": [ ], "penpaths": [ ] }; 
+        } else {
+            spnumCSP = getspnumsCSP(fadivid); 
+        }
+        
         // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
         svgprocess.elprocessstatus.textContent = "Gstart"; 
         svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedistgrouping, spnumCSP, svgprocess.fadivid, svgprocess.elprocessstatus); 

@@ -6,7 +6,6 @@ Process and join up polygons and shapes (and etched lines) from an SVG file so t
 ### Implementation notes
 
 FileArea tracks each file import.  
-spnumcols are the layers or colours that you can select
 
 svgprocesses is an array of SVGfileprocess recording the current state of the file, whether it has been loaded or grouped yet.
 Select a process from it as k = svgprocesses["fa0"]

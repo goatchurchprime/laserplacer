@@ -43,13 +43,12 @@ var nostrokecolour = null;
 //nostrokecolour = "#0000A0"; // can override the no stroke, though there's often a good reason it's not stroked (being garbage)
 //layerclass is the class put in by the dxf2svg conversion which sets class of each element to the layername
 //(which will potentially supercede the generation of spnums)
+// function redundant now we are not updating colours in it
 SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, layerclass)
 {    
     var dtrans = Raphael.mapPath(d, cmatrix); // Raphael.transformPath(d, raphtranslist.join("")); 
     if (dtrans.length <= 1)
         return; 
-
-    var cclass; 
     if ((stroke == "none") || (stroke === undefined) || (stroke === null)) {
         if (nostrokecolour == null) {
             console.log("skipping path with no stroke", d); 
@@ -57,26 +56,7 @@ SVGfileprocess.prototype.processSingleSVGpath = function(d, cmatrix, stroke, lay
         }
         stroke = nostrokecolour; 
     }
-    cclass = stroke; 
-    
-    // convert all to extended classes with these strokes in?
-    if (this.spnummap[cclass] === undefined) {
-        var strokecolour = stroke; 
-        var spnumobj = { spnum:this.spnumlist.length, strokecolour:strokecolour }; 
-        var stitle = strokecolour + " (click to exclude from outline)"; 
-        this.spnummap[cclass] = spnumobj.spnum; 
-        this.spnumlist.push(spnumobj); 
-        
-        var elspnumcols = document.getElementById(this.fadivid).getElementsByClassName("spnumcols")[0]; 
-        var spnumid = this.fadivid+"_spnum"+spnumobj.spnum; 
-        elspnumcols.insertAdjacentHTML("beforeend", '<span id="'+spnumid+'" class="spnumselected" title="'+stitle+'" style="background:'+strokecolour+'">'+('X')+'</span>'); 
-        document.getElementById(spnumid).onclick = function() { this.classList.toggle("spnumselected"); }; 
-    }
-    
-    var spnum = this.spnummap[cclass]; 
-    var spnumobj = this.spnumlist[spnum]; 
-    var strokecolour = spnumobj.strokecolour; 
-    this.processSingleSVGpathFinal(dtrans, true, d, spnum, strokecolour, layerclass, cmatrix); 
+    this.processSingleSVGpathFinal(dtrans, true, d, 0, stroke, layerclass, cmatrix); 
 }
 
 
@@ -273,8 +253,6 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
                         // quickest shortcut is to use d = path.attr("path")
                         // also functions useful are: Raphael.mapPath(d, cmatrix) and PolySorting.flattenpath()
                         
-    this.spnumlist = [ ]; 
-    this.spnummap = { }; // maps into the above from concatenations of subset and strokecolour
     
     this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with
     //this.pathgroupings = [ ]; // the actual primary data, returned from ProcessToPathGroupings()
@@ -324,7 +302,7 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
     this.updateLgrouppaths(); 
     updateAvailableThingPositions();  // apply any JSON code to this
     if (this.bstockdefinitiontype)
-        setTimeout(groupingprocess, 1, this); 
+        setTimeout(groupingprocess, 1, this.fadivid); 
     else
         setTimeout(makelayers, 1, this); 
 }
@@ -358,18 +336,11 @@ function importSVGfile(i, f)
     
     var fileblock = ['<div id="'+fadivid+'">']; 
     fileblock.push('<select class="dropdownlayerselection"></select>'); 
-    fileblock.push('<span class="delbutton" title="Delete geometry">&times;</span>'); 
     if (!bstockdefinitiontype) 
         fileblock.push('<input class="tfscale" type="text" name="fscale" value="1.0" title="Apply scale"/>'); 
     fileblock.push('<b class="fname">'+f.name+'</b>'); 
 
-// shouldn't have numcols in     stockdef kind
-    //if (!bstockdefinitiontype)
-        fileblock.push(': <span class="spnumcols"></span>'); 
-        
     fileblock.push('<span class="fprocessstatus">VV</span>'); 
-    if (!bstockdefinitiontype)
-        fileblock.push('<span class="groupprocess" title="Group geometry">Group</span>'); 
     fileblock.push('<select class="dposition"></select>'); 
     if (bstockdefinitiontype) {
         fileblock.push('<input type="button" class="genpathorder" value="GenPath"/>'); 
@@ -391,7 +362,6 @@ function importSVGfile(i, f)
     svgprocesses[fadivid] = svgprocess; 
 
     var elfadiv = document.getElementById(fadivid); 
-    elfadiv.getElementsByClassName("delbutton")[0].onclick = deletesvgprocess; 
     if (bstockdefinitiontype) {
         elfadiv.getElementsByClassName("genpathorder")[0].onclick = genpathorderonstock; 
         elfadiv.getElementsByClassName("pencutseqadvance")[0].onclick = function() { plotpencutseqadvance(svgprocess, 1) }; 
@@ -400,7 +370,6 @@ function importSVGfile(i, f)
     } else {
         elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
         elfadiv.getElementsByClassName("dropdownlayerselection")[0].onchange = function() { makelayers(svgprocess); }
-        elfadiv.getElementsByClassName("groupprocess")[0].onclick = groupsvgprocess; 
         elfadiv.getElementsByClassName("tfscale")[0].onkeydown = function(e) { if (e.keyCode == 13)  { e.preventDefault(); rescalefileabs(elfadiv) }; }; 
     }
     

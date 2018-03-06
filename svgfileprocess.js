@@ -14,8 +14,8 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
     
     // after importing:
     this.rlistb = [ ];  // all the paths
-    this.spnumlist = [ ]; 
-    this.spnummap = { }; 
+    this.nspnumcols = 0; 
+    
     this.pathgroupings = [ ]; // the actual primary data, returned from ProcessToPathGroupings()
     this.pathgroupingtstrs = [ ]; // the transform strings (which run in parallel to the pathgroupings) of type {tstr:""} so we can pass it in to functions by reference
     this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with (the 0th element is the area, which is not part of the geometry)
@@ -40,7 +40,7 @@ SVGfileprocess.prototype.applyThingsPosition = function(thingpos)   // to be use
         rescalefileabs(elfadiv); 
         
         // do the reverse of getspnumsselected
-        var elcolspans = document.getElementById(this.fadivid).getElementsByClassName("spnumcols")[0].getElementsByTagName("span"); 
+/*        var elcolspans = document.getElementById(this.fadivid).getElementsByClassName("spnumcols")[0].getElementsByTagName("span"); 
         for (var i = 0; i < elcolspans.length; i++) {
             var spnum = parseInt(elcolspans[i].id.match(/\d+$/g)[0]); 
             if (thingpos.spnumsselected.indexOf(spnum) != -1)
@@ -48,7 +48,9 @@ SVGfileprocess.prototype.applyThingsPosition = function(thingpos)   // to be use
             else
                 elcolspans[i].classList.remove("spnumselected"); 
         }
+*/
     }
+
     
     // and now fill in the parallel list of transformations for each of the pathgroups
     for (var j = 0; j < thingpos.pathgroupingsinfo.length; j++) {
@@ -256,8 +258,10 @@ console.log(spnumCSP);
         var ic = singletslist[i]; 
         var dpath = dlist[ic]; 
         var j = PolySorting.SingletsToGroupingsD(dpath, cboundislands, jdgeos); 
-        if (j != -1)
+        if (j != -1) {
             res[j][res[j].length-1].push(ic); 
+            rlistb[ic].path.attr("stroke-dasharray", ""); 
+        }
         else
             unmatchedsinglets.push(ic); 
     }
