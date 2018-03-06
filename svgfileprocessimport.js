@@ -221,20 +221,8 @@ function importSVGpathRR(lthis)
         
     // the final step when done
     } else {
-        if (false) { // lthis.svgstate == "donedetailsloading") {
-            this.elprocessstatus.textContent = "LD"; 
-            lthis.processdetailSVGtunnelx(); 
-            
-        // this is the standard path (making a bounding box)
-        } else  {
-            lthis.elprocessstatus.textContent = "LD"; 
-            lthis.ProcessPathsToBoundingRect();  
-            lthis.elprocessstatus.textContent = "BD"; 
-            lthis.updateLgrouppaths(); 
-            updateAvailableThingPositions();  // apply any JSON code to this
-            if (lthis.bstockdefinitiontype)
-                setTimeout(groupingprocess, 1, lthis); 
-        }
+        lthis.elprocessstatus.textContent = "LD"; 
+        setTimeout(lthis.FinalizeLoadingProcess.bind(lthis), 1); 
     }
 }
 
@@ -301,6 +289,45 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
     importSVGpathRR(this); 
 }
 
+SVGfileprocess.prototype.FinalizeLoadingProcess = function() 
+{
+    // count the number of layers and colours and layer-colours; fill <select dropdownlayerselection> and make a choice
+    var colcountmap = { }; 
+    var layerclasscountmap = { };
+    var collayerclasscountmap = { };
+    console.log(this); 
+    for (var i = 0; i < this.rlistb.length; i++) {
+        colcountmap[this.rlistb[i].col] = 1; 
+        layerclasscountmap[this.rlistb[i].layerclass] = 1; 
+        collayerclasscountmap[this.rlistb[i].col+"*"+this.rlistb[i].layerclass] = 1; 
+    }
+    console.log("layerclasscountmap", layerclasscountmap); 
+    console.log("colcountmap", colcountmap);
+    var ncolcountmap = Object.keys(colcountmap).length;  
+    var nlayerclasscountmap = Object.keys(layerclasscountmap).length;  
+    var ncollayerclasscountmap = Object.keys(collayerclasscountmap).length; 
+    var bblanklayer = (layerclasscountmap[""] !== undefined)
+
+    var eldropdownlayerselection = document.getElementById(this.fadivid).getElementsByClassName("dropdownlayerselection")[0]; 
+    var dropdownlayerselectionlist = [ "<option>hide</option>" ]; 
+    dropdownlayerselectionlist.push("<option>colour "+ncolcountmap+"</option>"); 
+    dropdownlayerselectionlist.push("<option>class "+nlayerclasscountmap+(bblanklayer ? "_" : "")+"</option>"); 
+    dropdownlayerselectionlist.push("<option>colclass "+ncollayerclasscountmap+"</option>"); 
+    dropdownlayerselectionlist.push("<option>delete</option>"); 
+    eldropdownlayerselection.innerHTML = dropdownlayerselectionlist.join(""); 
+    eldropdownlayerselection.selectedIndex = (((nlayerclasscountmap >= 2) && !bblanklayer) ? 2 : 1); 
+    
+    // this.processdetailSVGtunnelx(); 
+    this.ProcessPathsToBoundingRect();  
+    this.elprocessstatus.textContent = "BD"; 
+    this.updateLgrouppaths(); 
+    updateAvailableThingPositions();  // apply any JSON code to this
+    if (this.bstockdefinitiontype)
+        setTimeout(groupingprocess, 1, this); 
+    else
+        setTimeout(makelayers, 1, this); 
+}
+
 
 function importSVGfile(i, f)
 {
@@ -327,7 +354,10 @@ function importSVGfile(i, f)
 
     // create the control panel and functions for this process
     var elfilearea = document.getElementById("filearea"); 
-    var fileblock = ['<div id="'+fadivid+'"><span class="delbutton" title="Delete geometry">&times;</span>' ]; 
+    
+    var fileblock = ['<div id="'+fadivid+'">']; 
+    fileblock.push('<select class="dropdownlayerselection"></select>'); 
+    fileblock.push('<span class="delbutton" title="Delete geometry">&times;</span>'); 
     if (!bstockdefinitiontype) 
         fileblock.push('<input class="tfscale" type="text" name="fscale" value="1.0" title="Apply scale"/>'); 
     fileblock.push('<b class="fname">'+f.name+'</b>'); 
@@ -352,7 +382,7 @@ function importSVGfile(i, f)
     }
     
     if (!bstockdefinitiontype)
-        fileblock.push('<div class="layerclasslist">Yooo!!!</div>'); 
+        fileblock.push('<div class="layerclasslist"></div>'); 
     
     fileblock.push('</div>'); 
     elfilearea.insertAdjacentHTML("beforeend", fileblock.join("")); 
@@ -370,7 +400,8 @@ function importSVGfile(i, f)
         elfadiv.getElementsByClassName("pencutseqanimate")[0].onclick = function() { pencutseqanimate(svgprocess) }; 
     } else {
         elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
-        elfadiv.getElementsByClassName("makelayers")[0].onclick = makelayers; 
+        //elfadiv.getElementsByClassName("makelayers")[0].onclick = makelayers; 
+        elfadiv.getElementsByClassName("dropdownlayerselection")[0].onchange = function() { makelayers(svgprocess); }
         elfadiv.getElementsByClassName("groupprocess")[0].onclick = groupsvgprocess; 
         elfadiv.getElementsByClassName("tfscale")[0].onkeydown = function(e) { if (e.keyCode == 13)  { e.preventDefault(); rescalefileabs(elfadiv) }; }; 
     }

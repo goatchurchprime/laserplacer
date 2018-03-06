@@ -344,7 +344,6 @@ SVGfileprocess.prototype.ProcessPathsToBoundingRect = function()
     for (var i = 0; i < this.rlistb.length; i++) 
         groupall.push(i); 
     this.pathgroupings = [ [ "boundrect", groupall ] ]; 
-    this.elprocessstatus.textContent = "LD"; 
 }
 
 // could this be converted into a callback function if it takes too long

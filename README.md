@@ -17,6 +17,12 @@ Now you can look at its contents.
 SVGprocess.spnummap maps from colours to colour numbers.  
 SVGprocess.spnumlist maps colour numbers back to colours, but also provides an index for rlistb elements via spnum
 
+# Series of calls
+InitiateLoadingProcess()
+Calls to importSVGpathRR(), which calls back repeatedly the function importSVGpathR()
+FinalizeLoadingProcess()
+
+
     this.rlistb = [ ];  // list of type [ {path       : paper1.path (raphaelJS object), 
                         //                 spnum      : pen number object indexinginto spnumobj list
                         //                 layerclass : classname from svg object, from layername in dxf

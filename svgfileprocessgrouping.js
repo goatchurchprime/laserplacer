@@ -11,52 +11,69 @@ console.log(elcolspans);
 }
 
 
-function makelayers() 
-{
-    console.log("hi there"); 
 
-    // we can decide to make layers by col or layerclass
-    var elfadiv = this.parentElement; 
-    var svgprocess = svgprocesses[elfadiv.id]; 
-    svgprocess.fadivid; 
-    var layerclassdiv = document.getElementById(svgprocess.fadivid).getElementsByClassName("layerclasslist")[0]; 
-    if (layerclassdiv.style.display === "block") {
-        layerclassdiv.style.display = "hide";
+var wingdingtriplesymbols = [ "&#9898;",  // open circle
+                              "&#9899;",  // filled circle
+                              "&#x2700;", // scissors
+                              "&#x270E;", // pencil
+                              "&#x2701;", // blade scissors
+                              "&#x2B20;" ]; // pentagon
+// have to handle the fact that the symbols get converted
+var wingdingtriplesymbolsU = [ ]; 
+for (var i = 0; i < wingdingtriplesymbols.length; i++) {
+    var tmp = document.createElement("span"); 
+    tmp.innerHTML = wingdingtriplesymbols[i]; 
+    wingdingtriplesymbolsU.push(tmp.textContent); 
+}
+
+
+// this is attached to the select class=dropdownlayerselection object and puts stuff into the layerclasslist
+function makelayers(lthis) 
+{
+    var elfadiv = document.getElementById(lthis.fadivid); 
+    var layerselectindex = elfadiv.getElementsByClassName("dropdownlayerselection")[0].selectedIndex; 
+    var layerclassdiv = elfadiv.getElementsByClassName("layerclasslist")[0]; 
+console.log("makelayers", layerselectindex); 
+    if (layerselectindex == 0) {
+        layerclassdiv.style.display = "none";
         return; 
     }
-
+    
+    // layerselectindex = 1 colour; 2 class; 3 colclass; 4 delete
     layerclassdiv.style.display = "block"; 
     layerclassdiv.innerHTML = "<ul></ul>"; 
     var layerclassul = layerclassdiv.getElementsByTagName("ul")[0]; 
+    var rlistb = lthis.rlistb; 
 
-    var rlistb = svgprocess.rlistb; 
-
-    // this should be done on the input
-    var colcountmap = { }; 
-    var layerclasscountmap = { };
-    for (var i = 0; i < rlistb.length; i++) {
-        colcountmap[rlistb[i].col] = 1; 
-        layerclasscountmap[rlistb[i].layerclass] = 1; 
-    }
-    console.log("layerclasscountmap", layerclasscountmap); 
-    console.log("colcountmap", colcountmap); 
-    var bcollayers = true; 
-    var bclasslayers = false; 
-    if ((Object.keys(layerclasscountmap).length >= 2) && (layerclasscountmap[""] === undefined)) {
-        bclasslayers = true; 
-    }
-    
     var splcnamematch = { }; 
     for (var i = 0; i < rlistb.length; i++) {
-        var splc = rlistb[i].col; 
-        if (bclasslayers) 
-            splc = (bcollayers ? rlistb[i].layerclass+"*"+rlistb[i].col :  rlistb[i].layerclass); 
-        
+        var splc = (layerselectindex == 1 ? rlistb[i].col : (layerselectindex == 2 ? rlistb[i].layerclass : (rlistb[i].layerclass+" | "+rlistb[i].col))); 
         if (splcnamematch[splc] == undefined) {
-            console.log(splc); '<select class="dposition"></select>'
-            layerclassul.insertAdjacentHTML("beforeend", '<li><select><option>Hide</option><option>Pen</option><option>ContourCut</option><option>SiceCut</option></select>'+splc+'</li>'); 
+            console.log(splc); 
+            var layerblock = ["<li>"]; 
+            layerblock.push('<div class="wingding3stoggle">'+wingdingtriplesymbols[1]+"</div>"); 
+            layerblock.push('<div class="wingding3stoggle">'+wingdingtriplesymbols[2]+"</div>"); 
+            layerblock.push('<div class="wingding3stoggle">'+wingdingtriplesymbols[5]+"</div>"); 
+            
+            // U+1F5DA increase font size
+            // U+1F5DB decrease font size
+            
+            layerblock.push('<div class="layerclasscol" style="background:'+rlistb[i].col+'"> </div>'); 
+            layerblock.push('<div class="layerclassname"><span>'+splc+'</span></div>'); 
+            layerblock.push("</li>"); 
+            layerclassul.insertAdjacentHTML("beforeend", layerblock.join("")); 
             //document.getElementById(spnumid).onclick = function() { this.classList.toggle("spnumselected"); }; 
             splcnamematch[splc] = 99; 
+        }
+    }
+
+    // add the toggle feature onto each of these wingdingies
+    var wingding3stoggles = layerclassul.getElementsByClassName("wingding3stoggle"); 
+    for (var i = 0; i < wingding3stoggles.length; i++) {
+        wingding3stoggles[i].onclick = function() { 
+            var wdi = wingdingtriplesymbolsU.indexOf(this.textContent); 
+            console.log(this.textContent, wdi); 
+            this.textContent = wingdingtriplesymbolsU[wdi + ((wdi%2)==0 ? 1 : -1)]; 
         }
     }
 
