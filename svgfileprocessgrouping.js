@@ -10,6 +10,28 @@ console.log(elcolspans);
     return spnumscp; 
 }
 
+function getspnumsCSP(fadivid)
+{
+    var spnumCSP = { "cutpaths": [ ], "slotpaths": [ ], "penpaths": [ ] }; 
+    var elspnumids = document.getElementById(fadivid).getElementsByClassName("layerclasslist")[0].getElementsByTagName("li"); 
+    for (var i = 0; i < elspnumids.length; i++) {
+        console.assert(parseInt(elspnumids[i].id.match(/\d+$/g)[0]) == i); // _sspnum(\d+) 
+        var wd3sel = elspnumids[i].getElementsByClassName("wingding3stoggle"); 
+        var bvisible = (wd3sel[0].textContent == wingdingtriplesymbolsU[1]); 
+        var bcuttype = (wd3sel[1].textContent == wingdingtriplesymbolsU[2]); 
+        var bslottype = (wd3sel[2].textContent == wingdingtriplesymbolsU[4]); 
+        if (bvisible) {
+            if (bcuttype)
+                spnumCSP["cutpaths"].push(i); 
+            else if (bslottype)
+                spnumCSP["slotpaths"].push(i); 
+            else
+                spnumCSP["penpaths"].push(i); 
+        }
+    }
+    return spnumCSP; 
+}
+
 
 
 var wingdingtriplesymbols = [ "&#9898;",  // open circle
@@ -153,11 +175,11 @@ function groupingprocess(svgprocess)
     // action this way so as to get the working-green thing lit up so we know it's working
     setTimeout(function() {
         // normal case
-        var spnumscp = getspnumsselected(svgprocess.fadivid); 
+        var spnumCSP = getspnumsCSP(svgprocess.fadivid); 
 
         // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
         svgprocess.elprocessstatus.textContent = "Gstart"; 
-        svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedistgrouping, spnumscp, svgprocess.fadivid, svgprocess.elprocessstatus); 
+        svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedistgrouping, spnumCSP, svgprocess.fadivid, svgprocess.elprocessstatus); 
         svgprocess.elprocessstatus.textContent = "GD"; 
         svgprocess.updateLgrouppaths(); 
         updateAvailableThingPositions(); 

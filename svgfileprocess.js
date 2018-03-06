@@ -162,14 +162,40 @@ function MakeContourcurvesFromSequences(dlist, jdseqs)
     return jdgeos; 
 }
 
+// derived from GetSingletsList, which also sorts the non contour types into three categories of singlets
+function GetSingletsListCSP(jdseqs, rlistb, spnumCSP)
+{
+    var singletslistNm = { }; 
+    for (var i = 0; i < jdseqs.length; i++) {
+        var jdseq = jdseqs[i]; 
+        for (var j = 0; j < jdseq.length; j++) {
+            singletslistNm[jdseq[j]/2|0] = 1; 
+        }
+    }
+    
+    var singletslist = [ ]; 
+    for (var i = 0; i < rlistb.length; i++) {
+        if (singletslistNm[i] === undefined) {
+            if (spnumCSP.cutpaths.indexOf(rlistb[i].spnum) != -1)
+                singletslist.push(i); 
+            else if (spnumCSP.slotpaths.indexOf(rlistb[i].spnum) != -1)
+                singletslist.push(i); 
+            else if (spnumCSP.penpaths.indexOf(rlistb[i].spnum) != -1)
+                singletslist.push(i); 
+        }
+    }
+    return singletslist; 
+}
 
 
 // may need to be in callback type to spread the load and make the processstatus appear
 var bgroupcoloursindividually = true; 
-function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocessstatus)
+function ProcessToPathGroupings(rlistb, closedist, spnumCSP, fadivid, elprocessstatus)
 {
     // form the closed path sequences per spnum
     var jdseqs = [ ];  // indexes dlist
+console.log(spnumCSP); 
+    var spnumscp = spnumCSP.cutpaths; 
     if (bgroupcoloursindividually) {
         for (var ispnum = 0; ispnum < spnumscp.length; ispnum++) {
             var spnum = spnumscp[ispnum]; 
@@ -195,8 +221,10 @@ function ProcessToPathGroupings(rlistb, closedist, spnumscp, fadivid, elprocesss
 
     // list of paths not included in any cycle
     elprocessstatus.textContent = "Ggetsingletlist"; 
-    var singletslist = PolySorting.GetSingletsList(jdseqs, rlistb.length); // (why isn't dlist defined outside of the loop?)  
-
+    
+    // var singletslist = PolySorting.GetSingletsList(jdseqs, rlistb.length); 
+    var singletslist = GetSingletsListCSP(jdseqs, rlistb, spnumCSP); 
+    
     // build the dlist without any holes parallel to rlistb to use for groupings
     elprocessstatus.textContent = "Gconcat_JDgeoseqs"; 
     var dlist = CopyPathListOfColourList(rlistb, null); 
@@ -346,22 +374,6 @@ SVGfileprocess.prototype.ProcessPathsToBoundingRect = function()
     this.pathgroupings = [ [ "boundrect", groupall ] ]; 
 }
 
-// could this be converted into a callback function if it takes too long
-/*SVGfileprocess.prototype.groupimportedSVGfordrag = function(grouptype)
-{
-    var closedist = 0.2; // should be a setting
-    var spnumscp = getspnumsselected(this.fadivid); 
-console.log("hghghg", grouptype, spnumscp); 
-    
-    // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
-    if (grouptype == "grouptunnelx")
-        this.pathgroupings = ProcessToPathGroupingsTunnelX(this.rlistb, this.spnumlist); 
-    else if (grouptype == "groupcontainment") {
-        this.pathgroupings = ProcessToPathGroupings(this.rlistb, closedist, spnumscp, this.fadivid, this.elprocessstatus); 
-    }
-
-    this.updateLgrouppaths(); 
-}*/
 
 
 

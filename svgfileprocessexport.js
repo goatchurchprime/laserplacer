@@ -134,7 +134,7 @@ function exportJSON()
 SVGfileprocess.prototype.jsonThingsPositions = function()   // to be used by importThingPositions(lthingsposition) 
 {
     var thingpos = { fname:this.fname, svgstate:this.elprocessstatus.textContent, currentabsolutescale:this.currentabsolutescale }; 
-    thingpos["spnumsselected"] = getspnumsselected(this.fadivid); 
+    thingpos["spnumsCSP"] = getspnumsCSP(this.fadivid); 
     thingpos["rlistblength"] = this.rlistb.length; 
     thingpos["pathgroupingsinfo"] = [ ]; 
     
