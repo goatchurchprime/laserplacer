@@ -18,12 +18,44 @@ var wingdingtriplesymbols = [ "&#9898;",  // open circle
                               "&#x270E;", // pencil
                               "&#x2701;", // blade scissors
                               "&#x2B20;" ]; // pentagon
-// have to handle the fact that the symbols get converted
+// have to handle the fact that the symbols get converted (quick hack to avoid having non-ascii things in this file)
 var wingdingtriplesymbolsU = [ ]; 
 for (var i = 0; i < wingdingtriplesymbols.length; i++) {
     var tmp = document.createElement("span"); 
     tmp.innerHTML = wingdingtriplesymbols[i]; 
     wingdingtriplesymbolsU.push(tmp.textContent); 
+}
+
+function UpdateWingDingVisibility(spnumid) 
+{
+    console.log("UpdateWingDingVisibility", spnumid); 
+    var spnum = parseInt(spnumid.match(/\d+$/g)[0]); 
+    var fadivid = spnumid.match(/^[^_]+/g)[0]; 
+    var svgprocess = svgprocesses[fadivid]; 
+    var wd3sel = document.getElementById(spnumid).getElementsByClassName("wingding3stoggle"); 
+    var bvisible = (wd3sel[0].textContent == wingdingtriplesymbolsU[1]); 
+    var bcuttype = (wd3sel[1].textContent == wingdingtriplesymbolsU[2]); 
+    var bslottype = (wd3sel[2].textContent == wingdingtriplesymbolsU[4]); 
+    console.log(fadivid, spnum, bvisible, bcuttype, bslottype); 
+    var rlistb = svgprocess.rlistb; 
+    for (var i = 0; i < rlistb.length; i++) {
+        if (rlistb[i].spnum === spnum) {
+            if (bvisible) {
+                rlistb[i].path.show(); 
+                rlistb[i].path.attr("stroke-dasharray", (bcuttype ? "" : ".")); 
+                rlistb[i].path.attr("stroke", (bslottype ? "#F90" : rlistb[i].col)); 
+            } else {
+                rlistb[i].path.hide(); 
+            }
+        }
+    }
+}
+
+function wingding3stogglesclick()
+{
+    var wdi = wingdingtriplesymbolsU.indexOf(this.textContent); 
+    this.textContent = wingdingtriplesymbolsU[wdi + ((wdi%2)==0 ? 1 : -1)]; 
+    UpdateWingDingVisibility(this.parentElement.id); 
 }
 
 
@@ -34,63 +66,55 @@ function makelayers(lthis)
     var layerselectindex = elfadiv.getElementsByClassName("dropdownlayerselection")[0].selectedIndex; 
     var layerclassdiv = elfadiv.getElementsByClassName("layerclasslist")[0]; 
 console.log("makelayers", layerselectindex); 
+
     if (layerselectindex == 0) {
         layerclassdiv.style.display = "none";
         return; 
     }
+    if (layerselectindex == 4) {
+//        groupingprocess();
+        return; 
+    }
+    if (layerselectindex == 5) {
+//        deletesvgprocess();
+        return; 
+    }
     
-    // layerselectindex = 1 colour; 2 class; 3 colclass; 4 delete
+    
+    // layerselectindex = 1 colour; 2 class; 3 colclass; 
     layerclassdiv.style.display = "block"; 
     layerclassdiv.innerHTML = "<ul></ul>"; 
     var layerclassul = layerclassdiv.getElementsByTagName("ul")[0]; 
     var rlistb = lthis.rlistb; 
 
     var splcnamematch = { }; 
+    lthis.nspnumcols = 0; 
+//getspnumsselected
+//spnummap
     for (var i = 0; i < rlistb.length; i++) {
         var splc = (layerselectindex == 1 ? rlistb[i].col : (layerselectindex == 2 ? rlistb[i].layerclass : (rlistb[i].layerclass+" | "+rlistb[i].col))); 
         if (splcnamematch[splc] == undefined) {
             console.log(splc); 
-            var layerblock = ["<li>"]; 
+            var spnumid = lthis.fadivid+"_sspnum"+lthis.nspnumcols; 
+            var layerblock = ['<li id="'+spnumid+'">']; 
             layerblock.push('<div class="wingding3stoggle">'+wingdingtriplesymbols[1]+"</div>"); 
             layerblock.push('<div class="wingding3stoggle">'+wingdingtriplesymbols[2]+"</div>"); 
             layerblock.push('<div class="wingding3stoggle">'+wingdingtriplesymbols[5]+"</div>"); 
-            
-            // U+1F5DA increase font size
-            // U+1F5DB decrease font size
             
             layerblock.push('<div class="layerclasscol" style="background:'+rlistb[i].col+'"> </div>'); 
             layerblock.push('<div class="layerclassname"><span>'+splc+'</span></div>'); 
             layerblock.push("</li>"); 
             layerclassul.insertAdjacentHTML("beforeend", layerblock.join("")); 
-            //document.getElementById(spnumid).onclick = function() { this.classList.toggle("spnumselected"); }; 
-            splcnamematch[splc] = 99; 
+            splcnamematch[splc] = lthis.nspnumcols++; 
         }
+        rlistb[i].spnum = splcnamematch[splc]; // fill it in
     }
+    console.assert(Object.keys(splcnamematch).length == lthis.nspnumcols); 
 
     // add the toggle feature onto each of these wingdingies
     var wingding3stoggles = layerclassul.getElementsByClassName("wingding3stoggle"); 
-    for (var i = 0; i < wingding3stoggles.length; i++) {
-        wingding3stoggles[i].onclick = function() { 
-            var wdi = wingdingtriplesymbolsU.indexOf(this.textContent); 
-            console.log(this.textContent, wdi); 
-            this.textContent = wingdingtriplesymbolsU[wdi + ((wdi%2)==0 ? 1 : -1)]; 
-        }
-    }
-
-/*
-    if (this.spnummap[cclass] === undefined) {
-        var strokecolour = stroke; 
-        var spnumobj = { spnum:this.spnumlist.length, strokecolour:strokecolour }; 
-        var stitle = strokecolour + " (click to exclude from outline)"; 
-        this.spnummap[cclass] = spnumobj.spnum; 
-        this.spnumlist.push(spnumobj); 
-        
-        var elspnumcols = document.getElementById(this.fadivid).getElementsByClassName("spnumcols")[0]; 
-        var spnumid = this.fadivid+"_spnum"+spnumobj.spnum; 
-        elspnumcols.insertAdjacentHTML("beforeend", '<span id="'+spnumid+'" class="spnumselected" title="'+stitle+'" style="background:'+strokecolour+'">'+('X')+'</span>'); 
-        document.getElementById(spnumid).onclick = function() { this.classList.toggle("spnumselected"); }; 
-    }
-*/    
+    for (var i = 0; i < wingding3stoggles.length; i++) 
+        wingding3stoggles[i].onclick = wingding3stogglesclick; 
 }
 
 

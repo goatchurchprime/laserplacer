@@ -313,7 +313,8 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
     dropdownlayerselectionlist.push("<option>colour "+ncolcountmap+"</option>"); 
     dropdownlayerselectionlist.push("<option>class "+nlayerclasscountmap+(bblanklayer ? "_" : "")+"</option>"); 
     dropdownlayerselectionlist.push("<option>colclass "+ncollayerclasscountmap+"</option>"); 
-    dropdownlayerselectionlist.push("<option>delete</option>"); 
+    dropdownlayerselectionlist.push("<option>group</option>"); // option 4
+    dropdownlayerselectionlist.push("<option>delete</option>"); // option 5
     eldropdownlayerselection.innerHTML = dropdownlayerselectionlist.join(""); 
     eldropdownlayerselection.selectedIndex = (((nlayerclasscountmap >= 2) && !bblanklayer) ? 2 : 1); 
     
@@ -365,8 +366,6 @@ function importSVGfile(i, f)
 // shouldn't have numcols in     stockdef kind
     //if (!bstockdefinitiontype)
         fileblock.push(': <span class="spnumcols"></span>'); 
-    if (!bstockdefinitiontype)
-        fileblock.push('<span class="makelayers">Layers</span>'); 
         
     fileblock.push('<span class="fprocessstatus">VV</span>'); 
     if (!bstockdefinitiontype)
@@ -400,7 +399,6 @@ function importSVGfile(i, f)
         elfadiv.getElementsByClassName("pencutseqanimate")[0].onclick = function() { pencutseqanimate(svgprocess) }; 
     } else {
         elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
-        //elfadiv.getElementsByClassName("makelayers")[0].onclick = makelayers; 
         elfadiv.getElementsByClassName("dropdownlayerselection")[0].onchange = function() { makelayers(svgprocess); }
         elfadiv.getElementsByClassName("groupprocess")[0].onclick = groupsvgprocess; 
         elfadiv.getElementsByClassName("tfscale")[0].onkeydown = function(e) { if (e.keyCode == 13)  { e.preventDefault(); rescalefileabs(elfadiv) }; }; 
