@@ -15,6 +15,8 @@ var SVGfileprocess = function(fname, fadivid, bstockdefinitiontype)
     // after importing:
     this.rlistb = [ ];  // all the paths
     this.nspnumcols = 0; 
+    this.spnumCSP = null; 
+    this.layerselectindextype = null; // have to back this up as the select box gets reset
     
     this.pathgroupings = [ ]; // the actual primary data, returned from ProcessToPathGroupings()
     this.pathgroupingtstrs = [ ]; // the transform strings (which run in parallel to the pathgroupings) of type {tstr:""} so we can pass it in to functions by reference
@@ -197,10 +199,10 @@ function ProcessToPathGroupings(rlistb, closedist, spnumCSP, fadivid, elprocesss
     // form the closed path sequences per spnum
     var jdseqs = [ ];  // indexes dlist
 console.log(spnumCSP); 
-    var spnumscp = spnumCSP.cutpaths; 
+    var spnumcspcutpaths = spnumCSP.cutpaths; 
     if (bgroupcoloursindividually) {
-        for (var ispnum = 0; ispnum < spnumscp.length; ispnum++) {
-            var spnum = spnumscp[ispnum]; 
+        for (var ispnum = 0; ispnum < spnumcspcutpaths.length; ispnum++) {
+            var spnum = spnumcspcutpaths[ispnum]; 
             elprocessstatus.textContent = "Gjoining_spnum="+spnum; 
             var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColourList(rlistb, [spnum]), closedist); 
             var npathsleft = 0; 
@@ -210,8 +212,8 @@ console.log(spnumCSP);
             jdseqs = jdseqs.concat(ljdseqs); 
         }
     } else {
-        elprocessstatus.textContent = "Gjoining_spnum="+spnumscp.join(","); 
-        var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColourList(rlistb, spnumscp), closedist); 
+        elprocessstatus.textContent = "Gjoining_spnum="+spnumcspcutpaths.join(","); 
+        var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColourList(rlistb, spnumcspcutpaths), closedist); 
         var npathsleft = 0; 
         for (var i = 0; i < ljdseqs.length; i++)
             npathsleft += ljdseqs[i].length; 

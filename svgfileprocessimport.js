@@ -21,15 +21,21 @@ SVGfileprocess.prototype.processSingleSVGpathFinal = function(dtrans, bMsplits, 
         // this is the place to separate out the paths by M positions
         var path = paper1.path(dtrans.slice(i0, i1)); 
         path.attr({stroke:strokecolour, "stroke-width":this.drawstrokewidth}); 
-        var rb = {path:path, spnum:spnum, col:strokecolour, layerclass:layerclass, d:d, mi:mi, dmi:(dim1 == -1 ? d.substr(im0) : d.substr(im0, dim1+im0+1)), cmatrix:cmatrix}; 
-        if ((d[im0] == "m") && (i0 !== 0)) {
-            rb["MX0"] = dtrans[i0-1][dtrans[i0-1].length - 2];  // the previous end point relative to which the next m motion goes from
-            rb["MY0"] = dtrans[i0-1][dtrans[i0-1].length - 1];  
-        } else {
-            if ((im0 === 0) && (d[im0] == "m"))
+        var dmi = (dim1 == -1 ? d.substr(im0) : d.substr(im0, dim1)); 
+        console.assert((dmi.indexOf("M", 1) == -1) && (dmi.indexOf("m", 1) == -1)); 
+        var rb = {path:path, spnum:spnum, col:strokecolour, layerclass:layerclass, d:d, mi:mi, dmi:dmi, cmatrix:cmatrix}; 
+        if (d[im0] == "m") {
+            if (im0 !== 0) {
+                var invcmatrix = cmatrix.invert();  // quick fix to undo the transforms being applied (that will be reapplied to the path if we don't get to the underlying position)
+                var MX0 = dtrans[i0-1][dtrans[i0-1].length - 2];  // the previous end point relative to which the next m motion goes from
+                var MY0 = dtrans[i0-1][dtrans[i0-1].length - 1];  
+                rb["MX0"] = invcmatrix.x(MX0, MY0); 
+                rb["MY0"] = invcmatrix.y(MX0, MY0); 
+            } else {
                 console.log("Bad lower-case m at start of path", d);  
-            rb["MX0"] = dtrans[i0][dtrans[i0].length - 2];  // the absolute M position here 
-            rb["MY0"] = dtrans[i0][dtrans[i0].length - 1];  
+                rb["MX0"] = 0;
+                rb["MY0"] = 0;  
+            }
         } 
         this.rlistb.push(rb); 
         
@@ -249,7 +255,8 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
                         //                 d          : original path d definition string, 
                         //                 mi         : index of M move within d-string, 
                         //                 dmi        : sub d definition path string, 
-                        //                 cmatrix    : concatenated transform derived from svg grouping objects   } ]
+                        //                 cmatrix    : concatenated transform derived from svg grouping objects
+                        //                 (MX0, MY0) : used when dmi[0]=="m" relative move to state its absolute offset  } ]
                         // quickest shortcut is to use d = path.attr("path")
                         // also functions useful are: Raphael.mapPath(d, cmatrix) and PolySorting.flattenpath()
                         
@@ -285,26 +292,30 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
     var nlayerclasscountmap = Object.keys(layerclasscountmap).length;  
     var ncollayerclasscountmap = Object.keys(collayerclasscountmap).length; 
     var bblanklayer = (layerclasscountmap[""] !== undefined)
+    var bclasstype = ((nlayerclasscountmap >= 2) && !bblanklayer); 
 
     var eldropdownlayerselection = document.getElementById(this.fadivid).getElementsByClassName("dropdownlayerselection")[0]; 
     var dropdownlayerselectionlist = [ "<option>hide</option>" ]; 
-    dropdownlayerselectionlist.push("<option>colour "+ncolcountmap+"</option>"); 
-    dropdownlayerselectionlist.push("<option>class "+nlayerclasscountmap+(bblanklayer ? "_" : "")+"</option>"); 
+    dropdownlayerselectionlist.push("<option>colour "+(bclasstype?"":"*")+ncolcountmap+"</option>"); 
+    dropdownlayerselectionlist.push("<option>class "+(bclasstype?"*":"")+nlayerclasscountmap+(bblanklayer ? "_" : "")+"</option>"); 
     dropdownlayerselectionlist.push("<option>colclass "+ncollayerclasscountmap+"</option>"); 
     dropdownlayerselectionlist.push("<option>group</option>"); // option 4
     dropdownlayerselectionlist.push("<option>delete</option>"); // option 5
     eldropdownlayerselection.innerHTML = dropdownlayerselectionlist.join(""); 
-    eldropdownlayerselection.selectedIndex = (((nlayerclasscountmap >= 2) && !bblanklayer) ? 2 : 1); 
+    eldropdownlayerselection.selectedIndex = (bclasstype ? 2 : 1); 
     
     // this.processdetailSVGtunnelx(); 
     this.ProcessPathsToBoundingRect();  
     this.elprocessstatus.textContent = "BD"; 
     this.updateLgrouppaths(); 
     updateAvailableThingPositions();  // apply any JSON code to this
-    if (this.bstockdefinitiontype)
+    if (this.bstockdefinitiontype) {
+        eldropdownlayerselection.selectedIndex = 4; 
+        this.spnumCSP = { "layerselectindex":"colour", "cutpaths": [ 0 ], "slotpaths": [ ], "penpaths": [ ] }; 
         setTimeout(groupingprocess, 1, this.fadivid); 
-    else
+    } else {
         setTimeout(makelayers, 1, this); 
+    }
 }
 
 

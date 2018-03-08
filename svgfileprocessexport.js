@@ -268,8 +268,10 @@ function GetPathsPensSequences(svgprocess, pgi, pathgrouping, tstr)
             rres["absolutescale"] = svgprocess.currentabsolutescale; 
             rres["cmatrix"] = svgprocess.rlistb[jr].cmatrix; 
             rres["dmi"] = svgprocess.rlistb[jr].dmi; 
-            rres["MX0"] = svgprocess.rlistb[jr].MX0; 
-            rres["MY0"] = svgprocess.rlistb[jr].MY0; 
+            if (svgprocess.rlistb[jr].MX0 !== undefined) {
+                rres["MX0"] = svgprocess.rlistb[jr].MX0; 
+                rres["MY0"] = svgprocess.rlistb[jr].MY0; 
+            }
             res.push(rres); 
         }
     }
@@ -286,7 +288,7 @@ function PenCutSeqToPoints(penseq, ftol)
     
     var dtrans; 
     if (penseq.dmi[0] === "m") {
-        var dmiM = "M"+penseq.MX0+","+penseq.MY0+" "+ penseq.dmi; 
+        var dmiM = "M"+penseq.MX0+","+penseq.MY0+" "+ penseq.dmi; // insert an absolute M position and then shift it out
         dtrans = Raphael.mapPath(dmiM, penseq.cmatrix); 
         console.assert((dtrans[0][0] == "M") && (dtrans[1][0] == "M")); 
         dtrans.shift(); 
@@ -632,7 +634,7 @@ var FPSclosest = function(pencutseqs, jdopseqs, x0, y0) {
     return [ijd, idjbfront, dist]; 
 }
 
-var Njdopseqs = [ jdopseqs.pop() ]; 
+var Njdopseqs = (jdopseqs.length != 0 ? [ jdopseqs.pop() ] : [ ]); 
 while (jdopseqs.length != 0) {
     var n = Njdopseqs.length; 
     var pp0 = GetXY(pencutseq, Njdopseqs[n-1], false); 

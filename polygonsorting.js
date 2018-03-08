@@ -23,6 +23,7 @@ flattenpath: function(d, cosangdot, thinningtolerance)
     var p1x = d[0][1], p1y = d[0][2]; 
     var res = [ [p1x, p1y] ]; 
     for (var i = 1; i < d.length; i++) {
+        if (d[i][0] != "C")  console.log(i, d); 
         console.assert(d[i][0] == "C"); 
         var c1x = d[i][1], c1y = d[i][2]; 
         var c2x = d[i][3], c2y = d[i][4]; 

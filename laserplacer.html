@@ -3,18 +3,18 @@
 <head>
 <script src="jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="raphael220_D.js"></script>    
-<script type="text/javascript" src="visualsettings.js?18032"></script>
-<script type="text/javascript" src="polygonsorting.js?18032"></script>    
-<script type="text/javascript" src="svgfileprocess.js?18032"></script>    
-<script type="text/javascript" src="svgfileprocessimport.js?18032"></script>    
-<script type="text/javascript" src="svgfileprocessgrouping.js?18032"></script>    
-<script type="text/javascript" src="svgfileprocessexport.js?18032"></script>    
-<script type="text/javascript" src="svgfileprocesstunnel.js?18032"></script>    
-<script type="text/javascript" src="svgizingtext.js?18032"></script>
-<script type="text/javascript" src="viewcontrols.js?18032"></script>    
-<script type="text/javascript" src="collisiontests.js?18032"></script>
+<script type="text/javascript" src="visualsettings.js?18038"></script>
+<script type="text/javascript" src="polygonsorting.js?18038"></script>    
+<script type="text/javascript" src="svgfileprocess.js?18038"></script>    
+<script type="text/javascript" src="svgfileprocessimport.js?18038"></script>    
+<script type="text/javascript" src="svgfileprocessgrouping.js?18038"></script>    
+<script type="text/javascript" src="svgfileprocessexport.js?18038"></script>    
+<script type="text/javascript" src="svgfileprocesstunnel.js?18038"></script>    
+<script type="text/javascript" src="svgizingtext.js?18038"></script>
+<script type="text/javascript" src="viewcontrols.js?18038"></script>    
+<script type="text/javascript" src="collisiontests.js?18038"></script>
 <meta charset="utf-8">
-<title>Laser placer V2018.03.02</title>
+<title>Laser placer V2018.03.08</title>
 <script>
 
 
@@ -109,7 +109,7 @@ div#filearea input[type="text"] { width: 25px; height: 15px; border: thin black 
 div#filearea .layerclasslist { display: none }
 div#filearea .layerclasslist ul { padding: 0; margin: 0; list-style-type: none; margin-left: 5px}
 div#filearea .layerclasslist ul div { display: inline-block; vertical-align: middle; height: 23px; border: 1px white solid }
-div#filearea .layerclasslist ul div.wingding3stoggle { text-align: center; background:#ddd; width: 25px; }
+div#filearea .layerclasslist ul div.wingding3stoggle { text-align: center; background:#ddd; width: 25px; user-select: none; }
 div#filearea .layerclasslist ul div.wingding3stoggle:hover { background: #ffc}
 div#filearea .layerclasslist ul div.layerclasscol { width: 20px; border: 1px black solid; }
 div#filearea .layerclasslist ul div.layerclassname { padding-left: 10px; font-style: italic; } 
@@ -139,17 +139,25 @@ div#filearea select#importedthingpos { Dvisibility: hidden }
 	  build using free internet technology.</p>
 	  
 	  <h4>Instructions:</h4>
+
 	  <p>Drag and drop an SVG file into this working area to decode all its lines.</p>
+
 	  <p>You can drag the diagram with the left mouse button.  You can rotate it 
 	  by holding Control-key down when you start dragging.  If you click and drag outside the 
 	  diagram you change the view.  The scroll wheel also changes the view by zooming in and out.</p>
-	  <p>Now look at the <b>FileArea</b> in the bottom right of the screen and select the colours 
-	  that are <b>NOT</b> part of the outline.  Then click [GGGoup].  This breaks apart your file into 
-	  independent pieces that you can move about in the same way as above with their corresponding 
-	  etching lines.</p>
-	  <p>The buttons [<<] and [>>] change the line width, [.*.] toggles the background colour, 
-	  and [exportANC] generates a cut file in HP-GL format. 
-	  The code is at <a href="https://bitbucket.org/goatchurch/laserplacer/">bitbucket/laserplacer</a></p>
+
+	  <p>Now look at the <b>FileArea</b> where there is a dropdown to the left of your file name which has automatically 
+	  selected what type of layer categorization to use on your paths (by colour, by class (=dxflayer if you have used dxf2svg.py), 
+	  or by a combination).  The number says how many of that type were found.  You can toggle the state of the layers by:
+	  hide:&#9898; or visible:&#9899;;  cut:&#x2700;; or draw:&#x270E;; slot:&#x2701; or border:&#x2B20;.</p>
+	  <p>Use the dropdown to hide the layers, delete the file, or <b>group</b> the contours up into the different components 
+	  and their etching lines so you can place them on a <b>stockdef</b> object.</p>
+	  
+	  <p>The <b>stockdef</b> type svg file defines the cutting sheet on which you place your shapes.  It has a 
+	  button called [GenPath] which will download your anc file.</p>
+	  
+	  <p>The buttons [<<] and [>>] change the line width, [.*.] toggles the background colour.</p>
+	  <p>The code is at <a href="https://bitbucket.org/goatchurch/laserplacer/">bitbucket/laserplacer</a></p>
   </div>
   <div id="filearea">
     FileArea<input type="button" value="thingpos" id="thingpos" title="Download positions of everything in a JSON file"/><select id="importedthingpos"></select>
@@ -170,7 +178,7 @@ div#filearea select#importedthingpos { Dvisibility: hidden }
     <textarea id="texttosvgize">svgizing letters here</textarea>
     <input type="button" value="svgizetext" id="svgizetext"/>
     <a href="https://bitbucket.org/goatchurch/laserplacer/">[source]</a>
-    V2018.01.22
+	V2018.03.08
   </div>
   
   <div style="border: thin black solid; background: #e8e8e8" id="paper1">
