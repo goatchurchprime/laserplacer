@@ -310,8 +310,8 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
     this.updateLgrouppaths(); 
     updateAvailableThingPositions();  // apply any JSON code to this
     if (this.bstockdefinitiontype) {
-        eldropdownlayerselection.selectedIndex = 4; 
         this.spnumCSP = { "layerselectindex":"colour", "cutpaths": [ 0 ], "slotpaths": [ ], "penpaths": [ ] }; 
+        eldropdownlayerselection.selectedIndex = 4; // group them
         setTimeout(groupingprocess, 1, this.fadivid); 
     } else {
         setTimeout(makelayers, 1, this); 
@@ -402,4 +402,64 @@ Df = f;
 
 //if (svgprocess.svgstate.match(/doneimportsvgr|doneimportsvgrareas/))
 //    svgprocess.groupimportedSVGfordrag((svgprocess.btunnelxtype ? "grouptunnelx" : "groupcontainment")); 
+
+
+
+function updateAvailableThingPositions()   // see jsonThingsPositions for format
+{
+    // go through and find any svgprocesses that match by name with any unconsumed thingpositions
+    var svgprocesseskeys = Object.keys(svgprocesses); 
+    for (var i = 0; i < svgprocesseskeys.length; i++) {
+        var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
+        
+        // we should only need to apply it once, because all the positions will be filled in ready in the pathgroupingtstrs array
+        if ((svgprocess.elprocessstatus.textContent == "BD") || (svgprocess.elprocessstatus.textContent == "GD")) {
+            var jmatchedalready = -1; 
+            for (var j = 0; j < mainthingsposition.svgprocesses.length; j++) {
+                if (mainthingsposition.svgprocesses[j].matchingprocessfadivid === svgprocess.fadivid) {
+                    jmatchedalready = j; 
+                    break; 
+                }
+            }
+            if (jmatchedalready !== -1)
+                continue; 
+            
+            for (var j = 0; j < mainthingsposition.svgprocesses.length; j++) {
+                if ((mainthingsposition.svgprocesses[j].matchingprocessfadivid === undefined) && (svgprocess.fname == mainthingsposition.svgprocesses[j].fname)) {
+                    svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
+                    mainthingsposition.svgprocesses[j].matchingprocessfadivid = svgprocess.fadivid; 
+                    if (svgprocess.elprocessstatus.textContent == "BD") {
+                        document.getElementById(svgprocess.fadivid).getElementsByClassName("dropdownlayerselection")[0].selectedIndex = 4; 
+                        setTimeout(groupingprocess, 1, svgprocess.fadivid); 
+                    } 
+                    break; 
+                }
+            }
+        }
+    }
+
+    // update the select option list of thingpos
+    var elimportedthingpos = document.getElementById("importedthingpos"); 
+    while (elimportedthingpos.firstChild)  // clearall
+        elimportedthingpos.removeChild(elimportedthingpos.firstChild); 
+    for (var j = 0; j < mainthingsposition.svgprocesses.length; j++)
+        elimportedthingpos.insertAdjacentHTML("beforeend", "<option>"+(mainthingsposition.svgprocesses[j].matchingprocessfadivid ?"["+mainthingsposition.svgprocesses[j].matchingprocessfadivid+"] ":"** ")+mainthingsposition.svgprocesses[j].fname+"</option>"); // can't put colours into option tag
+    elimportedthingpos.hidden = (mainthingsposition.svgprocesses.length == 0); 
+}
+
+var Df; 
+var filecountid = 0; 
+function importSVGfiles(files)
+{
+    console.log("importSVGfiles", files.length); 
+    for (var i = 0; i < files.length; i++) {
+        if (files[i].type == "application/json") {
+            var reader = new FileReader(); 
+            reader.onload = function(e) {  mainthingsposition = JSON.parse(reader.result);  updateAvailableThingPositions();  }; 
+            reader.readAsText(files[i]); 
+        } else {
+            importSVGfile(i, files[i]);   // this function already kicks off independent loading processes
+        }
+    }
+}
 

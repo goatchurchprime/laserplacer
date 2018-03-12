@@ -1,11 +1,14 @@
 
 
 
-function getspnumsCSP(fadivid, layerselectindextype)
+function getspnumCSP(fadivid, layerselectindextype)
 {
     var elfadiv = document.getElementById(fadivid); 
-    var spnumCSP = { "layerselectindex":layerselectindextype, "cutpaths": [ ], "slotpaths": [ ], "penpaths": [ ] }; 
-    var elspnumids = elfadiv.getElementsByClassName("layerclasslist")[0].getElementsByTagName("li"); 
+    var ellayerclasslist = elfadiv.getElementsByClassName("layerclasslist");
+    if (ellayerclasslist.length == 0)
+        return null; 
+    var spnumCSP = { "layerselectindextype":layerselectindextype, "cutpaths": [ ], "slotpaths": [ ], "penpaths": [ ] }; 
+    var elspnumids = ellayerclasslist[0].getElementsByTagName("li"); 
     for (var i = 0; i < elspnumids.length; i++) {
         console.assert(parseInt(elspnumids[i].id.match(/\d+$/g)[0]) == i); // _sspnum(\d+) 
         var wd3sel = elspnumids[i].getElementsByClassName("wingding3stoggle"); 
@@ -24,9 +27,9 @@ function getspnumsCSP(fadivid, layerselectindextype)
     return spnumCSP; 
 }
 
-function setspnumsCSP(fadivid, spnumCSP)
+function setspnumCSP(fadivid, spnumCSP)
 {
-    console.log("setspnumsCSP", spnumCSP); 
+    console.log("setspnumCSP", spnumCSP); 
     var elfadiv = document.getElementById(fadivid); 
     //console.assert(spnumCSP.layerselectindex == elfadiv.getElementsByClassName("dropdownlayerselection")[0].selectedIndex); 
     var elspnumids = elfadiv.getElementsByClassName("layerclasslist")[0].getElementsByTagName("li"); 
@@ -114,7 +117,7 @@ console.log("makelayers", layerselectindex);
     if (layerselectindex == 0) {
         layerclassdiv.style.display = "none";
         if (lthis.layerselectindextype !== null)
-            lthis.spnumCSP = getspnumsCSP(lthis.fadivid, lthis.layerselectindextype);  // back up the spnumCSP
+            lthis.spnumCSP = getspnumCSP(lthis.fadivid, lthis.layerselectindextype);  // back up the spnumCSP
         return; 
     }
     if (layerselectindex == 4) {
@@ -159,13 +162,13 @@ console.log("makelayers", layerselectindex);
 
     // now apply any backed up spnumCSP
     if (lthis.spnumCSP === null) {
-        lthis.spnumCSP = getspnumsCSP(lthis.fadivid, lthis.layerselectindextype); 
+        lthis.spnumCSP = getspnumCSP(lthis.fadivid, lthis.layerselectindextype); 
         console.assert(lthis.spnumCSP.cutpaths.length == lthis.nspnumcols); 
     } else {
-        console.log("jjkj", layerselectindex, lthis.spnumCSP.layerselectindex); 
-        if (lthis.layerselectindextype === lthis.spnumCSP.layerselectindex) 
-            setspnumsCSP(lthis.fadivid, lthis.spnumCSP); 
-        lthis.spnumCSP = getspnumsCSP(lthis.fadivid, lthis.layerselectindextype); 
+        console.log("jjkj", layerselectindex, lthis.spnumCSP.layerselectindextype); 
+        if (lthis.layerselectindextype === lthis.spnumCSP.layerselectindextype) 
+            setspnumCSP(lthis.fadivid, lthis.spnumCSP); 
+        lthis.spnumCSP = getspnumCSP(lthis.fadivid, lthis.layerselectindextype); 
         var elspnumids = elfadiv.getElementsByClassName("layerclasslist")[0].getElementsByTagName("li"); 
         for (var i = 0; i < elspnumids.length; i++) 
             UpdateWingDingVisibility(elspnumids[i].id); // we also need to reset the line types from whatever state it's in if it's been changed
@@ -188,8 +191,8 @@ function groupingprocess(fadivid)
     // action this way so as to get the working-green thing lit up so we know it's working
     setTimeout(function() {
         // normal case
-        if (!svgprocess.bstockdefinitiontype) 
-            svgprocess.spnumCSP = getspnumsCSP(fadivid); 
+//        if (!svgprocess.bstockdefinitiontype) 
+//            svgprocess.spnumCSP = getspnumCSP(fadivid, lthis.layerselectindextype); 
         
         // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
         svgprocess.elprocessstatus.textContent = "Gstart"; 

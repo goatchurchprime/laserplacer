@@ -41,18 +41,11 @@ SVGfileprocess.prototype.applyThingsPosition = function(thingpos)   // to be use
         elfadiv.getElementsByClassName("tfscale")[0].value = thingpos.currentabsolutescale; 
         rescalefileabs(elfadiv); 
         
-        // do the reverse of getspnumsselected
-/*        var elcolspans = document.getElementById(this.fadivid).getElementsByClassName("spnumcols")[0].getElementsByTagName("span"); 
-        for (var i = 0; i < elcolspans.length; i++) {
-            var spnum = parseInt(elcolspans[i].id.match(/\d+$/g)[0]); 
-            if (thingpos.spnumsselected.indexOf(spnum) != -1)
-                elcolspans[i].classList.add("spnumselected"); 
-            else
-                elcolspans[i].classList.remove("spnumselected"); 
-        }
-*/
+        this.spnumCSP = thingpos.spnumCSP; 
+        var layerselectindex = (thingpos.spnumCSP.layerselectindextype == "color" ? 1 : (thingpos.spnumCSP.layerselectindextype == "class" ? 2 : 3)); 
+        elfadiv.getElementsByClassName("dropdownlayerselection")[0].selectedIndex = layerselectindex; 
+        makelayers(this);  
     }
-
     
     // and now fill in the parallel list of transformations for each of the pathgroups
     for (var j = 0; j < thingpos.pathgroupingsinfo.length; j++) {
