@@ -252,7 +252,8 @@ console.log(spnumCSP);
     for (var i = 0; i < singletslist.length; i++) {
         var ic = singletslist[i]; 
         var dpath = dlist[ic]; 
-        var j = PolySorting.SingletsToGroupingsD(dpath, cboundislands, jdgeos); 
+//        var j = PolySorting.SingletsToGroupingsD(dpath, cboundislands, jdgeos); 
+var j = -1; 
         if (j != -1) {
             res[j][res[j].length-1].push(ic); 
             rlistb[ic].path.attr("stroke-dasharray", ""); 

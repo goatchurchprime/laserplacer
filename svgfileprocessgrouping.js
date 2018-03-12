@@ -122,7 +122,8 @@ console.log("makelayers", layerselectindex);
     }
     if (layerselectindex == 4) {
         layerclassdiv.style.display = "none";
-        groupingprocess(lthis.fadivid);
+        lthis.spnumCSP = getspnumCSP(lthis.fadivid, lthis.layerselectindextype);  // back up the spnumCSP
+        groupingprocess(lthis);
         return; 
     }
     if (layerselectindex == 5) {
@@ -182,12 +183,8 @@ console.log("makelayers", layerselectindex);
 
 
 var closedistgrouping = 0.2; // should be a setting
-function groupingprocess(fadivid) 
+function groupingprocess(svgprocess) 
 {
-    console.log(fadivid, document.getElementById(fadivid)); 
-    var svgprocess = svgprocesses[fadivid]; 
-    var elgroupprocess = null; 
-    
     // action this way so as to get the working-green thing lit up so we know it's working
     setTimeout(function() {
         // normal case
@@ -201,9 +198,5 @@ function groupingprocess(fadivid)
         svgprocess.updateLgrouppaths(); 
         updateAvailableThingPositions(); 
 
-        if (elgroupprocess != null) {
-            elgroupprocess.classList.remove("working"); 
-            elgroupprocess.classList.remove("selected"); 
-        }
     }, 1); 
 }

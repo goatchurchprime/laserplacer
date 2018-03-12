@@ -312,7 +312,7 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
     if (this.bstockdefinitiontype) {
         this.spnumCSP = { "layerselectindex":"colour", "cutpaths": [ 0 ], "slotpaths": [ ], "penpaths": [ ] }; 
         eldropdownlayerselection.selectedIndex = 4; // group them
-        setTimeout(groupingprocess, 1, this.fadivid); 
+        groupingprocess(this); 
     } else {
         setTimeout(makelayers, 1, this); 
     }
@@ -429,8 +429,10 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
                     svgprocess.applyThingsPosition(mainthingsposition.svgprocesses[j]); 
                     mainthingsposition.svgprocesses[j].matchingprocessfadivid = svgprocess.fadivid; 
                     if (svgprocess.elprocessstatus.textContent == "BD") {
-                        document.getElementById(svgprocess.fadivid).getElementsByClassName("dropdownlayerselection")[0].selectedIndex = 4; 
-                        setTimeout(groupingprocess, 1, svgprocess.fadivid); 
+                        var elfadiv = document.getElementById(svgprocess.fadivid); 
+                        elfadiv.getElementsByClassName("dropdownlayerselection")[0].selectedIndex = 4; 
+                        elfadiv.getElementsByClassName("layerclasslist")[0].style.display = "none";
+                        groupingprocess(svgprocess); 
                     } 
                     break; 
                 }
