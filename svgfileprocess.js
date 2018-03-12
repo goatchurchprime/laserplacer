@@ -187,8 +187,9 @@ function GetSingletsListCSP(jdseqs, rlistb, spnumCSP)
 
 // may need to be in callback type to spread the load and make the processstatus appear
 var bgroupcoloursindividually = true; 
-function ProcessToPathGroupings(rlistb, closedist, spnumCSP, fadivid, elprocessstatus)
+function ProcessToPathGroupings(res, rlistb, closedist, spnumCSP, fadivid, elprocessstatus, groupingprocessFinalize)
 {
+    console.assert(res.length == 0); // should start as [ ]
     // form the closed path sequences per spnum
     var jdseqs = [ ];  // indexes dlist
 console.log(spnumCSP); 
@@ -229,7 +230,9 @@ console.log(spnumCSP);
 
     // groups of jdsequences forming outercontour, islands, singlets 
     elprocessstatus.textContent = "GFindAreaGroupingsD"; 
-    var res = [ ]; 
+    
+    // initialized outside (so we can run in a callback)
+    // var res = [ ];  // [ [ fadivid+"cb"+0, ...], [ fadivid+"cb"+1, ...], ..., 
     var cboundislands = PolySorting.FindAreaGroupingsD(jdgeos); 
     
     elprocessstatus.textContent = "Goriented_islands"; 
@@ -252,8 +255,7 @@ console.log(spnumCSP);
     for (var i = 0; i < singletslist.length; i++) {
         var ic = singletslist[i]; 
         var dpath = dlist[ic]; 
-//        var j = PolySorting.SingletsToGroupingsD(dpath, cboundislands, jdgeos); 
-var j = -1; 
+        var j = PolySorting.SingletsToGroupingsD(dpath, cboundislands, jdgeos); 
         if (j != -1) {
             res[j][res[j].length-1].push(ic); 
             rlistb[ic].path.attr("stroke-dasharray", ""); 
@@ -267,6 +269,8 @@ var j = -1;
         res.push(["unmatchedsinglets", unmatchedsinglets ]); 
     console.log("unmatched", unmatchedsinglets); 
     console.log("pathgroupings", res); 
+    if (groupingprocessFinalize !== null)
+        groupingprocessFinalize(); 
     return res; 
 }
 

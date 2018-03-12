@@ -431,7 +431,8 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
                     if (svgprocess.elprocessstatus.textContent == "BD") {
                         var elfadiv = document.getElementById(svgprocess.fadivid); 
                         elfadiv.getElementsByClassName("dropdownlayerselection")[0].selectedIndex = 4; 
-                        elfadiv.getElementsByClassName("layerclasslist")[0].style.display = "none";
+                        if (elfadiv.getElementsByClassName("layerclasslist").length != 0)
+                            elfadiv.getElementsByClassName("layerclasslist")[0].style.display = "none";
                         groupingprocess(svgprocess); 
                     } 
                     break; 

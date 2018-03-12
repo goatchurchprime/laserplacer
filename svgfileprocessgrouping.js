@@ -185,18 +185,18 @@ console.log("makelayers", layerselectindex);
 var closedistgrouping = 0.2; // should be a setting
 function groupingprocess(svgprocess) 
 {
+    svgprocess.elprocessstatus.textContent = "Gstart"; 
+
     // action this way so as to get the working-green thing lit up so we know it's working
     setTimeout(function() {
-        // normal case
-//        if (!svgprocess.bstockdefinitiontype) 
-//            svgprocess.spnumCSP = getspnumCSP(fadivid, lthis.layerselectindextype); 
-        
         // pathgroupings are of indexes into rlistb specifying the linked boundaries and islands (*2+(bfore?1:0)), and engraving lines in the last list (not multiplied)
-        svgprocess.elprocessstatus.textContent = "Gstart"; 
-        svgprocess.pathgroupings = ProcessToPathGroupings(svgprocess.rlistb, closedistgrouping, svgprocess.spnumCSP, svgprocess.fadivid, svgprocess.elprocessstatus); 
-        svgprocess.elprocessstatus.textContent = "GD"; 
-        svgprocess.updateLgrouppaths(); 
-        updateAvailableThingPositions(); 
-
+        svgprocess.pathgroupings = [ ];  // the res value
+        var groupingprocessFinalize = function()
+        {
+            svgprocess.elprocessstatus.textContent = "GD"; 
+            svgprocess.updateLgrouppaths(); 
+            updateAvailableThingPositions(); 
+        }
+        ProcessToPathGroupings(svgprocess.pathgroupings, svgprocess.rlistb, closedistgrouping, svgprocess.spnumCSP, svgprocess.fadivid, svgprocess.elprocessstatus, groupingprocessFinalize); 
     }, 1); 
 }
