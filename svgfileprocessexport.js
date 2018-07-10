@@ -304,6 +304,61 @@ function PenCutSeqsToPltCode(pencutseqs, stockbbox)
 } 
 
 
+function PenCutSeqsToKineticCode(pencutseqs, stockbbox)
+{
+	var zclear = 20; 
+	var zetch = 15; 
+	var zcut = 10; 
+
+    lc = [  "POST: https://bitbucket.org/goatchurch/laserplacer\r\n", 
+			"%\r\n", "G90 (absolute dimensions)\r\n", "G94 (feed in mm/min)\r\n", 
+		    "G17 (Level selection XY for circular arcs)\r\n", 
+		    "G21 (metric unit for coordinates mm)\r\n", 
+			"G90 (Absolute coordinates)\r\n", 
+			"G40 (Cancel radius compensation)\r\n", 
+			"G54 (Select workpiece zero)\r\n", 
+			"G0 X0 Y0\r\n", 
+			"G43 Z"+zclear+" H1 (Switch length compensation on)\r\n" ]; 
+
+    
+    var currx, curry, currsp; 
+    var jointol = 0.1; 
+    // origin to offset is stockbbox.x, stockbbox.y2-; 
+    
+    // [ { ptype:cutouter/cutisland/etch, d:dvalue, reversed:true/false, colour:col, tstr:tstr, xtransseq:[], ytransseq:[] } ] 
+    for (var i = 0; i < pencutseqs.length; i++) {
+        var pencutseq = pencutseqs[i]; 
+        var sp = (pencutseq.ptype == "etch" ? 1 : 2); 
+        var n = pencutseq.xtransseq.length; 
+        var p0x = (pencutseq.reversed ? pencutseq.xtransseq[n-1] : pencutseq.xtransseq[0]); 
+        var p0y = (pencutseq.reversed ? pencutseq.ytransseq[n-1] : pencutseq.ytransseq[0]); 
+        var bliftpen = ((i == 0) || (Math.hypot(currx - p0x, curry - p0y) > jointol)); 
+        var bchangepen = ((i == 0) || (sp != currsp)); 
+        if (bliftpen || bchangepen) {
+            if (i != 0)
+                lc.push("G0 Z"+zclear+"\r\n"); 
+            lc.push("X"+(p0x-stockbbox.x).toFixed(3)+" Y"+(stockbbox.y2-p0y).toFixed(3)+"\r\n");  // flipping the y
+            //if (bchangepen)
+            //    lc.push("SP "+sp+";\r\n"); 
+            //lc.push("PD;\r\n"); 
+			lc.push("G1 Z"+(pencutseq.ptype == "etch" ? zetch : zcut)+" F1000\r\n"); 
+            currsp = sp; 
+        }
+        currx = p0x; 
+        curry = p0y; 
+            
+        for (var j = 1; j < n; j++) {
+            var rj = (pencutseq.reversed ? n-1-j : j); 
+            currx = pencutseq.xtransseq[rj]; 
+            curry = pencutseq.ytransseq[rj]; 
+            lc.push("X"+(currx-stockbbox.x).toFixed(3)+" Y"+(stockbbox.y2-curry).toFixed(3)+"\r\n"); 
+        }
+    }
+
+    lc.push("G0 Z"+zclear+"\r\n", "M30\r\n", "%\r\n"); 
+    return lc; 
+} 
+
 
 var Dpens = null; 
 
@@ -614,8 +669,13 @@ Dpens = paper1.path(dseq).attr("stroke-width", gcutstrokewidth);
 Dsvgstockprocess = svgstockprocess; 
 
     elfadiv.getElementsByClassName("pencutseqcount")[0].textContent = pencutseqs.length; 
-    
-    AutoDownloadBlob(PenCutSeqsToPltCode(pencutseqs, stockbbox), "pencut.anc"); 
+
+
+var bkinetictype = true;     
+	if (bkinetictype)
+		AutoDownloadBlob(PenCutSeqsToKineticCode(pencutseqs, stockbbox), "kineticcut.nc"); 
+	else
+		AutoDownloadBlob(PenCutSeqsToPltCode(pencutseqs, stockbbox), "pencut.anc"); 
 }
 
 
