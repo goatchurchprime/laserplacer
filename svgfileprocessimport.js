@@ -95,11 +95,26 @@ SVGfileprocess.prototype.importSVGpathR = function()
     var cc = this.cstack.pop(); 
     var tag = cc.prop("tagName").toLowerCase(); 
     var raphtranslist = this.pback.raphtranslist; 
-    var cmatrix = this.pback.cmatrix; 
+    var cmatrix = this.pback.cmatrix; // this already is raphtranslist.join("")).matrix
     
+    // we need to replace strings translate(1,2) with t1,2
     if (cc.attr("transform")) {
         raphtranslist = raphtranslist.slice(); 
-        raphtranslist.push(cc.attr("transform").replace(/([mtrs])\w+\s*\(([^\)]*)\)/gi, function(a, b, c) { return b.toLowerCase()+c+(b.match(/s/i) ? ",0,0" : ""); } )); 
+        // was: raphtranslist.push(cc.attr("transform").replace(/([mtrs])\w+\s*\(([^\)]*)\)/gi, function(a, b, c) { return b.toLowerCase()+c+(b.match(/s/i) ? ",0,0" : ""); } )); 
+        var transre = /([mtrs])\w+\s*\(([^\)]*)\)/gi; 
+        var transstr = cc.attr("transform"); 
+        var transmatch;
+        while ((transmatch = transre.exec(transstr)) !== null) {
+            var transshort = transmatch[1].toLowerCase() + transmatch[2]; 
+            if (transshort[0] == "s") {  // get the scaling about absolute 0,0 not centre of path
+                var ncommas = (transshort.match(/,/g)||[]).length; 
+                if (ncommas == 0)
+                    transshort += "," + transshort.substr(1); 
+                if (ncommas <= 1)
+                    transshort += ",0,0"; 
+            }
+            raphtranslist.push(transshort); 
+        }
         cmatrix = paper1.path().transform(raphtranslist.join("")).matrix; 
     }
     var strokelist = this.pback.strokelist; 
