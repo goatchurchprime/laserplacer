@@ -554,7 +554,8 @@ PolySorting.FPScopybackreorderingPC(pencutseqs, etchseqslen, Njdopseqs);
             dseq.push("L", pencutseq.xtransseq[jr], pencutseq.ytransseq[jr]); 
         }
     }
-    dseq[0] = "M"; 
+    if (dseq.length != 0)
+        dseq[0] = "M"; 
 
 if (Dpens !== null)
     Dpens.remove(); 
@@ -565,12 +566,14 @@ Dsvgstockprocess = svgstockprocess;
 
     elfadiv.getElementsByClassName("pencutseqcount")[0].textContent = pencutseqs.length; 
 
-
-var bkinetictype = true;     
-	if (bkinetictype)
-		AutoDownloadBlob(PenCutSeqsToKineticCode(pencutseqs, stockbbox), "kineticcut.nc"); 
+	var lc; 
+    if (svgstockprocess.textvalueparams["PenCutSeqsTo"] == "KinetiC")
+		lc = PenCutSeqsToKineticCode(pencutseqs, stockbbox, svgstockprocess.textvalueparams); 
 	else
-		AutoDownloadBlob(PenCutSeqsToPltCode(pencutseqs, stockbbox), "pencut.anc"); 
+		lc = PenCutSeqsToPltCode(pencutseqs, stockbbox, svgstockprocess.textvalueparams); 
+
+    var defaultfilename = svgstockprocess.textvalueparams["defaultfilename"]; 
+    AutoDownloadBlob(lc, (defaultfilename == undefined ? "default.nc" : defaultfilename)); 
 }
 
 

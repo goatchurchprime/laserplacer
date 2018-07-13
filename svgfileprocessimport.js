@@ -85,6 +85,7 @@ function ColNoneToNullF(col)
     return ColNoneToNull(col); 
 }
 
+
 SVGfileprocess.prototype.importSVGpathR = function() 
 {
     while (this.cstack.length == this.pback.pos) 
@@ -195,7 +196,15 @@ SVGfileprocess.prototype.importSVGpathR = function()
             this.processSingleSVGpath(d, cmatrix, cstroke, layerclass); 
     } else if (tag == "path") {
         this.processSingleSVGpath(cc.attr("d"), cmatrix, cstroke, layerclass); 
-    } else {
+        
+    } else if (tag == "text") {
+        var textvalue = cc.text(); 
+        this.textvalues.push(textvalue); 
+        var textvalueparam = textvalue.split(/\s*=\s*/); 
+        if (textvalueparam.length == 2)
+            this.textvalueparams[textvalueparam[0]] = textvalueparam[1]; 
+        
+    } else {  // push remaining objects back into the stack
         this.pstack.push(this.pback); 
         this.pback = { pos:this.cstack.length, raphtranslist:raphtranslist, strokelist:strokelist, cmatrix:cmatrix }; 
         var cs = cc.children(); 
@@ -278,12 +287,14 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
     
     this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with
     //this.pathgroupings = [ ]; // the actual primary data, returned from ProcessToPathGroupings()
+    this.textvalues = [ ];  // contents of any text objects (which we can use to make into parameters and settings on the postprocessor)
+    this.textvalueparams = { }; 
 
     // these control the loop importSVGpathRR runs within
     var imatrix = Raphael.matrix(this.fsca, 0, 0, this.fsca, 0, 0); 
     this.pback = {pos:-1, raphtranslist:[imatrix.toTransformString()], strokelist:[undefined], cmatrix:imatrix };
-    this.pstack = [ ]; 
-    this.cstack = [ this.tsvg ]; 
+    this.pstack = [ ];   // stack holding the depth sequence of transforms to be applied
+    this.cstack = [ this.tsvg ];  // stack handling the recursive breakdown and identification of the objects
     
     this.timeoutcyclems = 4; 
     importSVGpathRR(this); 
@@ -310,7 +321,7 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
     var bclasstype = ((nlayerclasscountmap >= 2) && !bblanklayer); 
 
     var eldropdownlayerselection = document.getElementById(this.fadivid).getElementsByClassName("dropdownlayerselection")[0]; 
-    var dropdownlayerselectionlist = [ "<option>hide</option>" ]; 
+    var dropdownlayerselectionlist = [ "<option>collapse</option>" ]; 
     dropdownlayerselectionlist.push("<option>colour "+(bclasstype?"":"*")+ncolcountmap+"</option>"); 
     dropdownlayerselectionlist.push("<option>class "+(bclasstype?"*":"")+nlayerclasscountmap+(bblanklayer ? "_" : "")+"</option>"); 
     dropdownlayerselectionlist.push("<option>colclass "+ncollayerclasscountmap+"</option>"); 
