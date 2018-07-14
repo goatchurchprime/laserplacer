@@ -199,10 +199,8 @@ SVGfileprocess.prototype.importSVGpathR = function()
         
     } else if (tag == "text") {
         var textvalue = cc.text(); 
-        this.textvalues.push(textvalue); 
         var textvalueparam = textvalue.split(/\s*=\s*/); 
-        if (textvalueparam.length == 2)
-            this.textvalueparams[textvalueparam[0]] = textvalueparam[1]; 
+        this.textvalues.push(textvalueparam.length == 2 ? textvalueparam : [textvalue]); 
         
     } else {  // push remaining objects back into the stack
         this.pstack.push(this.pback); 
@@ -236,6 +234,16 @@ function importSVGpathRR(lthis)
     }
 }
 
+
+function paramvaluedefault(textvalues, key, defv)  
+{
+    // keep these as a list of pairs and singletons, not a dict, as it's much more well-behaved
+    for (var i = 0; i < textvalues.length; i++) {
+        if ((textvalues[i].length == 2) && (textvalues[i][0] == key))
+            return textvalues[i][1]; 
+    }
+    return defv;  
+}
 
 
 SVGfileprocess.prototype.InitiateLoadingProcess = function(txt) 
@@ -287,8 +295,7 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
     
     this.Lgrouppaths = [ ]; // used to hold the sets of paths we drag with
     //this.pathgroupings = [ ]; // the actual primary data, returned from ProcessToPathGroupings()
-    this.textvalues = [ ];  // contents of any text objects (which we can use to make into parameters and settings on the postprocessor)
-    this.textvalueparams = { }; 
+    this.textvalues = [ ];  // contents of any text objects, split by '=' which we can use to make into parameters and settings on the postprocessor; accessed by paramvaluedefault()
 
     // these control the loop importSVGpathRR runs within
     var imatrix = Raphael.matrix(this.fsca, 0, 0, this.fsca, 0, 0); 

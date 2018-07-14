@@ -1,11 +1,11 @@
 
 
-function paramfloatdefault(v, defv)  {  return (v === undefined ? defv : parseFloat(v));  }
-function PenCutSeqsToKineticCode(pencutseqs, stockbbox, textvalueparams)
+
+function PenCutSeqsToKineticCode(pencutseqs, stockbbox, textvalues)
 {
-	var zclear = paramfloatdefault(textvalueparams["zclear"], 20); 
-	var zetch = paramfloatdefault(textvalueparams["zetch"], 15); 
-	var zcut = paramfloatdefault(textvalueparams["zcut"], 10); 
+	var zclear = parseFloat(paramvaluedefault(textvalues, "zclear", 20)); 
+	var zetch = parseFloat(paramvaluedefault(textvalues, "zetch", 15)); 
+	var zcut = parseFloat(paramvaluedefault(textvalues, "zcut", 10)); 
 
     lc = [  "POST: https://bitbucket.org/goatchurch/laserplacer\r\n", 
 			"%\r\n", "G90 (absolute dimensions)\r\n", "G94 (feed in mm/min)\r\n", 
@@ -57,7 +57,7 @@ function PenCutSeqsToKineticCode(pencutseqs, stockbbox, textvalueparams)
 } 
 
 
-function PenCutSeqsToPltCode(pencutseqs, stockbbox, textvalueparams)
+function PenCutSeqsToPltCode(pencutseqs, stockbbox, textvalues)
 {
     lc = [ "POST: https://bitbucket.org/goatchurch/laserplacer\r\n" ];  
     lc.push("START\r\n"); 

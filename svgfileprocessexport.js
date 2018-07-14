@@ -566,14 +566,15 @@ Dsvgstockprocess = svgstockprocess;
 
     elfadiv.getElementsByClassName("pencutseqcount")[0].textContent = pencutseqs.length; 
 
+    var textvalues = getstockdefparams(svgstockprocess); 
 	var lc; 
-    if (svgstockprocess.textvalueparams["PenCutSeqsTo"] == "KinetiC")
-		lc = PenCutSeqsToKineticCode(pencutseqs, stockbbox, svgstockprocess.textvalueparams); 
+    if (paramvaluedefault(svgstockprocess.textvalues, "PenCutSeqsTo", "") == "KinetiC")
+		lc = PenCutSeqsToKineticCode(pencutseqs, stockbbox, textvalues); 
 	else
-		lc = PenCutSeqsToPltCode(pencutseqs, stockbbox, svgstockprocess.textvalueparams); 
+		lc = PenCutSeqsToPltCode(pencutseqs, stockbbox, textvalues); 
 
-    var defaultfilename = svgstockprocess.textvalueparams["defaultfilename"]; 
-    AutoDownloadBlob(lc, (defaultfilename == undefined ? "default.nc" : defaultfilename)); 
+    var lfilename = paramvaluedefault(textvalues, "defaultfilename", "default.nc"); 
+    AutoDownloadBlob(lc, lfilename); 
 }
 
 

@@ -190,6 +190,7 @@ function makestockdeflayers(lthis)
     var layerclassdiv = elfadiv.getElementsByClassName("layerparamslist")[0]; 
 console.log("makestockdeflayers", layerselectvalue); 
     if (layerselectvalue == "collapse") {
+        lthis.textvalues = getstockdefparams(lthis); 
         layerclassdiv.style.display = "none";
         return; 
     }
@@ -206,7 +207,7 @@ console.log("makestockdeflayers", layerselectvalue);
     
     for (var i = 0; i < lthis.textvalues.length; i++) {
         var layerblock; 
-        var textvalueparam = lthis.textvalues[i].split(/\s*=\s*/); 
+        var textvalueparam = lthis.textvalues[i]; 
         if (textvalueparam.length == 2) {
             layerblock = [ '<li class="valueparam">', '<div class="valueparamkey">', textvalueparam[0], '</div>', ":", 
                            '<input type="text" value="', textvalueparam[1], '"/>', '</li>' ]; 
@@ -216,6 +217,27 @@ console.log("makestockdeflayers", layerselectvalue);
         layerclassul.insertAdjacentHTML("beforeend", layerblock.join("")); 
     }
 }
+
+function getstockdefparams(lthis) 
+{
+    var elfadiv = document.getElementById(lthis.fadivid); 
+    var layerclassdiv = elfadiv.getElementsByClassName("layerparamslist")[0]; 
+    if (layerclassdiv.style.display == "none")
+        return lthis.textvalues; 
+    var layerclassul = layerclassdiv.getElementsByTagName("ul")[0]; 
+    var layerclasslivalues = layerclassul.getElementsByTagName("li"); 
+    var ltextvalues = [ ]; 
+    for (var i = 0; i < layerclasslivalues.length; i++) {
+        var li = layerclasslivalues[i]; 
+        if (li.className == "valueparam") {
+            ltextvalues.push([li.getElementsByClassName("valueparamkey")[0].textContent, li.getElementsByTagName("input")[0].value]); 
+        } else if (li.className == "textvalue") {
+            ltextvalues.push([li.textContent]); 
+        }
+    }
+    return ltextvalues; 
+}
+
 
 
 
