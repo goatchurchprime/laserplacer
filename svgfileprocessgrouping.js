@@ -113,7 +113,6 @@ function makelayers(lthis)
     var layerselectvalue = elfadiv.getElementsByClassName("dropdownlayerselection")[0].value; 
     var layerclassdiv = elfadiv.getElementsByClassName("layerclasslist")[0]; 
 console.log("makelayers", layerselectvalue); 
-
     if (layerselectvalue == "collapse") {
         layerclassdiv.style.display = "none";
         if (lthis.layerselectindextype !== null)
@@ -127,6 +126,7 @@ console.log("makelayers", layerselectvalue);
         return; 
     }
     if (layerselectvalue == "deleteprocess") {
+        alert("About to delete process"); 
         deletesvgprocess(lthis.fadivid);
         return; 
     }
@@ -180,6 +180,43 @@ console.log("makelayers", layerselectvalue);
     for (var i = 0; i < wingding3stoggles.length; i++) 
         wingding3stoggles[i].onclick = wingding3stogglesclick; 
 }
+
+// For stockdef types this is attached to the select class=dropdownlayerselection object and puts stuff into the layerclasslist
+// It is also used to invoke delete (and then GenPath)
+function makestockdeflayers(lthis) 
+{
+    var elfadiv = document.getElementById(lthis.fadivid); 
+    var layerselectvalue = elfadiv.getElementsByClassName("dropdownlayerselection")[0].value; 
+    var layerclassdiv = elfadiv.getElementsByClassName("layerparamslist")[0]; 
+console.log("makestockdeflayers", layerselectvalue); 
+    if (layerselectvalue == "collapse") {
+        layerclassdiv.style.display = "none";
+        return; 
+    }
+    if (layerselectvalue == "deleteprocess") {
+        alert("About to delete stock process"); 
+        deletesvgprocess(lthis.fadivid);
+        return; 
+    }
+    
+    // assert(layerselectvalue == "showparameters")
+    layerclassdiv.style.display = "block"; 
+    layerclassdiv.innerHTML = "<ul></ul>"; 
+    var layerclassul = layerclassdiv.getElementsByTagName("ul")[0]; 
+    
+    for (var i = 0; i < lthis.textvalues.length; i++) {
+        var layerblock; 
+        var textvalueparam = lthis.textvalues[i].split(/\s*=\s*/); 
+        if (textvalueparam.length == 2) {
+            layerblock = [ '<li class="valueparam">', '<div class="valueparamkey">', textvalueparam[0], '</div>', ":", 
+                           '<input type="text" value="', textvalueparam[1], '"/>', '</li>' ]; 
+        } else {
+            layerblock = [ '<li class="textvalue">', lthis.textvalues[i], '</li>' ]; 
+        }
+        layerclassul.insertAdjacentHTML("beforeend", layerblock.join("")); 
+    }
+}
+
 
 
 var closedistgrouping = 0.2; // should be a setting

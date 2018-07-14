@@ -322,13 +322,20 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
 
     var eldropdownlayerselection = document.getElementById(this.fadivid).getElementsByClassName("dropdownlayerselection")[0]; 
     var dropdownlayerselectionlist = [ '<option value="collapse">collapse</option>' ]; 
-    dropdownlayerselectionlist.push('<option value="showcolourlist">colour '+(bclasstype?"":"*")+ncolcountmap+'</option>'); 
-    dropdownlayerselectionlist.push('<option value="showclasslist">class '+(bclasstype?"*":"")+nlayerclasscountmap+(bblanklayer ? "_" : "")+"</option>"); 
-    dropdownlayerselectionlist.push('<option value="showcolourclasslist">colclass '+ncollayerclasscountmap+'</option>'); 
-    dropdownlayerselectionlist.push('<option value="makegroup">group</option>'); // option 4
+    if (!this.bstockdefinitiontype) {
+        dropdownlayerselectionlist.push('<option value="showcolourlist">colour '+(bclasstype?"":"*")+ncolcountmap+'</option>'); 
+        dropdownlayerselectionlist.push('<option value="showclasslist">class '+(bclasstype?"*":"")+nlayerclasscountmap+(bblanklayer ? "_" : "")+"</option>"); 
+        dropdownlayerselectionlist.push('<option value="showcolourclasslist">colclass '+ncollayerclasscountmap+'</option>'); 
+        dropdownlayerselectionlist.push('<option value="makegroup">group</option>'); // option 4
+    } else {
+        dropdownlayerselectionlist.push('<option value="showparameters">parameters</option>'); 
+        dropdownlayerselectionlist.push('<option value="generatepath">make toolpath</option>'); 
+    }
     dropdownlayerselectionlist.push('<option value="deleteprocess">delete</option>'); // option 5
     eldropdownlayerselection.innerHTML = dropdownlayerselectionlist.join(""); 
-    eldropdownlayerselection.selectedIndex = (bclasstype ? "showclasslist" : "showcolourlist"); 
+    if (!this.bstockdefinitiontype) {
+        eldropdownlayerselection.value = (bclasstype ? "showclasslist" : "showcolourlist"); 
+    }
     
     // this.processdetailSVGtunnelx(); 
     this.ProcessPathsToBoundingRect();  
@@ -337,8 +344,9 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
     updateAvailableThingPositions();  // apply any JSON code to this
     if (this.bstockdefinitiontype) {
         this.spnumCSP = { "layerselectindextype":"colour", "cutpaths": [ 0 ], "slotpaths": [ ], "penpaths": [ ] }; 
-        eldropdownlayerselection.value = "makegroup"; 
+        eldropdownlayerselection.value = "showparameters"; 
         groupingprocess(this); 
+        setTimeout(makestockdeflayers, 1, this); 
     } else {
         setTimeout(makelayers, 1, this); 
     }
@@ -390,11 +398,13 @@ function importSVGfile(i, f)
     
     if (!bstockdefinitiontype)
         fileblock.push('<div class="layerclasslist"></div>'); 
+    else
+        fileblock.push('<div class="layerparamslist"></div>'); 
     
     fileblock.push('</div>'); 
     elfilearea.insertAdjacentHTML("beforeend", fileblock.join("")); 
 
-    // now the actual process (which has links into the control panel just made
+    // n/ow the actual process (which has links into the control panel just made
     var svgprocess = new SVGfileprocess(f.name, fadivid, bstockdefinitiontype); 
     svgprocesses[fadivid] = svgprocess; 
 
@@ -404,10 +414,11 @@ function importSVGfile(i, f)
         elfadiv.getElementsByClassName("pencutseqadvance")[0].onclick = function() { plotpencutseqadvance(svgprocess, 1) }; 
         elfadiv.getElementsByClassName("pencutseqback")[0].onclick = function() { plotpencutseqadvance(svgprocess, -1) }; 
         elfadiv.getElementsByClassName("pencutseqanimate")[0].onclick = function() { pencutseqanimate(svgprocess) }; 
+        elfadiv.getElementsByClassName("dropdownlayerselection")[0].onchange = function() { makestockdeflayers(svgprocess); }
     } else {
         elfadiv.getElementsByClassName("fprocessstatus")[0].onclick = function() { svgprocess.bcancelIm = true; }; 
-        elfadiv.getElementsByClassName("dropdownlayerselection")[0].onchange = function() { makelayers(svgprocess); }
         elfadiv.getElementsByClassName("tfscale")[0].onkeydown = function(e) { if (e.keyCode == 13)  { e.preventDefault(); rescalefileabs(elfadiv) }; }; 
+        elfadiv.getElementsByClassName("dropdownlayerselection")[0].onchange = function() { makelayers(svgprocess); }
     }
     
     fadividlast = fadivid; 
