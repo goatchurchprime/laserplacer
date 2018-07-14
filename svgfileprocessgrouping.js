@@ -31,7 +31,7 @@ function setspnumCSP(fadivid, spnumCSP)
 {
     console.log("setspnumCSP", spnumCSP); 
     var elfadiv = document.getElementById(fadivid); 
-    //console.assert(spnumCSP.layerselectindex == elfadiv.getElementsByClassName("dropdownlayerselection")[0].selectedIndex); 
+    //console.assert(spnumCSP.layerselectvalue == elfadiv.getElementsByClassName("dropdownlayerselection")[0].value); 
     var elspnumids = elfadiv.getElementsByClassName("layerclasslist")[0].getElementsByTagName("li"); 
     for (var i = 0; i < elspnumids.length; i++) {
         var wd3sel = elspnumids[i].getElementsByClassName("wingding3stoggle"); 
@@ -110,29 +110,29 @@ function wingding3stogglesclick()
 function makelayers(lthis) 
 {
     var elfadiv = document.getElementById(lthis.fadivid); 
-    var layerselectindex = elfadiv.getElementsByClassName("dropdownlayerselection")[0].selectedIndex; 
+    var layerselectvalue = elfadiv.getElementsByClassName("dropdownlayerselection")[0].value; 
     var layerclassdiv = elfadiv.getElementsByClassName("layerclasslist")[0]; 
-console.log("makelayers", layerselectindex); 
+console.log("makelayers", layerselectvalue); 
 
-    if (layerselectindex == 0) {
+    if (layerselectvalue == "collapse") {
         layerclassdiv.style.display = "none";
         if (lthis.layerselectindextype !== null)
             lthis.spnumCSP = getspnumCSP(lthis.fadivid, lthis.layerselectindextype);  // back up the spnumCSP
         return; 
     }
-    if (layerselectindex == 4) {
+    if (layerselectvalue == "makegroup") {
         layerclassdiv.style.display = "none";
         lthis.spnumCSP = getspnumCSP(lthis.fadivid, lthis.layerselectindextype);  // back up the spnumCSP
         groupingprocess(lthis);
         return; 
     }
-    if (layerselectindex == 5) {
+    if (layerselectvalue == "deleteprocess") {
         deletesvgprocess(lthis.fadivid);
         return; 
     }
     
     // layerselectindex = 1 colour; 2 class; 3 colclass; 
-    lthis.layerselectindextype = (layerselectindex == 1 ? "color" : (layerselectindex == 2 ? "class" : "colclass")); 
+    lthis.layerselectindextype = (layerselectvalue == "showcolourlist" ? "color" : (layerselectvalue == "showclasslist" ? "class" : "colclass")); 
     layerclassdiv.style.display = "block"; 
     layerclassdiv.innerHTML = "<ul></ul>"; 
     var layerclassul = layerclassdiv.getElementsByTagName("ul")[0]; 
@@ -142,7 +142,7 @@ console.log("makelayers", layerselectindex);
     lthis.nspnumcols = 0; 
     
     for (var i = 0; i < rlistb.length; i++) {
-        var splc = (layerselectindex == 1 ? rlistb[i].col : (layerselectindex == 2 ? rlistb[i].layerclass : (rlistb[i].layerclass+" | "+rlistb[i].col))); 
+        var splc = (layerselectvalue == "showcolourlist" ? rlistb[i].col : (layerselectvalue == "showclasslist" ? rlistb[i].layerclass : (rlistb[i].layerclass+" | "+rlistb[i].col))); 
         if (splcnamematch[splc] == undefined) {
             console.log(splc); 
             var spnumid = lthis.fadivid+"_sspnum"+lthis.nspnumcols; 
@@ -166,7 +166,7 @@ console.log("makelayers", layerselectindex);
         lthis.spnumCSP = getspnumCSP(lthis.fadivid, lthis.layerselectindextype); 
         console.assert(lthis.spnumCSP.cutpaths.length == lthis.nspnumcols); 
     } else {
-        console.log("jjkj", layerselectindex, lthis.spnumCSP.layerselectindextype); 
+        console.log("jjkj", layerselectvalue, lthis.spnumCSP.layerselectindextype); 
         if (lthis.layerselectindextype === lthis.spnumCSP.layerselectindextype) 
             setspnumCSP(lthis.fadivid, lthis.spnumCSP); 
         lthis.spnumCSP = getspnumCSP(lthis.fadivid, lthis.layerselectindextype); 

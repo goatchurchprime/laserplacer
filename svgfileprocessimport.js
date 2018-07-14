@@ -321,14 +321,14 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
     var bclasstype = ((nlayerclasscountmap >= 2) && !bblanklayer); 
 
     var eldropdownlayerselection = document.getElementById(this.fadivid).getElementsByClassName("dropdownlayerselection")[0]; 
-    var dropdownlayerselectionlist = [ "<option>collapse</option>" ]; 
-    dropdownlayerselectionlist.push("<option>colour "+(bclasstype?"":"*")+ncolcountmap+"</option>"); 
-    dropdownlayerselectionlist.push("<option>class "+(bclasstype?"*":"")+nlayerclasscountmap+(bblanklayer ? "_" : "")+"</option>"); 
-    dropdownlayerselectionlist.push("<option>colclass "+ncollayerclasscountmap+"</option>"); 
-    dropdownlayerselectionlist.push("<option>group</option>"); // option 4
-    dropdownlayerselectionlist.push("<option>delete</option>"); // option 5
+    var dropdownlayerselectionlist = [ '<option value="collapse">collapse</option>' ]; 
+    dropdownlayerselectionlist.push('<option value="showcolourlist">colour '+(bclasstype?"":"*")+ncolcountmap+'</option>'); 
+    dropdownlayerselectionlist.push('<option value="showclasslist">class '+(bclasstype?"*":"")+nlayerclasscountmap+(bblanklayer ? "_" : "")+"</option>"); 
+    dropdownlayerselectionlist.push('<option value="showcolourclasslist">colclass '+ncollayerclasscountmap+'</option>'); 
+    dropdownlayerselectionlist.push('<option value="makegroup">group</option>'); // option 4
+    dropdownlayerselectionlist.push('<option value="deleteprocess">delete</option>'); // option 5
     eldropdownlayerselection.innerHTML = dropdownlayerselectionlist.join(""); 
-    eldropdownlayerselection.selectedIndex = (bclasstype ? 2 : 1); 
+    eldropdownlayerselection.selectedIndex = (bclasstype ? "showclasslist" : "showcolourlist"); 
     
     // this.processdetailSVGtunnelx(); 
     this.ProcessPathsToBoundingRect();  
@@ -336,8 +336,8 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
     this.updateLgrouppaths(); 
     updateAvailableThingPositions();  // apply any JSON code to this
     if (this.bstockdefinitiontype) {
-        this.spnumCSP = { "layerselectindex":"colour", "cutpaths": [ 0 ], "slotpaths": [ ], "penpaths": [ ] }; 
-        eldropdownlayerselection.selectedIndex = 4; // group them
+        this.spnumCSP = { "layerselectindextype":"colour", "cutpaths": [ 0 ], "slotpaths": [ ], "penpaths": [ ] }; 
+        eldropdownlayerselection.value = "makegroup"; 
         groupingprocess(this); 
     } else {
         setTimeout(makelayers, 1, this); 
@@ -456,7 +456,7 @@ function updateAvailableThingPositions()   // see jsonThingsPositions for format
                     mainthingsposition.svgprocesses[j].matchingprocessfadivid = svgprocess.fadivid; 
                     if (svgprocess.elprocessstatus.textContent == "BD") {
                         var elfadiv = document.getElementById(svgprocess.fadivid); 
-                        elfadiv.getElementsByClassName("dropdownlayerselection")[0].selectedIndex = 4; 
+                        elfadiv.getElementsByClassName("dropdownlayerselection")[0].value = "makegroup"; 
                         if (elfadiv.getElementsByClassName("layerclasslist").length != 0)
                             elfadiv.getElementsByClassName("layerclasslist")[0].style.display = "none";
                         groupingprocess(svgprocess); 

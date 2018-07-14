@@ -42,8 +42,8 @@ SVGfileprocess.prototype.applyThingsPosition = function(thingpos)   // to be use
         rescalefileabs(elfadiv); 
         
         this.spnumCSP = thingpos.spnumCSP; 
-        var layerselectindex = (thingpos.spnumCSP.layerselectindextype == "color" ? 1 : (thingpos.spnumCSP.layerselectindextype == "class" ? 2 : 3)); 
-        elfadiv.getElementsByClassName("dropdownlayerselection")[0].selectedIndex = layerselectindex; 
+        var layerselectvalue = (thingpos.spnumCSP.layerselectindextype == "color" ? "showcolourlist" : (thingpos.spnumCSP.layerselectindextype == "class" ? "showclasslist" : "showcolourclasslist")); 
+        elfadiv.getElementsByClassName("dropdownlayerselection")[0].value = layerselectvalue; 
         makelayers(this);  
     }
     
