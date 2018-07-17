@@ -77,7 +77,7 @@ SVGfileprocess.prototype.spnummapGetCreate = function(cclass, mcs, strokecolour)
 SVGfileprocess.prototype.processSingleSVGpathTunnelx = function(d, stroke, cc)
 {
     var dtrans = Raphael.path2curve(d); 
-    var cclass = cc.attr("class"); 
+    var cclass = cc.getAttribute("class"); 
     var mcs = this.mclassstyle[cclass]; 
     var dlinestyle = mcs.dlinestyle; 
     this.spnummapGetCreate(cclass, mcs, stroke); 
@@ -114,23 +114,23 @@ SVGfileprocess.prototype.importSVGpathRtunnelx = function()
     if (this.cstack.length == 0) 
         return false; 
     var cc = this.cstack.pop(); 
-    var tag = cc.prop("tagName").toLowerCase(); 
-    console.assert(cc.attr("transform") == null); 
+    var tag = cc.tag.toLowerCase(); 
+    console.assert(cc.getAttribute("transform") === null); 
 
     if (tag == "clippath") {
         console.log("skip clippath"); // will deploy Raphael.pathIntersection(path1, path2) eventually
         // <clipPath id="cp1"> <path d="M497.7 285.2 Z"/></clipPath>
         // then clippath="url(#cp1)" in a path for a trimmed symbol type
     } else if (tag == "path") {
-        var cclass = cc.attr("class"); 
+        var cclass = cc.getattr("class"); 
         var cstroke = this.mclassstyle[cclass]["stroke"]; 
-        this.processSingleSVGpathTunnelx(cc.attr("d"), cstroke, cc); 
+        this.processSingleSVGpathTunnelx(cc.getAttribute("d"), cstroke, cc); 
     } else {
         this.pstack.push(this.pback); 
         this.pback = { pos:this.cstack.length }; 
-        var cs = cc.children(); 
+        var cs = cc.children; 
         for (var i = cs.length - 1; i >= 0; i--) 
-            this.cstack.push($(cs[i]));   // in reverse order for the stack
+            this.cstack.push(cs[i]);   // in reverse order for the stack
     }
     this.elprocessstatus.textContent = ("T"+this.rlistb.length+"/"+this.cstack.length); 
     return true; 

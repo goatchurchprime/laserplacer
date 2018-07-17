@@ -89,13 +89,14 @@ function converttomm(s)
 
 SVGfileprocess.prototype.WorkOutPixelScale = function() 
 {
-    var svgtitletext = this.tsvg.find("title").text(); 
+    var qsvgtitletext = this.tsvg.querySelector("title"); 
+    var svgtitletext = (qsvgtitletext !== null ? qsvgtitletext.textContent : ""); 
     this.btunnelxtype = (svgtitletext.match(/TunnelX/) != null); 
     if (this.btunnelxtype) 
         console.log("Detected TunnelX type"); 
 
-    var sheight = this.tsvg.attr("height"); 
-    var swidth = this.tsvg.attr("width"); 
+    var sheight = this.tsvg.getAttribute("height"); 
+    var swidth = this.tsvg.getAttribute("width"); 
     var viewBox = []; // (seemingly unable to lift the viewBox as an attribute, so get by regexp)
     this.txt.replace(/viewBox="(-?\d*\.?\d*(?:e[\-+]?\d+)?)\s+(-?\d*\.?\d*(?:e[\-+]?\d+)?)\s+(-?\d*\.?\d*(?:e[\-+]?\d+)?)\s+(-?\d*\.?\d*(?:e[\-+]?\d+)?)/g, 
         function(a, x, y, w, h) { 

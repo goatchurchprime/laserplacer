@@ -94,16 +94,16 @@ SVGfileprocess.prototype.importSVGpathR = function()
         return false; 
     }
     var cc = this.cstack.pop(); 
-    var tag = cc.prop("tagName").toLowerCase(); 
+    var tag = cc.tagName.toLowerCase(); 
     var raphtranslist = this.pback.raphtranslist; 
     var cmatrix = this.pback.cmatrix; // this already is raphtranslist.join("")).matrix
     
     // we need to replace strings translate(1,2) with t1,2
-    if (cc.attr("transform")) {
+    if (cc.getAttribute("transform")) {
         raphtranslist = raphtranslist.slice(); 
-        // was: raphtranslist.push(cc.attr("transform").replace(/([mtrs])\w+\s*\(([^\)]*)\)/gi, function(a, b, c) { return b.toLowerCase()+c+(b.match(/s/i) ? ",0,0" : ""); } )); 
+        // was: raphtranslist.push(cc.getAttribute("transform").replace(/([mtrs])\w+\s*\(([^\)]*)\)/gi, function(a, b, c) { return b.toLowerCase()+c+(b.match(/s/i) ? ",0,0" : ""); } )); 
         var transre = /([mtrs])\w+\s*\(([^\)]*)\)/gi; 
-        var transstr = cc.attr("transform"); 
+        var transstr = cc.getAttribute("transform"); 
         var transmatch;
         while ((transmatch = transre.exec(transstr)) !== null) {
             var transshort = transmatch[1].toLowerCase() + transmatch[2]; 
@@ -121,19 +121,20 @@ SVGfileprocess.prototype.importSVGpathR = function()
     var strokelist = this.pback.strokelist; 
 
     // decode case where multiple classes in same field
-    var cclass = cc.attr("class"); 
+    var cclass = cc.getAttribute("class"); 
     
+    // to use getComputedStyle, the loaded svg object would need to be inserted into the DOM somewhere; but here we are just parsing it by regexps
     var lstyle = { }; 
-    if (cc.attr("style")) {   // taken from parser in InitiateLoadingProcess
-        cc.attr("style").replace(/([^:;]*):([^:;]*)/gi, function(a1, b1, c1) { 
+    if (cc.getAttribute("style")) {   // taken from parser in InitiateLoadingProcess
+        cc.getAttribute("style").replace(/([^:;]*):([^:;]*)/gi, function(a1, b1, c1) { 
             var c11 = c1.trim(); 
             if ((c11.length != 0) && (c11[0] == '"') && (c11[c11.length-1] == '"'))
                 c11 = c11.slice(1, -1); 
             lstyle[b1.trim().toLowerCase()] = c11; 
         });
     }
-    var cstroke = ColNoneToNull(cc.attr("stroke")) || ColNoneToNull(cc.css("stroke")) || ColNoneToNull(lstyle["stroke"]); 
-    var cfill = ColNoneToNullF(cc.attr("fill")) || ColNoneToNullF(cc.css("fill")) || ColNoneToNullF(lstyle["fill"]); 
+    var cstroke = ColNoneToNull(cc.getAttribute("stroke")) || ColNoneToNull(lstyle["stroke"]); 
+    var cfill = ColNoneToNullF(cc.getAttribute("fill")) || ColNoneToNullF(lstyle["fill"]); 
     var ocfill = cfill; 
 
     if ((cstroke === null) && cclass) {
@@ -160,7 +161,7 @@ SVGfileprocess.prototype.importSVGpathR = function()
         cstroke = strokelist[strokelist.length - 1]; 
     }
     
-    var layerclass = cc.attr("class") || ""; 
+    var layerclass = cc.getAttribute("class") || ""; 
     if (tag == "pattern") {
         console.log("skip pattern"); 
     } else if (tag == "clippath") {
@@ -168,51 +169,50 @@ SVGfileprocess.prototype.importSVGpathR = function()
         // <clipPath id="cp1"> <path d="M497.7 285.2 Z"/></clipPath>
         // then clippath="url(#cp1)" in a path for a trimmed symbol type
     } else if ((tag == "polygon") || (tag == "polyline")) {
-        var ppts = cc.attr("points").split(/\s+|,/);
+        var ppts = cc.getAttribute("points").split(/\s+|,/);
         var x0 = ppts.shift(); 
         var y0 = ppts.shift();
         var d = 'M'+x0+','+y0+'L'+ppts.join(' ')+(tag == "polygon" ? "Z" : ""); 
         this.processSingleSVGpath(d, cmatrix, cstroke, layerclass); 
     } else if (tag == "circle") {
-        var cx = parseFloat(cc.attr("cx"));
-        var cy = parseFloat(cc.attr("cy")); 
-        var r = parseFloat(cc.attr("r")); 
+        var cx = parseFloat(cc.getAttribute("cx"));
+        var cy = parseFloat(cc.getAttribute("cy")); 
+        var r = parseFloat(cc.getAttribute("r")); 
         var d = "M"+(cx-r)+","+cy+"A"+r+","+r+",0,0,1,"+cx+","+(cy-r)+"A"+r+","+r+",0,1,1,"+(cx-r)+","+cy; 
         this.processSingleSVGpath(d, cmatrix, cstroke, layerclass); 
     } else if (tag == "line") {
-        var x1 = parseFloat(cc.attr("x1"));
-        var y1 = parseFloat(cc.attr("y1")); 
-        var x2 = parseFloat(cc.attr("x2"));
-        var y2 = parseFloat(cc.attr("y2")); 
+        var x1 = parseFloat(cc.getAttribute("x1"));
+        var y1 = parseFloat(cc.getAttribute("y1")); 
+        var x2 = parseFloat(cc.getAttribute("x2"));
+        var y2 = parseFloat(cc.getAttribute("y2")); 
         var d = "M"+x1+","+y1+"L"+x2+","+y2; 
         this.processSingleSVGpath(d, cmatrix, cstroke, layerclass); 
     } else if (tag == "rect") {
-        var x0 = parseFloat(cc.attr("x"));
-        var y0 = parseFloat(cc.attr("y")); 
-        var x1 = x0 + parseFloat(cc.attr("width")); 
-        var y1 = y0 + parseFloat(cc.attr("height")); 
+        var x0 = parseFloat(cc.getAttribute("x"));
+        var y0 = parseFloat(cc.getAttribute("y")); 
+        var x1 = x0 + parseFloat(cc.getAttribute("width")); 
+        var y1 = y0 + parseFloat(cc.getAttribute("height")); 
         var d = "M"+x0+","+y0+"L"+x0+","+y1+" "+x1+","+y1+" "+x1+","+y0+"Z"; 
         if (!this.btunnelxtype)
             this.processSingleSVGpath(d, cmatrix, cstroke, layerclass); 
     } else if (tag == "path") {
-        this.processSingleSVGpath(cc.attr("d"), cmatrix, cstroke, layerclass); 
+        this.processSingleSVGpath(cc.getAttribute("d"), cmatrix, cstroke, layerclass); 
         
     } else if (tag == "text") {
-        var textvalue = cc.text(); 
+        var textvalue = cc.textContent; 
         var textvalueparam = textvalue.split(/\s*=\s*/); 
         this.textvalues.push(textvalueparam.length == 2 ? textvalueparam : [textvalue]); 
         
     } else {  // push remaining objects back into the stack
         this.pstack.push(this.pback); 
         this.pback = { pos:this.cstack.length, raphtranslist:raphtranslist, strokelist:strokelist, cmatrix:cmatrix }; 
-        var cs = cc.children(); 
+        var cs = cc.children; 
         for (var i = cs.length - 1; i >= 0; i--) 
-            this.cstack.push($(cs[i]));   // in reverse order for the stack
+            this.cstack.push(cs[i]);   // in reverse order for the stack
     }
     this.elprocessstatus.textContent = ("L"+this.rlistb.length+"/"+this.cstack.length); 
     return true; 
 }
-
 
 
 
@@ -258,14 +258,20 @@ SVGfileprocess.prototype.InitiateLoadingProcess = function(txt)
 // would also need a rewrite on the cstack using nodename and node value, and find out what .find does
 // to get it all done
 //console.log(txt);   
-    this.tsvg = $($(txt).children()[0]).parent(); // seems not to work directly as $(txt).find("svg")
+    var dtsvg = document.createElement("div"); 
+    dtsvg.innerHTML = txt; 
+    this.tsvg = dtsvg.querySelector("svg"); 
+    //this.tsvg = $($(txt).children()[0]).parent(); // seems not to work directly as $(txt).find("svg")
+    
 //console.log(this.tsvg);   
     this.WorkOutPixelScale();  // sets the btunnelxtype
     
     // find the class definitions for style (using the replace function to look up all of them)
     this.mclassstyle = { }; 
     var mclassstyle = this.mclassstyle; 
-    this.tsvg.find("style").text().replace(/\.([\w\d\-]+)\s*\{([^}]*)/gi, function(a, b, c) { 
+    var qstyle = this.tsvg.querySelector("style"); 
+    var styletext = (qstyle !== null ? qstyle.textContent : ""); 
+    styletext.replace(/\.([\w\d\-]+)\s*\{([^}]*)/gi, function(a, b, c) { 
         mclassstyle[b] = { }; 
         c.replace(/([^:;]*):([^:;]*)/gi, function(a1, b1, c1) { 
             var c11 = c1.trim(); 
