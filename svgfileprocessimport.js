@@ -402,7 +402,6 @@ function importSVGfile(i, f)
     fileblock.push('<select class="dposition"></select>'); 
     if (bstockdefinitiontype) {
         fileblock.push('<input type="button" class="genpathorder" value="GenPath"/>'); 
-        fileblock.push('<input type="text" class="genpathftol" value="0.5" title="Path thinning tolerance"/>'); 
         fileblock.push('<input type="text" class="pencutseqindex" value="0" title="Path index"/>/<span class="pencutseqcount" title="Total path count">1</span>'); 
         fileblock.push('<input type="button" value="<<<" class="pencutseqback" title="go back one path"/>'); 
         fileblock.push('<input type="button" value=">" class="pencutseqadvance" title="advance on segment"/>'); 

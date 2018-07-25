@@ -118,47 +118,7 @@ SVGfileprocess.prototype.WorkOutPixelScale = function()
     this.fsca = 1.0/this.fmmpixwidth; 
 }
 
-function DcolourPathSubGrouping(rlistb, splist, pathpoly, strokecolour) 
-{
-    for (var ii = 0; ii < pathpoly.length; ii++) {
-        var rp = rlistb[pathpoly[ii]/2|0]; 
-        rp.path.attr("stroke", (strokecolour ? strokecolour : splist[rp.spnum].strokecolour)); 
-    }
-}
 
-function DcolourPathGrouping(rlistb, splist, pathgrouping, strokecolour, strokeengcolour) 
-{
-    for (var i = 1; i < pathgrouping.length - 1; i++) {
-        DcolourPathSubGrouping(rlistb, splist, pathgrouping[i], strokecolour);  
-    }
-    DcolourPathSubGrouping(rlistb, splist, pathgrouping[pathgrouping.length - 1], strokeengcolour);   
-}
-
-
-
-function CopyPathListOfColourList(rlistb, spnumarray)
-{
-    var dlist = [ ]; 
-    var npathsc = 0; 
-    for (var i = 0; i < rlistb.length; i++) {
-        if ((spnumarray === null) || ((spnumarray.indexOf(rlistb[i].spnum) != -1) && (rlistb[i].path.getTotalLength() != 0)))
-            dlist.push(rlistb[i].path.attr("path")); 
-        else
-            dlist.push(null); 
-        npathsc++; 
-    }
-    return dlist; 
-}
-
-
-function MakeContourcurvesFromSequences(dlist, jdseqs) 
-{
-    var jdgeos = [ ]; 
-    for (var i = 0; i < jdseqs.length; i++) {
-        jdgeos.push(PolySorting.JDgeoseq(jdseqs[i], dlist)); // concatenated sequences of paths forming the boundaries
-    }
-    return jdgeos; 
-}
 
 // derived from GetSingletsList, which also sorts the non contour types into three categories of singlets
 function GetSingletsListCSP(jdseqs, rlistb, spnumCSP)
@@ -186,94 +146,6 @@ function GetSingletsListCSP(jdseqs, rlistb, spnumCSP)
 }
 
 
-// may need to be in callback type to spread the load and make the processstatus appear
-var bgroupcoloursindividually = true; 
-function ProcessToPathGroupings(res, rlistb, closedist, spnumCSP, fadivid, elprocessstatus, groupingprocessFinalize)
-{
-    console.assert(res.length == 0); // should start as [ ]
-    // form the closed path sequences per spnum
-    var jdseqs = [ ];  // indexes dlist
-console.log(spnumCSP); 
-    var spnumcspcutpaths = spnumCSP.cutpaths; 
-    if (bgroupcoloursindividually) {
-        for (var ispnum = 0; ispnum < spnumcspcutpaths.length; ispnum++) {
-            var spnum = spnumcspcutpaths[ispnum]; 
-            elprocessstatus.textContent = "Gjoining_spnum="+spnum; 
-            var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColourList(rlistb, [spnum]), closedist); 
-            var npathsleft = 0; 
-            for (var i = 0; i < ljdseqs.length; i++)
-                npathsleft += ljdseqs[i].length; 
-            //console.log("ljdseqs", spnum, "joined", npathsc, "left", npathsleft);  // could use not-joined paths as a guess of which colours to filter as engravings
-            jdseqs = jdseqs.concat(ljdseqs); 
-        }
-    } else {
-        elprocessstatus.textContent = "Gjoining_spnum="+spnumcspcutpaths.join(","); 
-        var ljdseqs = PolySorting.FindClosedPathSequencesD(CopyPathListOfColourList(rlistb, spnumcspcutpaths), closedist); 
-        var npathsleft = 0; 
-        for (var i = 0; i < ljdseqs.length; i++)
-            npathsleft += ljdseqs[i].length; 
-        //console.log("ljdseqs", spnum, "joined", npathsc, "left", npathsleft);  // could use not-joined paths as a guess of which colours to filter as engravings
-        jdseqs = jdseqs.concat(ljdseqs); 
-    }
-    
-    // jdseqs = [ [i1, i2, i3,...] sequence of dlist[ii/2|0], bfore=((ii%2)==1 ]
-
-    // list of paths not included in any cycle
-    elprocessstatus.textContent = "Ggetsingletlist"; 
-    
-    // var singletslist = PolySorting.GetSingletsList(jdseqs, rlistb.length); 
-    var singletslist = GetSingletsListCSP(jdseqs, rlistb, spnumCSP); 
-    
-    // build the dlist without any holes parallel to rlistb to use for groupings
-    elprocessstatus.textContent = "Gconcat_JDgeoseqs"; 
-    var dlist = CopyPathListOfColourList(rlistb, null); 
-    var jdgeos = MakeContourcurvesFromSequences(dlist, jdseqs); 
-
-    // groups of jdsequences forming outercontour, islands, singlets 
-    elprocessstatus.textContent = "GFindAreaGroupingsD"; 
-    
-    // initialized outside (so we can run in a callback)
-    // var res = [ ];  // [ [ fadivid+"cb"+0, ...], [ fadivid+"cb"+1, ...], ..., 
-    var cboundislands = PolySorting.FindAreaGroupingsD(jdgeos); 
-    
-    elprocessstatus.textContent = "Goriented_islands"; 
-    for (var j = 0; j < cboundislands.length; j++) {
-        var lres = [ fadivid+"cb"+j ]; 
-        var cboundisland = cboundislands[j]; 
-        for (var ci = 0; ci < cboundisland.length; ci++) {
-            var i = cboundisland[ci]; 
-            var jdgeo = jdgeos[i]; 
-            var bfore = PolySorting.FindPathOrientation(jdgeo); 
-            var jdseq = (((ci == 0) == bfore) ? jdseqs[i] : PolySorting.RevJDseq(jdseqs[i])); 
-            lres.push(jdseq); 
-        }
-        lres.push([ ]); // the slot for the list of singlet paths
-        res.push(lres); 
-    }
-    
-    elprocessstatus.textContent = "Gsinglets_to_groupings"; 
-    var unmatchedsinglets = [ ]; 
-    for (var i = 0; i < singletslist.length; i++) {
-        var ic = singletslist[i]; 
-        var dpath = dlist[ic]; 
-        var j = PolySorting.SingletsToGroupingsD(dpath, cboundislands, jdgeos); 
-        if (j != -1) {
-            res[j][res[j].length-1].push(ic); 
-            rlistb[ic].path.attr("stroke-dasharray", ""); 
-        }
-        else
-            unmatchedsinglets.push(ic); 
-    }
-
-    elprocessstatus.textContent = "GC"; 
-    if (unmatchedsinglets.length != 0)
-        res.push(["unmatchedsinglets", unmatchedsinglets ]); 
-    console.log("unmatched", unmatchedsinglets); 
-    console.log("pathgroupings", res); 
-    if (groupingprocessFinalize !== null)
-        groupingprocessFinalize(); 
-    return res; 
-}
 
 
 

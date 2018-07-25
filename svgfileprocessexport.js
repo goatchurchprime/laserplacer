@@ -451,10 +451,12 @@ var Djdopseqs;
 
 function genpathorderonstock() 
 {
+
     var elfadiv = this.parentElement; 
     var svgstockprocess = svgprocesses[elfadiv.id]; 
     console.assert(svgstockprocess.bstockdefinitiontype); 
     var stockbbox = svgstockprocess.Lgrouppaths[0][0].getBBox(); 
+    svgstockprocess.textvalues = rereadstockdefparamsfromlayerparamslist(svgstockprocess); 
 
     var groupsoverlayingstock = GetGroupsoverlayingstock(stockbbox); 
     
@@ -467,7 +469,7 @@ function genpathorderonstock()
         pencutseqs = pencutseqs.concat(pencutseq); 
     }
     
-    var ftol = parseFloat(elfadiv.getElementsByClassName("genpathftol")[0].value); 
+    var ftol = parseFloat(paramvaluedefault(svgstockprocess.textvalues, "curvetolerance", "0.5")); 
     
     // make the point sequences for each path and do all etches from left to right
     for (var i = 0; i < pencutseqs.length; i++) {
@@ -566,14 +568,13 @@ Dsvgstockprocess = svgstockprocess;
 
     elfadiv.getElementsByClassName("pencutseqcount")[0].textContent = pencutseqs.length; 
 
-    var textvalues = getstockdefparams(svgstockprocess); 
 	var lc; 
     if (paramvaluedefault(svgstockprocess.textvalues, "PenCutSeqsTo", "") == "KinetiC")
-		lc = PenCutSeqsToKineticCode(pencutseqs, stockbbox, textvalues); 
+		lc = PenCutSeqsToKineticCode(pencutseqs, stockbbox, svgstockprocess.textvalues); 
 	else
-		lc = PenCutSeqsToPltCode(pencutseqs, stockbbox, textvalues); 
+		lc = PenCutSeqsToPltCode(pencutseqs, stockbbox, svgstockprocess.textvalues); 
 
-    var lfilename = paramvaluedefault(textvalues, "defaultfilename", "default.nc"); 
+    var lfilename = paramvaluedefault(svgstockprocess.textvalues, "defaultfilename", "default.nc"); 
     AutoDownloadBlob(lc, lfilename); 
 }
 

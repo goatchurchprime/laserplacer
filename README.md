@@ -1,13 +1,27 @@
 # README #
 
-Process and join up polygons and shapes (and etched lines) from an SVG file so they can be moved and placed on the bed for a laser cutter
+This program generates NC code for a laser cutter or router 
+from the 2D shapes in an SVG file after cleaning and joining up 
+the cutting and etching lines and repositioning them within the cutting area.
 
+Specific instructions and hints are embedded in [the page](https://goatchurch.bitbucket.io/laserplacer.html).
+
+The main dependency is [RaphaelJS](http://dmitrybaranovskiy.github.io/raphael/)
+
+### Features
+
+This program runs fully in the browser, written in native Javascript.  No installation necessary.  
+Just drop your SVG files containing the geometry into the working area, drop in a second 
+SVG file called "stockdef_machinename" into the same file, click a few buttons, drag one onto the 
+other in the position you want to cut, and then download the finished NC file that you can 
+upload to your laser cutter or router.  
 
 ### Implementation notes
 
 FileArea tracks each file import.  
 
 svgprocesses is an array of SVGfileprocess recording the current state of the file, whether it has been loaded or grouped yet.
+
 Select a process from it as k = svgprocesses["fa0"]
 
 This uses the function importSVGpathR() that is called-back recursively and uses a cstack and pstack to keep track of how much is left to do and how deep the transformation values go.
@@ -71,9 +85,16 @@ where jtest2.js says:
 
 ----------------
 todo stuff:
+* get the bgroupcoloursindividually cases merged into a single loop
+* start to break out the components of ProcessToPathGroupings cleanly with callbacks
+* put spnumCSP into an array of paths that incorporates the bgroupcoloursindividually thing
+
+
 * get the working area to fill the screen no scrolling
-* batch delete on the x click
 * grouping by a big rectangle outline that's draggable
+
+
+---------
 
 *load the subsetareas separately and be able to pass over tsvg again to get the details
 *remove Raphael.mapPath at end of transform case (practice on scratch object first, then do the mappath on output)
