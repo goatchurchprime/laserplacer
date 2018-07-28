@@ -202,6 +202,11 @@ console.log("makestockdeflayers", layerselectvalue);
         deletesvgprocess(lthis.fadivid);
         return; 
     }
+    if (layerselectvalue == "testpathoverlaps") {
+        genpathonstockoverlapsTest(lthis.fadivid); 
+        return; 
+    }
+
     if (layerselectvalue == "generatepath") {
         genpathorderonstock(lthis.fadivid); 
         return; 

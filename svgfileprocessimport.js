@@ -342,6 +342,7 @@ SVGfileprocess.prototype.FinalizeLoadingProcess = function()
         dropdownlayerselectionlist.push('<option value="makegroup">group</option>'); // option 4
     } else {
         dropdownlayerselectionlist.push('<option value="showparameters">parameters</option>'); 
+        dropdownlayerselectionlist.push('<option value="testpathoverlaps">test overlaps</option>'); 
         dropdownlayerselectionlist.push('<option value="generatepath">make toolpath</option>'); 
     }
     dropdownlayerselectionlist.push('<option value="deleteprocess">delete</option>'); // option 5

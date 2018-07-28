@@ -158,6 +158,30 @@ function deletesvgprocess(fadivid)
 
 
 // returns [ {fadivid:fadivid, j:j, bbox:bbox } ]
+function GetAllProcessGroupings()
+{
+    // scan through everything available
+    var processgroupings = [ ]; 
+    var svgprocesseskeys = Object.keys(svgprocesses); 
+    
+    for (var i = 0; i < svgprocesseskeys.length; i++) {
+        var svgprocess = svgprocesses[svgprocesseskeys[i]]; 
+        console.assert(svgprocess.Lgrouppaths.length == svgprocess.pathgroupings.length); 
+        if (!svgprocess.bstockdefinitiontype) {
+            for (var j = 0; j < svgprocess.pathgroupings.length; j++) {
+                if (svgprocess.pathgroupings[j][0] != "unmatchedsinglets") {
+                    var groupbbox = svgprocess.Lgrouppaths[j][0].getBBox(); 
+                    processgroupings.push({fadivid:svgprocess.fadivid, j:j, bbox:groupbbox}); 
+                }
+            }
+        }
+    }
+    return processgroupings; 
+}
+
+
+
+// returns [ {fadivid:fadivid, j:j, bbox:bbox } ]
 function GetGroupsoverlayingstock(stockbbox)
 {
     // find all pathgroups that overlap this stockbbox
@@ -190,6 +214,9 @@ function GetGroupsoverlayingstock(stockbbox)
     }
     return groupsoverlayingstock; 
 }
+
+
+
 
 
 // finish 
@@ -251,6 +278,35 @@ function PenCutSeqToPoints(penseq, ftol)
         penseq.xtransseq.push(pts[j][0])
         penseq.ytransseq.push(pts[j][1])
     }        
+}
+
+function GetPolygonForIntersecting(svgprocess, pgi, pathgrouping, tstr, ftol) 
+{
+    var res = [ ]; 
+    for (var i = 1; i < pathgrouping.length-1; i++) { // skip boundingbox=0 and etching=-1 
+        var polygon = [ ]; 
+        for (var k = 0; k < pathgrouping[i].length; k++) {
+            var rres = { ptype:(i == 1 ? "cutouter" : "cutinner"), tstr:tstr, fadivid:svgprocess.fadivid, pgi:pgi, contnum:i, pgik:k }; 
+            var jr = pathgrouping[i][k]/2|0; 
+            rres["reversed"] = ((pathgrouping[i][k]%2) == 0); 
+            rres["rspnum"] = svgprocess.rlistb[jr].spnum; 
+            rres["absolutescale"] = svgprocess.currentabsolutescale; 
+            rres["cmatrix"] = svgprocess.rlistb[jr].cmatrix; 
+            rres["dmi"] = svgprocess.rlistb[jr].dmi; 
+            if (svgprocess.rlistb[jr].MX0 !== undefined) {
+                rres["MX0"] = svgprocess.rlistb[jr].MX0; 
+                rres["MY0"] = svgprocess.rlistb[jr].MY0; 
+            }
+            PenCutSeqToPoints(rres, ftol); 
+            var pn = rres.xtransseq.length; 
+            for (var j = 0; j < pn; j++) {
+                var jr = (rres.reversed ? pn - 1 - j : j); 
+                polygon.push([rres.xtransseq[jr], rres.ytransseq[jr]]); 
+            }
+        }
+        res.push(polygon); 
+    }
+    return res; 
 }
 
 
@@ -443,6 +499,63 @@ function plotpencutseq(svgstockprocess, iadvance)
 }
 
 
+var Doverlaps = [ ]; 
+function genpathonstockoverlapsTest(fadivid) 
+{
+    var svgstockprocess = svgprocesses[fadivid]; 
+    console.assert(svgstockprocess.bstockdefinitiontype); 
+    var stockbbox = svgstockprocess.Lgrouppaths[0][0].getBBox(); 
+    svgstockprocess.textvalues = rereadstockdefparamsfromlayerparamslist(svgstockprocess); 
+
+    var allprocessgroupings = GetAllProcessGroupings(); // [ {fadivid:fadivid, j:j, bbox:bbox } ]
+    
+    // sort through which ones are inside the stock
+    var processgroupings = [ ]
+    for (var i = 0; i < allprocessgroupings.length; i++) {
+        var svgprocess = svgprocesses[allprocessgroupings[i].fadivid]; 
+        var gj = allprocessgroupings[i].j; 
+        var gjbbox = allprocessgroupings[i].bbox; 
+        if (Raphael.isPointInsideBBox(stockbbox, gjbbox.x, gjbbox.y) && Raphael.isPointInsideBBox(stockbbox, gjbbox.x2, gjbbox.y) && Raphael.isPointInsideBBox(stockbbox, gjbbox.x, gjbbox.y2) && Raphael.isPointInsideBBox(stockbbox, gjbbox.x2, gjbbox.y2)) {
+            processgroupings.push(allprocessgroupings[i]); 
+        }
+    }
+    
+    var ftol = parseFloat(paramvaluedefault(svgstockprocess.textvalues, "curvetolerance", "0.5")); 
+    
+    // sort through and make the path sequences for each processgrouping
+    for (var i = 0; i < processgroupings.length; i++) {
+        var svgprocess = svgprocesses[processgroupings[i].fadivid]; 
+        var gj = processgroupings[i].j; 
+        processgroupings[i]["multipolygon"] = GetPolygonForIntersecting(svgprocess, gj, svgprocess.pathgroupings[gj], svgprocess.pathgroupingtstrs[gj].tstr, ftol); 
+    }
+    
+    while (Doverlaps.length != 0)
+        Doverlaps.pop().remove(); 
+
+    console.log(processgroupings); 
+    for (var i = 0; i < processgroupings.length; i++) {
+        for (var j = i+1; j < processgroupings.length; j++) {
+            var polyintersect = martinez.intersection(processgroupings[i].multipolygon, processgroupings[j].multipolygon); 
+            console.log(i, j, polyintersect); 
+            if (polyintersect !== null) {
+                var dseq = [ ]; 
+                for (var p = 0; p < polyintersect.length; p++) {
+                    for (var m = 0; m < polyintersect[p].length; m++) {
+                        for (var k = 0; k < polyintersect[p][m].length; k++) {
+                            dseq.push((k == 0 ? "M" : "L"), polyintersect[p][m][k][0], polyintersect[p][m][k][1]); 
+                        }
+                    }
+                }
+                console.log(dseq); 
+                Doverlaps.push(paper1.path(dseq).attr({"stroke-width":gcutstrokewidth*3, "stroke":"red"})); 
+            }
+        }
+    }
+    
+
+}
+
+
 var Dpencutseqs = null; 
 var Detchseqslen = -1; 
 var Drlends; 
@@ -458,14 +571,13 @@ function genpathorderonstock(fadivid)
     svgstockprocess.textvalues = rereadstockdefparamsfromlayerparamslist(svgstockprocess); 
 
     var groupsoverlayingstock = GetGroupsoverlayingstock(stockbbox); 
-    
+   
     // collect all the penciled edges into the su
     var pencutseqs = [ ]; 
     for (var i = 0; i < groupsoverlayingstock.length; i++) {
         var svgprocess = svgprocesses[groupsoverlayingstock[i].fadivid]; 
         var gj = groupsoverlayingstock[i].j; 
         var pencutseq = GetPathsPensSequences(svgprocess, gj, svgprocess.pathgroupings[gj], svgprocess.pathgroupingtstrs[gj].tstr); 
-        pencutseqs = pencutseqs.concat(pencutseq); 
     }
     
     var ftol = parseFloat(paramvaluedefault(svgstockprocess.textvalues, "curvetolerance", "0.5")); 
