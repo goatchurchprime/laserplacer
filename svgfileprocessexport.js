@@ -449,11 +449,10 @@ var Drlends;
 var Drlidat; 
 var Djdopseqs; 
 
-function genpathorderonstock() 
+function genpathorderonstock(fadivid) 
 {
 
-    var elfadiv = this.parentElement; 
-    var svgstockprocess = svgprocesses[elfadiv.id]; 
+    var svgstockprocess = svgprocesses[fadivid]; 
     console.assert(svgstockprocess.bstockdefinitiontype); 
     var stockbbox = svgstockprocess.Lgrouppaths[0][0].getBBox(); 
     svgstockprocess.textvalues = rereadstockdefparamsfromlayerparamslist(svgstockprocess); 
@@ -566,6 +565,7 @@ Dpens = paper1.path(dseq).attr("stroke-width", gcutstrokewidth);
     svgstockprocess.Dpencutseqs = pencutseqs; 
 Dsvgstockprocess = svgstockprocess; 
 
+    var elfadiv = document.getElementById(fadivid); 
     elfadiv.getElementsByClassName("pencutseqcount")[0].textContent = pencutseqs.length; 
 
 	var lc; 

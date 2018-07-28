@@ -401,7 +401,6 @@ function importSVGfile(i, f)
     fileblock.push('<span class="fprocessstatus">VV</span>'); 
     fileblock.push('<select class="dposition"></select>'); 
     if (bstockdefinitiontype) {
-        fileblock.push('<input type="button" class="genpathorder" value="GenPath"/>'); 
         fileblock.push('<input type="text" class="pencutseqindex" value="0" title="Path index"/>/<span class="pencutseqcount" title="Total path count">1</span>'); 
         fileblock.push('<input type="button" value="<<<" class="pencutseqback" title="go back one path"/>'); 
         fileblock.push('<input type="button" value=">" class="pencutseqadvance" title="advance on segment"/>'); 
@@ -422,7 +421,6 @@ function importSVGfile(i, f)
 
     var elfadiv = document.getElementById(fadivid); 
     if (bstockdefinitiontype) {
-        elfadiv.getElementsByClassName("genpathorder")[0].onclick = genpathorderonstock; 
         elfadiv.getElementsByClassName("pencutseqadvance")[0].onclick = function() { plotpencutseqadvance(svgprocess, 1) }; 
         elfadiv.getElementsByClassName("pencutseqback")[0].onclick = function() { plotpencutseqadvance(svgprocess, -1) }; 
         elfadiv.getElementsByClassName("pencutseqanimate")[0].onclick = function() { pencutseqanimate(svgprocess) }; 

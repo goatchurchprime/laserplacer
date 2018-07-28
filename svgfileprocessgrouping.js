@@ -106,7 +106,7 @@ function wingding3stogglesclick()
 
 
 // this is attached to the select class=dropdownlayerselection object and puts stuff into the layerclasslist
-// It is also used to invoke delete and makegroupings
+// It is also used to invoke delete, makegroupings and generate paths
 function makelayers(lthis) 
 {
     var elfadiv = document.getElementById(lthis.fadivid); 
@@ -131,8 +131,11 @@ console.log("makelayers", layerselectvalue);
         return; 
     }
     
-    // layerselectindex = 1 colour; 2 class; 3 colclass; 
-    lthis.layerselectindextype = (layerselectvalue == "showcolourlist" ? "color" : (layerselectvalue == "showclasslist" ? "class" : "colclass")); 
+    // layerselectindex = showcolourlist, ; 
+    lthis.layerselectindextype = ({"showcolourlist":"color", "showclasslist":"class", "showcolourclasslist":"colclass"})[layerselectvalue]; 
+    console.log(lthis.layerselectindextype); 
+    console.assert(lthis.layerselectindextype !== undefined); 
+    
     layerclassdiv.style.display = "block"; 
     layerclassdiv.innerHTML = "<ul></ul>"; 
     var layerclassul = layerclassdiv.getElementsByTagName("ul")[0]; 
@@ -199,7 +202,12 @@ console.log("makestockdeflayers", layerselectvalue);
         deletesvgprocess(lthis.fadivid);
         return; 
     }
+    if (layerselectvalue == "generatepath") {
+        genpathorderonstock(lthis.fadivid); 
+        return; 
+    }
     
+   
     // assert(layerselectvalue == "showparameters")
     layerclassdiv.style.display = "block"; 
     layerclassdiv.innerHTML = "<ul></ul>"; 
